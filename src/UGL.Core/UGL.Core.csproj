@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Pure class library: no UI, no platform-specific APIs -->
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>13</LangVersion>
+    <RootNamespace>UGL.Core</RootNamespace>
+    <AssemblyName>UGL.Core</AssemblyName>
+
+    <!-- Treat warnings as errors to enforce contract discipline in Core -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      UGL.Core intentionally has NO references to any other UGL project.
+      It is the dependency inversion anchor of the entire solution.
+      All other projects reference Core; Core references nothing in UGL.
+
+      The only external dependency allowed here is the DI abstractions
+      package so interfaces can be annotated with service lifetimes if
+      needed, without pulling in a full DI container.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

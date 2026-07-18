@@ -1,0 +1,108 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels"
+             xmlns:views="clr-namespace:UGL.App.Views"
+             x:Class="UGL.App.Views.FilterOverlayView"
+             x:DataType="vm:FilterOverlayViewModel">
+
+    <UserControl.Resources>
+        <views:PillBorderBrushConverter x:Key="PillBorder"/>
+        <views:PillBackgroundConverter  x:Key="PillBg"/>
+        <views:PillTextBrushConverter   x:Key="PillText"/>
+    </UserControl.Resources>
+
+    <!-- Full-screen semi-transparent backdrop -->
+    <Grid>
+        <Border Background="#CC000000" />
+
+        <!-- Centred filter panel -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="900"
+                Background="#EE0D0D1A"
+                BorderBrush="#44FFFFFF"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="40,32">
+
+            <StackPanel Spacing="28">
+
+                <!-- Header -->
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="Filter:"
+                               FontSize="18"
+                               Foreground="#88FFFFFF"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding CategoryLabel}"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Filter rows -->
+                <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:FilterRowViewModel">
+                            <Grid ColumnDefinitions="140,*"
+                                  Margin="0,0,0,8"
+                                  Opacity="{Binding IsFocusedRow,
+                                            Converter={x:Static views:BoolToOpacityConverter.Instance}}">
+
+                                <!-- Row label — brighter when row is focused -->
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding RowLabel}"
+                                           FontSize="16"
+                                           Foreground="White"
+                                           Opacity="{Binding IsFocusedRow,
+                                                     Converter={x:Static views:BoolToOpacityConverter.Instance}}"
+                                           VerticalAlignment="Center"/>
+
+                                <!-- Pill options -->
+                                <ItemsControl Grid.Column="1"
+                                              ItemsSource="{Binding Options}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:FilterOptionViewModel">
+                                            <Border Margin="4"
+                                                    Padding="16,6"
+                                                    CornerRadius="20"
+                                                    BorderThickness="2"
+                                                    BorderBrush="{Binding IsFocused,
+                                                                  Converter={StaticResource PillBorder},
+                                                                  ConverterParameter=focused}"
+                                                    Background="{Binding IsFocused,
+                                                                 Converter={StaticResource PillBg},
+                                                                 ConverterParameter=focused}">
+                                                <TextBlock Text="{Binding Label}"
+                                                           FontSize="14"
+                                                           Foreground="{Binding IsSelected,
+                                                                        Converter={StaticResource PillText}}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Hint bar -->
+                <Border BorderBrush="#22FFFFFF"
+                        BorderThickness="0,1,0,0"
+                        Padding="0,16,0,0">
+                    <TextBlock Text="A  Select      B  Close      X  Reset All      ↑↓  Switch Row      ←→  Browse Options"
+                               FontSize="13"
+                               Foreground="#66FFFFFF"
+                               HorizontalAlignment="Center"/>
+                </Border>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

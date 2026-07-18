@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>13</LangVersion>
+    <RootNamespace>UGL.App</RootNamespace>
+    <AssemblyName>UGL</AssemblyName>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UGL.Core\UGL.Core.csproj" />
+    <ProjectReference Include="..\UGL.Data\UGL.Data.csproj" />
+    <ProjectReference Include="..\UGL.Media\UGL.Media.csproj" />
+    <ProjectReference Include="..\UGL.Emulators\UGL.Emulators.csproj" />
+    <ProjectReference Include="..\UGL.Themes\UGL.Themes.csproj" />
+    <ProjectReference Include="..\UGL.Configuration\UGL.Configuration.csproj" />
+    <ProjectReference Include="..\UGL.Input\UGL.Input.csproj" />
+    <ProjectReference Include="..\UGL.Hooks\UGL.Hooks.csproj" />
+    <ProjectReference Include="..\UGL.Updates\UGL.Updates.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <!-- Copy config folder to build output using Content instead of None -->
+  <ItemGroup>
+    <Content Include="..\..\config\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>config\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

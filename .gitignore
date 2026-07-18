@@ -1,0 +1,57 @@
+## .NET / Visual Studio / Rider build artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.userosscache
+*.sln.docstates
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+
+## Runtime/user data — never commit personal libraries, ROMs, BIOS files, or
+## config to the repo. During local `dotnet run`/`dotnet build`, UGL creates
+## these folders under the build output path (bin\...\), which is already
+## excluded above — these extra rules are a safety net in case any of these
+## ever end up at the repo root instead (e.g. testing a published build from
+## the root, or a future portable-build script that outputs there).
+/config/
+/roms/
+/emulators/
+/bios/
+/bezels/
+/addons/
+/retroarch/
+/logs/
+/media/
+
+## A config\ folder was also found directly under src\ during setup (not just
+## the expected build-output location) — excluding it explicitly since it's
+## personal data (category/game library), not source code.
+src/config/
+
+## Local-only scratch/history — not part of the tracked project.
+## _specs\ is deliberately NOT excluded here — those are the project's design
+## spec documents and are meant to be tracked.
+_backup/
+_zip files/
+
+## Publish output (Milestone 17 packaging)
+publish/
+*.zip
+
+## OS noise
+Thumbs.db
+.DS_Store
+
+## Crash logs
+crash.log

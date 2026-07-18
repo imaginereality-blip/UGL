@@ -1,0 +1,17 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.App"
+             RequestedThemeVariant="Dark">
+
+    <!--
+        Avalonia's FluentTheme provides a baseline reset for control templates.
+        UGL's own Theme Engine (UGL.Themes) applies game-launcher-specific
+        styles on top of this at runtime via merged resource dictionaries.
+        We set Dark variant here so default controls are never jarring white
+        before the theme loads.
+    -->
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+
+</Application>

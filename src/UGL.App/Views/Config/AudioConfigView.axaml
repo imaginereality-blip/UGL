@@ -1,0 +1,295 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+             x:Class="UGL.App.Views.Config.AudioConfigView"
+             x:DataType="vm:AudioConfigViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- ── Inner tab bar ── -->
+    <StackPanel Grid.Row="0"
+                Orientation="Horizontal"
+                Spacing="4"
+                Margin="0,0,0,16">
+
+      <Button x:Name="MusicTabBtn"
+              Content="🎵 Music"
+              Command="{Binding SelectMusicTabCommand}"
+              Padding="16,6"/>
+
+      <Button x:Name="SoundsTabBtn"
+              Content="🔊 System Sounds"
+              Command="{Binding SelectSoundsTabCommand}"
+              Padding="16,6"/>
+
+    </StackPanel>
+
+    <!-- ══════════════════════════════════════════════
+         MUSIC TAB
+         ══════════════════════════════════════════════ -->
+    <ScrollViewer Grid.Row="1" Classes="contentScroll"
+                  IsVisible="{Binding IsMusicTabActive}"
+                  VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="16" Margin="0,0,0,16">
+
+        <!-- Enable + volume -->
+        <StackPanel Spacing="8">
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnableMusicFocused}" Padding="6">
+            <CheckBox IsChecked="{Binding EnableBackgroundMusic}"
+                      Content="Enable Background Music"/>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMasterMusicVolumeFocused}" Padding="6">
+            <Grid ColumnDefinitions="120,*,40">
+              <TextBlock Grid.Column="0" Text="Master Volume"
+                         Foreground="#88FFFFFF" VerticalAlignment="Center"/>
+              <Slider   Grid.Column="1"
+                        Value="{Binding MasterMusicVolume}"
+                        Minimum="0" Maximum="1" TickFrequency="0.05"/>
+              <TextBlock Grid.Column="2"
+                         Text="{Binding MasterMusicVolume, StringFormat={}{0:P0}}"
+                         Foreground="#88FFFFFF" VerticalAlignment="Center" FontSize="12"/>
+            </Grid>
+          </Border>
+        </StackPanel>
+
+        <!-- Playlist selector + track list -->
+        <Grid ColumnDefinitions="*,16,*">
+
+          <StackPanel Grid.Column="0" Spacing="8">
+            <TextBlock Text="Playlists" FontSize="15" FontWeight="SemiBold" Foreground="White"/>
+            <ListBox ItemsSource="{Binding Playlists}"
+                     SelectedItem="{Binding SelectedPlaylist}"
+                     Background="#11FFFFFF" MinHeight="100">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding Name}" Foreground="White" Margin="4"/>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryOverrideFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Per-category override:" Foreground="#88FFFFFF" FontSize="12"/>
+                <ComboBox ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"
+                          DisplayMemberBinding="{Binding Label}"
+                          HorizontalAlignment="Stretch"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsUseForCategoryFocused}" Padding="6">
+              <Button Content="Use / Create for Category"
+                      Command="{Binding SelectCategoryOverrideCommand}"
+                      IsEnabled="{Binding SelectedCategory,
+                                  Converter={x:Static ObjectConverters.IsNotNull}}"
+                      HorizontalAlignment="Stretch"/>
+            </Border>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2" Spacing="8">
+            <TextBlock Text="{Binding SelectedPlaylist.Name}"
+                       FontSize="14" FontWeight="SemiBold" Foreground="White"/>
+
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlaylistVolumeFocused}" Padding="6">
+              <Grid ColumnDefinitions="80,*,40">
+                <TextBlock Grid.Column="0" Text="Volume"
+                           Foreground="#88FFFFFF" VerticalAlignment="Center" FontSize="12"/>
+                <Slider Grid.Column="1"
+                        Value="{Binding PlaylistVolume}"
+                        Minimum="0" Maximum="1" TickFrequency="0.05"/>
+                <TextBlock Grid.Column="2"
+                           Text="{Binding PlaylistVolume, StringFormat={}{0:P0}}"
+                           Foreground="#88FFFFFF" VerticalAlignment="Center" FontSize="12"/>
+              </Grid>
+            </Border>
+
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlaylistShuffleFocused}" Padding="6">
+              <CheckBox IsChecked="{Binding PlaylistShuffle}" Content="Shuffle"/>
+            </Border>
+
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTracksFocused}" Padding="4">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Tracks (A/Select to reorder or remove)" Foreground="#88FFFFFF" FontSize="11"/>
+                <ListBox ItemsSource="{Binding SelectedPlaylistTracks}"
+                         SelectedIndex="{Binding SelectedTrackIndex}"
+                         Background="#11FFFFFF" MinHeight="140">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnDefinitions="*,4,Auto,4,Auto,4,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding}"
+                                   Foreground="White"
+                                   FontSize="12"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="▲"
+                                Command="{Binding $parent[UserControl].((vm:AudioConfigViewModel)DataContext).MoveTrackUpCommand}"
+                                CommandParameter="{Binding}" Padding="6,2"/>
+                        <Button Grid.Column="4" Content="▼"
+                                Command="{Binding $parent[UserControl].((vm:AudioConfigViewModel)DataContext).MoveTrackDownCommand}"
+                                CommandParameter="{Binding}" Padding="6,2"/>
+                        <Button Grid.Column="6" Content="✕"
+                                Command="{Binding $parent[UserControl].((vm:AudioConfigViewModel)DataContext).RemoveTrackCommand}"
+                                CommandParameter="{Binding}"
+                                Padding="6,2" Foreground="#FFFF4444"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAddTracksFocused}" Padding="6">
+              <Button Content="＋ Add Tracks…" Command="{Binding AddTracksCommand}" HorizontalAlignment="Stretch"/>
+            </Border>
+          </StackPanel>
+
+        </Grid>
+
+        <!-- Save -->
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSaveMusicFocused}">
+            <Button Content="💾 Save"
+                    Command="{Binding SaveCommand}"
+                    Background="#FF0078D4" Foreground="White" Padding="16,8"/>
+          </Border>
+          <TextBlock Text="{Binding StatusMessage}"
+                     Foreground="#FF44FF88" VerticalAlignment="Center"
+                     IsVisible="{Binding StatusMessage,
+                                 Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- ══════════════════════════════════════════════
+         SYSTEM SOUNDS TAB
+         ══════════════════════════════════════════════ -->
+    <ScrollViewer Grid.Row="1" Classes="contentScroll"
+                  IsVisible="{Binding IsSoundsTabActive}"
+                  VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="16" Margin="0,0,0,16">
+
+        <!-- Enable + volume -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnableNavSoundsFocused}" Padding="6">
+          <CheckBox IsChecked="{Binding EnableNavigationSounds}"
+                    Content="Enable Navigation Sounds"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMasterSoundVolumeFocused}" Padding="6">
+          <Grid ColumnDefinitions="120,*,40">
+            <TextBlock Grid.Column="0" Text="Sound Volume"
+                       Foreground="#88FFFFFF" VerticalAlignment="Center"/>
+            <Slider   Grid.Column="1"
+                      Value="{Binding MasterSoundVolume}"
+                      Minimum="0" Maximum="1" TickFrequency="0.05"/>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding MasterSoundVolume, StringFormat={}{0:P0}}"
+                       Foreground="#88FFFFFF" VerticalAlignment="Center" FontSize="12"/>
+          </Grid>
+        </Border>
+
+        <TextBlock Text="Sound Files" FontSize="15" FontWeight="SemiBold" Foreground="White"/>
+        <TextBlock Text="WAV, OGG, or MP3. Relative paths are resolved from the exe folder."
+                   Foreground="#66FFFFFF" FontSize="12"/>
+
+        <!-- Navigate sound -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="Navigate (← →)" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto,8,Auto" x:Name="NavigateDropZone">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsSoundNavigatePathFocused}">
+              <TextBox Text="{Binding SoundNavigatePath}"
+                       Watermark="media/sounds/navigate.wav"/>
+            </Border>
+            <Button  Grid.Column="2" Content="Browse…"
+                     Command="{Binding BrowseNavigateSoundCommand}"/>
+            <Button  Grid.Column="4" Content="▶ Test"
+                     Command="{Binding TestNavigateSoundCommand}"
+                     Classes="cfgField" Classes.fieldFocused="{Binding IsTestNavigateFocused}" Padding="10,4"/>
+          </Grid>
+        </StackPanel>
+
+        <!-- Confirm sound -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="Confirm (A / Enter)" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto,8,Auto" x:Name="ConfirmDropZone">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsSoundConfirmPathFocused}">
+              <TextBox Text="{Binding SoundConfirmPath}"
+                       Watermark="media/sounds/confirm.wav"/>
+            </Border>
+            <Button  Grid.Column="2" Content="Browse…"
+                     Command="{Binding BrowseConfirmSoundCommand}"/>
+            <Button  Grid.Column="4" Content="▶ Test"
+                     Command="{Binding TestConfirmSoundCommand}"
+                     Classes="cfgField" Classes.fieldFocused="{Binding IsTestConfirmFocused}" Padding="10,4"/>
+          </Grid>
+        </StackPanel>
+
+        <!-- Back sound -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="Back (B / Escape)" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto,8,Auto" x:Name="BackDropZone">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsSoundBackPathFocused}">
+              <TextBox Text="{Binding SoundBackPath}"
+                       Watermark="media/sounds/back.wav"/>
+            </Border>
+            <Button  Grid.Column="2" Content="Browse…"
+                     Command="{Binding BrowseBackSoundCommand}"/>
+            <Button  Grid.Column="4" Content="▶ Test"
+                     Command="{Binding TestBackSoundCommand}"
+                     Classes="cfgField" Classes.fieldFocused="{Binding IsTestBackFocused}" Padding="10,4"/>
+          </Grid>
+        </StackPanel>
+
+        <!-- Error sound -->
+        <StackPanel Spacing="4">
+          <TextBlock Text="Error" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto,8,Auto" x:Name="ErrorDropZone">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsSoundErrorPathFocused}">
+              <TextBox Text="{Binding SoundErrorPath}"
+                       Watermark="media/sounds/error.wav"/>
+            </Border>
+            <Button  Grid.Column="2" Content="Browse…"
+                     Command="{Binding BrowseErrorSoundCommand}"/>
+            <Button  Grid.Column="4" Content="▶ Test"
+                     Command="{Binding TestErrorSoundCommand}"
+                     Classes="cfgField" Classes.fieldFocused="{Binding IsTestErrorFocused}" Padding="10,4"/>
+          </Grid>
+        </StackPanel>
+
+        <!-- Video preview audio -->
+        <TextBlock Text="Video Preview Audio" FontSize="15" FontWeight="SemiBold"
+                   Foreground="White" Margin="0,8,0,0"/>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnableVideoPreviewFocused}" Padding="6">
+          <CheckBox IsChecked="{Binding EnableVideoPreviewAudio}"
+                    Content="Enable video preview audio (background music continues alongside)"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsVideoPreviewVolumeFocused}" Padding="6">
+          <Grid ColumnDefinitions="120,*,40">
+            <TextBlock Grid.Column="0" Text="Preview Volume"
+                       Foreground="#88FFFFFF" VerticalAlignment="Center"/>
+            <Slider   Grid.Column="1"
+                      Value="{Binding VideoPreviewVolume}"
+                      Minimum="0" Maximum="1" TickFrequency="0.05"
+                      IsEnabled="{Binding EnableVideoPreviewAudio}"/>
+            <TextBlock Grid.Column="2"
+                       Text="{Binding VideoPreviewVolume, StringFormat={}{0:P0}}"
+                       Foreground="#88FFFFFF" VerticalAlignment="Center" FontSize="12"/>
+          </Grid>
+        </Border>
+
+        <!-- Save -->
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Button Content="💾 Save"
+                  Command="{Binding SaveCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsSaveSoundsFocused}"
+                  Background="#FF0078D4" Foreground="White" Padding="16,8"/>
+          <TextBlock Text="{Binding StatusMessage}"
+                     Foreground="#FF44FF88" VerticalAlignment="Center"
+                     IsVisible="{Binding StatusMessage,
+                                 Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+
+      </StackPanel>
+    </ScrollViewer>
+
+  </Grid>
+</UserControl>

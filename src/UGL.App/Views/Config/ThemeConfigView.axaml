@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       xmlns:models="clr-namespace:UGL.Core.Models;assembly=UGL.Core"
+       x:Class="UGL.App.Views.Config.ThemeConfigView"
+       x:DataType="vm:ThemeConfigViewModel">
+
+    <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto"
+      HorizontalScrollBarVisibility="Disabled"
+      Padding="0,0,0,16">
+  <StackPanel Spacing="20">
+
+    <TextBlock Text="Theme" FontSize="18" FontWeight="Bold" Foreground="White"/>
+    <TextBlock Text="Changes apply immediately — no restart required."
+               Foreground="#88FFFFFF" FontSize="13"/>
+
+    <!-- Theme cards -->
+    <ItemsControl ItemsSource="{Binding AvailableThemes}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <WrapPanel Orientation="Horizontal"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate DataType="models:Theme">
+          <!-- Each theme renders as a clickable swatch card -->
+          <Border Width="200" Height="140"
+                  Margin="8"
+                  CornerRadius="6"
+                  Padding="12"
+                  Cursor="Hand">
+            <Border.Background>
+              <SolidColorBrush Color="#FF1A1A2E"/>
+            </Border.Background>
+            <StackPanel Spacing="8">
+              <!-- Colour swatches row -->
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <Border Width="20" Height="20" CornerRadius="10"
+                        Background="#FF0078D4"/>
+                <Border Width="20" Height="20" CornerRadius="10"
+                        Background="#FF1A1A2E"/>
+                <Border Width="20" Height="20" CornerRadius="10"
+                        Background="#FF16213E"/>
+              </StackPanel>
+              <TextBlock Text="{Binding Name}"
+                         FontSize="16" FontWeight="Bold"
+                         Foreground="White"/>
+              <TextBlock Text="{Binding Id}"
+                         FontSize="11"
+                         Foreground="#88FFFFFF"/>
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <!-- Simple list selector (more reliable than card click for now) -->
+    <TextBlock Text="Select Theme:" Foreground="#88FFFFFF" FontSize="13"/>
+    <ListBox ItemsSource="{Binding AvailableThemes}"
+             SelectedItem="{Binding SelectedTheme}"
+             Background="#11FFFFFF"
+             MaxHeight="180">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="4">
+            <TextBlock Text="{Binding Name}" Foreground="White" FontSize="15"/>
+            <TextBlock Text="{Binding Id}"   Foreground="#66FFFFFF" FontSize="12"
+                       VerticalAlignment="Center"/>
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <Button Content="✔ Apply Theme"
+              Command="{Binding ApplyThemeCommand}"
+              IsEnabled="{Binding SelectedTheme, Converter={x:Static ObjectConverters.IsNotNull}}"
+              Background="{DynamicResource UGL.AccentColor}"
+              Foreground="White"
+              Padding="16,8"/>
+      <TextBlock Text="{Binding StatusMessage}"
+                 Foreground="#FF44FF88"
+                 VerticalAlignment="Center"
+                 IsVisible="{Binding StatusMessage,
+                             Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+    </StackPanel>
+
+  </StackPanel>
+  </ScrollViewer>
+</UserControl>

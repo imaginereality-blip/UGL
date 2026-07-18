@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels"
+             xmlns:views="clr-namespace:UGL.App.Views"
+             x:Class="UGL.App.Views.GameBrowserView"
+             x:DataType="vm:GameBrowserViewModel"
+             Background="{DynamicResource UGL.BackgroundColor}">
+
+  <Grid RowDefinitions="*,60">
+
+    <Grid Grid.Row="0">
+      <TextBlock IsVisible="{Binding IsLoading}"
+                 Text="Loading…"
+                 Foreground="{DynamicResource UGL.TextPrimaryColor}"
+                 FontSize="20"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+
+      <TextBlock IsVisible="{Binding HasNoGames}"
+                 Text="No games in this category"
+                 Foreground="{DynamicResource UGL.TextSecondaryColor}"
+                 FontSize="18"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+
+      <ItemsControl IsVisible="{Binding !IsLoading}"
+                    ItemsSource="{Binding VisibleCards}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Rows="1" Columns="5" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:GameCardViewModel">
+            <views:GameCard DataContext="{Binding}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Grid>
+
+    <!-- Hint bar -->
+    <Border Grid.Row="1"
+            Background="{DynamicResource UGL.HintBarBackground}"
+            BorderBrush="{DynamicResource UGL.CardBorderDefault}"
+            BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid ColumnDefinitions="*,Auto" Margin="24,0">
+          <StackPanel Grid.Column="0"
+                      Orientation="Horizontal"
+                      Spacing="16"
+                      VerticalAlignment="Center">
+            <TextBlock Text="{Binding SelectedGameTitle}"
+                       FontSize="{DynamicResource UGL.BodyFontSize}"
+                       FontWeight="Bold"
+                       Foreground="{DynamicResource UGL.TextPrimaryColor}"
+                       VerticalAlignment="Center" />
+            <TextBlock Text="{Binding SelectedGameSystem}"
+                       FontSize="14"
+                       Foreground="{DynamicResource UGL.TextSecondaryColor}"
+                       VerticalAlignment="Center" />
+            <TextBlock Text="{Binding SelectedGamePlayers}"
+                       FontSize="14"
+                       Foreground="{DynamicResource UGL.TextSecondaryColor}"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+          <TextBlock Grid.Column="1"
+                     Text="A  Launch      B  Back      ← →  Browse      X  Favorite      LB/RB  Change Playlist"
+                     FontSize="14"
+                     Foreground="{DynamicResource UGL.TextSecondaryColor}"
+                     VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Same brief "now playing" indicator as the Home Menu — see the note
+             there; owned by MainWindowViewModel so it shows consistently from
+             both screens without duplicating the state on each one. -->
+        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NowPlayingPlaylistName}"
+                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsNowPlayingVisible}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="{DynamicResource UGL.BodyFontSize}"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource UGL.AccentColor}" />
+      </Grid>
+    </Border>
+
+  </Grid>
+</UserControl>

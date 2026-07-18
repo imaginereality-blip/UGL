@@ -1,0 +1,265 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels"
+             xmlns:cfg="clr-namespace:UGL.App.ViewModels.Config"
+             xmlns:views="clr-namespace:UGL.App.Views.Config"
+             x:Class="UGL.App.Views.ConfigEditorView"
+             x:DataType="vm:ConfigEditorViewModel">
+
+  <UserControl.Styles>
+    <!-- Quit row styled distinctly (red) so it reads as a different kind of action
+         from the tab rows above it. Selector targets TextBlock since that's where
+         Classes.quitRow is actually applied below (was previously mismatched against
+         ListBoxItem, which meant this style never actually applied). -->
+    <Style Selector="TextBlock.quitRow">
+      <Setter Property="Foreground" Value="#FFFF5C5C"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- Strong, guaranteed-visible selection highlight for every list in Settings —
+         sidebar menu, Peripheral devices, Games, Systems, Audio, Theme — since the
+         default theme's selected-item highlight was too subtle against this dark UI
+         to reliably tell what's currently selected while navigating with a controller. -->
+    <Style Selector="ListBoxItem:selected">
+      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+
+    <!-- Virtual keyboard keys: default state and highlighted state are BOTH styles
+         (not a local Background attribute) so the highlighted style can actually
+         override the default — a local XAML attribute would always win over any
+         style setter regardless of which classes are applied, which was the actual
+         bug before (the key Borders had Background set locally, silently blocking
+         the highlight style from ever taking visible effect). -->
+    <Style Selector="Border.vkKey">
+      <Setter Property="Background" Value="#22FFFFFF"/>
+    </Style>
+    <Style Selector="Border.vkKey.keyHighlighted">
+      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+
+    <!-- Shared field-focus highlight, reused across every tab (Games, Paths, Systems,
+         Theme, etc.) — not just a Games-specific style. Default and highlighted states
+         are both styles (not a local attribute) for the same reason as everywhere else:
+         a local value would always win over a style setter regardless of class match. -->
+    <Style Selector="Border.cfgField">
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="Border.cfgField.fieldFocused">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+    <Style Selector="Button.cfgField">
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    <Style Selector="Button.cfgField.fieldFocused">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+  </UserControl.Styles>
+
+  <!-- Full-screen semi-transparent backdrop -->
+  <Grid>
+    <Border Background="#F00D0D1A"/>
+
+    <Grid RowDefinitions="60,*,60" Margin="40,32">
+
+      <!-- Header -->
+      <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+
+        <TextBlock Grid.Column="0"
+                   Text="⚙ Settings"
+                   FontSize="26"
+                   FontWeight="Bold"
+                   Foreground="White"
+                   VerticalAlignment="Center"/>
+
+        <Button Grid.Column="2"
+                x:Name="CloseBtn"
+                Content="✕ Close"
+                Padding="16,8"
+                Click="OnCloseClick"
+                VerticalAlignment="Center"/>
+
+      </Grid>
+
+      <!-- Sidebar menu + tab content -->
+      <Grid Grid.Row="1" ColumnDefinitions="240,*" Margin="0,16,0,0">
+
+        <!-- Unified settings menu. D-pad Up/Down moves the highlight natively (ListBox
+             handles this itself once focused); selecting a tab row switches content
+             immediately; Quit requires an explicit confirm, not just a highlight. -->
+        <ListBox x:Name="SettingsMenuList"
+                 Grid.Column="0"
+                 Margin="0,0,16,0"
+                 Background="#110D0D1A"
+                 BorderBrush="#22FFFFFF"
+                 BorderThickness="1"
+                 CornerRadius="6"
+                 Padding="6"
+                 Tapped="OnMenuItemTapped"
+                 ItemsSource="{Binding MenuItems}"
+                 SelectedItem="{Binding SelectedMenuItem, Mode=TwoWay}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:SettingsMenuItem">
+              <TextBlock Text="{Binding Label}"
+                         FontSize="16"
+                         Padding="12,10"
+                         Classes.quitRow="{Binding IsQuit}"/>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Grid.Column="1"
+                Background="#110D0D1A"
+                BorderBrush="#22FFFFFF"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="24,16">
+          <Grid>
+            <Border IsVisible="{Binding IsCategoriesTabActive}">
+              <views:CategoriesConfigView DataContext="{Binding Categories}"/>
+            </Border>
+            <Border IsVisible="{Binding IsGamesTabActive}">
+              <views:GamesConfigView DataContext="{Binding Games}"/>
+            </Border>
+            <Border IsVisible="{Binding IsSystemsTabActive}">
+              <views:SystemsConfigView DataContext="{Binding Systems}"/>
+            </Border>
+            <Border IsVisible="{Binding IsAudioTabActive}">
+              <views:AudioConfigView DataContext="{Binding Audio}"/>
+            </Border>
+            <Border IsVisible="{Binding IsThemeTabActive}">
+              <views:ThemeConfigView DataContext="{Binding Theme}"/>
+            </Border>
+            <Border IsVisible="{Binding IsCardHighlightTabActive}">
+              <views:CardHighlightConfigView DataContext="{Binding CardHighlight}"/>
+            </Border>
+            <Border IsVisible="{Binding IsPathsTabActive}">
+              <views:PathsConfigView DataContext="{Binding Paths}"/>
+            </Border>
+            <Border IsVisible="{Binding IsPeripheralsTabActive}">
+              <views:PeripheralConfigView DataContext="{Binding Peripherals}"/>
+            </Border>
+            <Border IsVisible="{Binding IsHooksTabActive}">
+              <views:HookConfigView DataContext="{Binding Hooks}"/>
+            </Border>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Hint bar / legend -->
+      <Border Grid.Row="2"
+              BorderBrush="#22FFFFFF"
+              BorderThickness="0,1,0,0"
+              Padding="0,12,0,0">
+        <TextBlock Text="↑ ↓  Navigate      LB / RB  Switch tab (e.g. Music/Sounds)      A  Select      B / Start  Close settings      Mouse also works"
+                   FontSize="13"
+                   Foreground="#66FFFFFF"
+                   HorizontalAlignment="Center"/>
+      </Border>
+
+    </Grid>
+
+    <!-- Virtual keyboard overlay — topmost sibling so it renders above everything else.
+         Same pattern as every other controller-navigable list here: bound properties
+         (Label, IsHighlighted) driven directly in C#, no Avalonia focus system involved. -->
+    <Border IsVisible="{Binding VirtualKeyboard.IsOpen}"
+            Background="#F00D0D1A">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Width="720">
+
+        <TextBlock Text="{Binding VirtualKeyboard.FieldLabel}"
+                   FontSize="16" Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+
+        <Border Background="#22FFFFFF" CornerRadius="6" Padding="16,10" MinHeight="48">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding VirtualKeyboard.TextBeforeCursor}"
+                       FontSize="22" Foreground="White"/>
+            <Border Width="2" Margin="1,2" Background="{DynamicResource UGL.AccentColor}"/>
+            <TextBlock Text="{Binding VirtualKeyboard.TextAfterCursor}"
+                       FontSize="22" Foreground="White"/>
+          </StackPanel>
+        </Border>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row0Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="52" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="16" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row1Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="52" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="16" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row2Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="52" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="16" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row3Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="64" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="14" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row4Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="100" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="15" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Text="↑↓←→ Move      A Type key / Move cursor      B Cancel"
+                   FontSize="12" Foreground="#66FFFFFF" HorizontalAlignment="Center"/>
+
+      </StackPanel>
+    </Border>
+
+  </Grid>
+</UserControl>

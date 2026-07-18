@@ -1,0 +1,66 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:UGL.App.ViewModels"
+        xmlns:views="clr-namespace:UGL.App.Views"
+        x:Class="UGL.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1920"
+        Height="1080"
+        WindowState="FullScreen"
+        SystemDecorations="None"
+        Background="#FF1A1A2E">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:HomeMenuViewModel">
+            <views:HomeMenuView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:GameBrowserViewModel">
+            <views:GameBrowserView />
+        </DataTemplate>
+    </Window.DataTemplates>
+
+    <!-- Panel lets the filter overlay sit on top of the active view -->
+    <Panel>
+
+        <!-- Loading splash -->
+        <TextBlock IsVisible="{Binding IsLoading}"
+                   Text="Loading…"
+                   Foreground="White"
+                   FontSize="24"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+
+        <!-- Active level (Home Menu or Game Browser) -->
+        <ContentControl IsVisible="{Binding !IsLoading}"
+                        Content="{Binding CurrentView}"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch" />
+
+        <!-- Filter overlay — floats above everything, only visible when open -->
+        <views:FilterOverlayView x:Name="FilterOverlay"
+                                 DataContext="{Binding FilterOverlay}"
+                                 IsVisible="False" />
+
+        <!-- Settings overlay -->
+        <views:ConfigEditorView x:Name="ConfigEditor"
+                                DataContext="{Binding ConfigEditor}"
+                                IsVisible="False" />
+
+        <!-- Launch error toast — shown briefly when emulator fails to start -->
+        <Border VerticalAlignment="Bottom"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,80"
+                Padding="20,10"
+                CornerRadius="6"
+                Background="#CCFF2222"
+                IsVisible="{Binding LaunchError,
+                            Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding LaunchError}"
+                       Foreground="White"
+                       FontSize="16"
+                       FontWeight="SemiBold"/>
+        </Border>
+
+    </Panel>
+</Window>

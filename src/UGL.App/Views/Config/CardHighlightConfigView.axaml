@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       xmlns:controls="clr-namespace:UGL.App.Views.Controls"
+       x:Class="UGL.App.Views.Config.CardHighlightConfigView"
+       x:DataType="vm:CardHighlightConfigViewModel">
+
+  <UserControl.Styles>
+    <!-- Compact field wrapper — smaller padding/spacing than the standard cfgField,
+         used throughout this tab specifically to keep it dense rather than tall. -->
+    <Style Selector="Border.hlField">
+      <Setter Property="BorderThickness" Value="2"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="Border.hlField.fieldFocused">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+    <Style Selector="TextBlock.hlLabel">
+      <Setter Property="Foreground" Value="#88FFFFFF"/>
+      <Setter Property="FontSize" Value="11"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="10" Margin="0,0,0,12">
+
+      <TextBlock Text="Card Highlight" FontSize="16" FontWeight="Bold" Foreground="White"/>
+      <TextBlock Text="Selected-card border shown in the Home Menu and Game Browser."
+                 Foreground="#88FFFFFF" FontSize="12"/>
+
+      <Grid ColumnDefinitions="Auto,16,*">
+
+        <!-- Left: wheel, preview, save — everything you look at/click most, together -->
+        <StackPanel Grid.Column="0" Spacing="8" Width="220">
+          <controls:ColorWheelPicker Hue="{Binding Hue}" Saturation="{Binding Saturation}"/>
+
+          <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" Height="48"
+                  BorderBrush="{Binding PreviewBrush}" BorderThickness="{Binding PreviewThickness}">
+            <TextBlock Text="Preview" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="#66FFFFFF" FontSize="12"/>
+          </Border>
+
+          <Button Content="💾 Save" Command="{Binding SaveCommand}"
+                   Classes="hlField" Classes.fieldFocused="{Binding IsSaveFocused}"
+                   Background="{DynamicResource UGL.AccentColor}" Foreground="White"
+                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8"/>
+          <TextBlock Text="{Binding StatusMessage}" Foreground="#FF44FF88" FontSize="11"
+                     HorizontalAlignment="Center"
+                     IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+
+        <!-- Right: readouts + every adjustable value, compact -->
+        <StackPanel Grid.Column="2" Spacing="6">
+
+          <Grid ColumnDefinitions="*,*,*" >
+            <Border Grid.Column="0" Background="#1AFFFFFF" CornerRadius="4" Padding="6,4" Margin="0,0,3,0">
+              <TextBlock Text="{Binding HexDisplay}" Foreground="White" FontSize="11" FontFamily="Consolas,monospace"/>
+            </Border>
+            <Border Grid.Column="1" Background="#1AFFFFFF" CornerRadius="4" Padding="6,4" Margin="3,0">
+              <TextBlock Text="{Binding HslDisplay}" Foreground="White" FontSize="11" FontFamily="Consolas,monospace"/>
+            </Border>
+            <Border Grid.Column="2" Background="#1AFFFFFF" CornerRadius="4" Padding="6,4" Margin="3,0,0,0">
+              <TextBlock Text="{Binding RgbDisplay}" Foreground="White" FontSize="11" FontFamily="Consolas,monospace"/>
+            </Border>
+          </Grid>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsHueFocused}" Padding="6,2">
+            <Grid ColumnDefinitions="70,*,40">
+              <TextBlock Grid.Column="0" Text="Hue" Classes="hlLabel" VerticalAlignment="Center"/>
+              <Slider Grid.Column="1" Minimum="0" Maximum="360" Value="{Binding Hue}" Height="24"/>
+              <TextBlock Grid.Column="2" Text="{Binding Hue, StringFormat={}{0:F0}°}" Classes="hlLabel" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsSaturationFocused}" Padding="6,2">
+            <Grid ColumnDefinitions="70,*,40">
+              <TextBlock Grid.Column="0" Text="Saturation" Classes="hlLabel" VerticalAlignment="Center"/>
+              <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Saturation}" Height="24"/>
+              <TextBlock Grid.Column="2" Text="{Binding Saturation, StringFormat={}{0:P0}}" Classes="hlLabel" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsValueFocused}" Padding="6,2">
+            <Grid ColumnDefinitions="70,*,40">
+              <TextBlock Grid.Column="0" Text="Brightness" Classes="hlLabel" VerticalAlignment="Center"/>
+              <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Value}" Height="24"/>
+              <TextBlock Grid.Column="2" Text="{Binding Value, StringFormat={}{0:P0}}" Classes="hlLabel" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsThicknessFocused}" Padding="6,2">
+            <Grid ColumnDefinitions="70,*,40">
+              <TextBlock Grid.Column="0" Text="Width" Classes="hlLabel" VerticalAlignment="Center"/>
+              <Slider Grid.Column="1" Minimum="2" Maximum="5" Value="{Binding Thickness}" Height="24"
+                      TickFrequency="1" IsSnapToTickEnabled="True"/>
+              <TextBlock Grid.Column="2" Text="{Binding Thickness, StringFormat={}{0}px}" Classes="hlLabel" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsIntensityFocused}" Padding="6,2">
+            <Grid ColumnDefinitions="70,*,40">
+              <TextBlock Grid.Column="0" Text="Intensity" Classes="hlLabel" VerticalAlignment="Center"/>
+              <Slider Grid.Column="1" Minimum="0.1" Maximum="1.0" Value="{Binding Intensity}" Height="24"/>
+              <TextBlock Grid.Column="2" Text="{Binding Intensity, StringFormat={}{0:P0}}" Classes="hlLabel" VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+
+          <Border Classes="hlField" Classes.fieldFocused="{Binding IsStyleFocused}" Padding="6,4">
+            <Grid ColumnDefinitions="70,*">
+              <TextBlock Grid.Column="0" Text="Style" Classes="hlLabel" VerticalAlignment="Center"/>
+              <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsPulsing}"
+                            OnContent="Pulsing" OffContent="Solid" HorizontalAlignment="Left"/>
+            </Grid>
+          </Border>
+
+        </StackPanel>
+      </Grid>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       x:Class="UGL.App.Views.Config.HookConfigView"
+       x:DataType="vm:HookConfigViewModel">
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" Margin="0,0,0,16">
+
+      <TextBlock Text="Hook Integration" FontSize="18" FontWeight="Bold" Foreground="White"/>
+      <TextBlock TextWrapping="Wrap" Foreground="#88FFFFFF" FontSize="13"
+                 Text="Launches MameHooker or Hook of the Reaper alongside the emulator for light gun recoil/rumble and cabinet lighting. UGL only manages starting and stopping the tool — it listens for the emulator's own output signals and resolves its own per-game configuration independently."/>
+
+      <!-- Enable -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnabledGloballyFocused}" Padding="8">
+        <CheckBox IsChecked="{Binding EnabledGlobally}" Content="Enable Hook Integration"/>
+      </Border>
+
+      <!-- Tool type -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsToolTypeFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Tool (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Text="{Binding ToolTypeLabel}" FontSize="15" Foreground="White"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Executable path -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsExecutablePathFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Executable Path" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding ExecutablePath}" Watermark="e.g. C:\Tools\MameHooker\mamehook.exe" IsReadOnly="True"/>
+            <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseExecutableCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Startup delay -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsStartupDelayFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Startup Delay (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,60">
+            <Slider Grid.Column="0" Minimum="0" Maximum="5000" TickFrequency="100" Value="{Binding StartupDelayMs}"/>
+            <TextBlock Grid.Column="1" Text="{Binding StartupDelayMs, StringFormat={}{0}ms}" Foreground="#88FFFFFF" VerticalAlignment="Center"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Per-system overrides -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsOverridesFieldFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Disable for specific systems (A to enter, Up/Down to move, A to toggle, B to exit)"
+                     Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
+          <ItemsControl ItemsSource="{Binding SystemOverrides}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:HookSystemCheckItem">
+                <Border Classes="cfgField" Classes.fieldFocused="{Binding IsHighlighted}" Margin="0,2,8,2" Padding="4,2">
+                  <CheckBox Content="{Binding Name}" IsChecked="{Binding IsDisabledForSystem}"/>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <!-- Save -->
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}">
+          <Button Content="💾 Save" Command="{Binding SaveCommand}"
+                  Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
+        </Border>
+        <TextBlock Text="{Binding StatusMessage}" Foreground="#FF44FF88" VerticalAlignment="Center"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

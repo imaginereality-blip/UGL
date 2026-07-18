@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ColorWheelPicker"
+             Width="220" Height="220">
+
+  <!--
+    A real clickable/draggable HSV wheel, built from two layered gradients rather than
+    a hand-drawn bitmap:
+      - ConicGradientBrush sweeps the rainbow around the circle — this IS the hue.
+      - A white-center-to-transparent RadialGradientBrush on top fades toward the
+        center — this gives the saturation falloff (center = white/desaturated,
+        edge = fully saturated).
+    The small ring "CursorDot" marks the currently selected point, positioned in
+    code-behind from the Hue/Saturation values.
+
+    Orientation note: this assumes Avalonia's ConicGradientBrush follows the same
+    convention as CSS conic-gradient (0° = up/12 o'clock, sweeping clockwise). If it
+    turns out to differ, the wheel will still be fully usable — clicking anywhere still
+    picks a color, and the cursor dot still tracks the same spot you clicked — the only
+    possible effect is the visual hue ring being rotated from where the cursor lands,
+    which would just need this control's angle math flipped/rotated to match.
+  -->
+  <Canvas Width="220" Height="220" Background="Transparent">
+    <Ellipse Name="WheelEllipse" Width="220" Height="220">
+      <Ellipse.Fill>
+        <ConicGradientBrush Center="50%,50%" Angle="0">
+          <GradientStop Color="#FFFF0000" Offset="0.0"/>
+          <GradientStop Color="#FFFFFF00" Offset="0.1667"/>
+          <GradientStop Color="#FF00FF00" Offset="0.3333"/>
+          <GradientStop Color="#FF00FFFF" Offset="0.5"/>
+          <GradientStop Color="#FF0000FF" Offset="0.6667"/>
+          <GradientStop Color="#FFFF00FF" Offset="0.8333"/>
+          <GradientStop Color="#FFFF0000" Offset="1.0"/>
+        </ConicGradientBrush>
+      </Ellipse.Fill>
+    </Ellipse>
+
+    <Ellipse Width="220" Height="220" IsHitTestVisible="False">
+      <Ellipse.Fill>
+        <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+          <GradientStop Color="#FFFFFFFF" Offset="0.0"/>
+          <GradientStop Color="#00FFFFFF" Offset="1.0"/>
+        </RadialGradientBrush>
+      </Ellipse.Fill>
+    </Ellipse>
+
+    <Ellipse Name="CursorDot" Width="16" Height="16"
+             Stroke="White" StrokeThickness="2" Fill="Transparent"
+             IsHitTestVisible="False"/>
+  </Canvas>
+</UserControl>

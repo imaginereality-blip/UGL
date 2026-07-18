@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       x:Class="UGL.App.Views.Config.CategoriesConfigView"
+       x:DataType="vm:CategoriesConfigViewModel">
+
+  <Grid ColumnDefinitions="280,16,*">
+
+    <!-- Left: category list -->
+    <Border Grid.Column="0" Background="#110D0D1A" CornerRadius="6" Padding="12">
+      <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+        <TextBlock Grid.Row="0" Text="Categories" FontSize="18" FontWeight="Bold" Foreground="White"/>
+        <TextBlock Grid.Row="1" Text="Select a category to edit:" Foreground="#88FFFFFF" FontSize="13" Margin="0,8,0,0"/>
+        <ListBox Grid.Row="2"
+                 ItemsSource="{Binding Categories}"
+                 SelectedItem="{Binding SelectedCategory}"
+                 Background="#11FFFFFF"
+                 Margin="0,8,0,0">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Spacing="2" Margin="4">
+                <TextBlock Text="{Binding Label}" Foreground="White" FontSize="14"/>
+                <TextBlock Text="{Binding Id}" Foreground="#88FFFFFF" FontSize="11"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Grid.Row="3" Text="Controller: X to quickly add a new category" Foreground="#66FFFFFF" FontSize="11" Margin="0,8,0,0"/>
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+          <Button Content="＋ Add" Command="{Binding AddCategoryCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryAddFocused}"/>
+          <Button Content="💾 Save" Command="{Binding SaveCategoryCommand}" IsEnabled="{Binding SelectedCategory, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsCategorySaveFocused}"/>
+          <Button Content="✕ Delete" Command="{Binding DeleteCategoryCommand}" IsEnabled="{Binding CanDeleteSelectedCategory}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryDeleteFocused}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Right: category detail editor -->
+    <ScrollViewer Grid.Column="2" Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+      <Border Background="#110D0D1A" CornerRadius="6" Padding="16">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Category Details" FontSize="16" FontWeight="SemiBold" Foreground="White"/>
+          <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="ID" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryIdFocused}" Margin="0,0,0,8">
+              <StackPanel Spacing="2">
+                <TextBox Text="{Binding CategoryId}" IsEnabled="{Binding !IsSelectedCategoryProtected}"/>
+                <TextBlock Text="Locked — this is the built-in Favorites category" Foreground="#66FFFFFF" FontSize="10"
+                           IsVisible="{Binding IsSelectedCategoryProtected}"/>
+              </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Label" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryLabelFocused}" Margin="0,0,0,8">
+              <TextBox Text="{Binding CategoryLabel}"/>
+            </Border>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Order" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryOrderFocused}" Margin="0,0,0,8">
+              <StackPanel Spacing="4">
+                <NumericUpDown Minimum="0" Maximum="100" Value="{Binding CategoryOrder}"/>
+                <TextBlock Text="{Binding UsedOrdersHint}" Foreground="#66FFFFFF" FontSize="11"/>
+              </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Accent" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryAccentFocused}" Margin="0,0,0,8">
+              <TextBox Text="{Binding CategoryAccentColor}"/>
+            </Border>
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Art" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="4" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryArtFocused}">
+              <StackPanel Spacing="2">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBox Text="{Binding CategoryArtPath}" Margin="0,0,8,0"/>
+                  <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseCategoryImageCommand}"/>
+                </Grid>
+                <TextBlock Text="{Binding RecommendedArtSizeHint}" Foreground="#66FFFFFF" FontSize="11"/>
+              </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="5" Grid.Column="0" Text="Background" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="5" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryBackgroundFocused}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox Text="{Binding CategoryBackgroundPath}" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseCategoryBackgroundCommand}"/>
+              </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="Icon Key" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <Border Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryIconKeyFocused}" Margin="0,0,0,8">
+              <TextBox Text="{Binding CategoryIconKey}"/>
+            </Border>
+
+            <Border Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3"
+                    Background="#11222222"
+                    CornerRadius="6"
+                    Padding="10"
+                    Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <TextBlock Text="{Binding CategoryIconPreviewGlyph}"
+                           FontSize="32"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+                <StackPanel>
+                  <TextBlock Text="Icon preview" Foreground="#88FFFFFF" FontSize="12"/>
+                  <TextBlock Text="{Binding CategoryIconPreviewMessage}"
+                             Foreground="#FFFFFF"
+                             FontSize="14"
+                             TextWrapping="Wrap"
+                             MaxWidth="420"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="8" Grid.Column="0" Text="Description" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Top"/>
+            <Border Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryDescriptionFocused}">
+              <TextBox Text="{Binding CategoryDescription}" AcceptsReturn="True" Height="80"/>
+            </Border>
+          </Grid>
+
+          <TextBlock Text="{Binding CategoryStatusMessage}"
+                     Foreground="#FF44FF88"
+                     IsVisible="{Binding CategoryStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+      </Border>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

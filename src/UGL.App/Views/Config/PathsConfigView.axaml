@@ -1,0 +1,172 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+             xmlns:models="clr-namespace:UGL.Core.Models;assembly=UGL.Core"
+             x:Class="UGL.App.Views.Config.PathsConfigView"
+             x:DataType="vm:PathsConfigViewModel">
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="24" Margin="0,0,0,16">
+
+      <!-- ── Root Paths ── -->
+      <StackPanel Spacing="4">
+        <TextBlock Text="Root Folders" FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+        <TextBlock Foreground="#66FFFFFF" FontSize="12" TextWrapping="Wrap"
+                   Text="These are defaults. Individual games, systems and emulators can override any path to point anywhere on any drive."/>
+      </StackPanel>
+
+      <!-- Media Root -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMediaRootFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Media Root" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Foreground="#44FFFFFF" FontSize="11"
+                     Text="Card art, video previews, sounds, music. Sub-folders: categories\, games\covers\, games\video\, sounds\, music\"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding MediaRootPath}"
+                     Watermark="media  (relative to exe, or full path like D:\UGL\media)"/>
+            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseMediaRootCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- ROMs Root -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRomsRootFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="ROMs Root" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Foreground="#44FFFFFF" FontSize="11"
+                     Text="Default ROM location. Sub-folders created per system ID (e.g. roms\arcade\, roms\nes\). Override per-system below."/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding RomsRootPath}"
+                     Watermark="roms  (or D:\ROMs, \\NAS\Games, etc.)"/>
+            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseRomsRootCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Emulators Root -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorsRootFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Emulators Root" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Foreground="#44FFFFFF" FontSize="11"
+                     Text="Default location for emulator installations. Individual emulator paths in the Systems tab override this."/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding EmulatorsRootPath}"
+                     Watermark="emulators  (or C:\Emulators)"/>
+            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseEmulatorsRootCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Addons Root -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAddonsRootFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Addons Root" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Foreground="#44FFFFFF" FontSize="11"
+                     Text="MameHooker, Hook of the Reaper, and other peripheral integration tools."/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding AddonsRootPath}"
+                     Watermark="addons"/>
+            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseAddonsRootCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Logs Root -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLogsRootFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Logs Root" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding LogsRootPath}"
+                     Watermark="logs"/>
+            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseLogsRootCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Save root paths -->
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Content="💾 Save Paths"
+                Command="{Binding SaveAllPathsCommand}"
+                Classes="cfgField" Classes.fieldFocused="{Binding IsSaveAllFocused}"
+                Background="{DynamicResource UGL.AccentColor}"
+                Foreground="White" Padding="16,8"/>
+        <TextBlock Text="{Binding StatusMessage}"
+                   Foreground="#FF44FF88" VerticalAlignment="Center"
+                   IsVisible="{Binding StatusMessage,
+                               Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+      </StackPanel>
+
+      <Border BorderBrush="#22FFFFFF" BorderThickness="0,1,0,0" Margin="0,8,0,0"/>
+
+      <!-- ── Per-System ROM Path Overrides ── -->
+      <StackPanel Spacing="4">
+        <TextBlock Text="Per-System ROM Paths" FontSize="18" FontWeight="Bold"
+                   Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+        <TextBlock Foreground="#66FFFFFF" FontSize="12" TextWrapping="Wrap"
+                   Text="Override the ROM folder for any individual system. Use this to point Pinball tables to D:\Pinball\Tables, Windows games to E:\Games, etc. Leave blank to use the ROMs Root above."/>
+      </StackPanel>
+
+      <Grid ColumnDefinitions="200,16,*">
+
+        <!-- System list -->
+        <ListBox Grid.Column="0"
+                 ItemsSource="{Binding Systems}"
+                 SelectedItem="{Binding SelectedSystem}"
+                 Background="#11FFFFFF" MinHeight="200">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="models:GameSystem">
+              <StackPanel Margin="4,4">
+                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="13"/>
+                <TextBlock Text="{Binding RomPath}" Foreground="#55FFFFFF" FontSize="11"
+                           TextTrimming="CharacterEllipsis"
+                           IsVisible="{Binding RomPath,
+                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- System ROM path editor -->
+        <StackPanel Grid.Column="2" Spacing="8"
+                    IsVisible="{Binding SelectedSystem,
+                                Converter={x:Static ObjectConverters.IsNotNull}}">
+
+          <TextBlock Text="{Binding SelectedSystem.Name}"
+                     FontSize="16" FontWeight="SemiBold"
+                     Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+
+          <TextBlock Foreground="#44FFFFFF" FontSize="11" TextWrapping="Wrap"
+                     Text="Leave blank to use the ROMs Root default. Set to any path on any drive or network share."/>
+
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0"
+                     Text="{Binding EditSystemRomPath}"
+                     Watermark="Leave blank for default, or D:\Pinball\Tables, E:\Games, \\NAS\ROMs\nes…"/>
+            <Button  Grid.Column="2" Content="Browse…"
+                     Command="{Binding BrowseSystemRomPathCommand}"/>
+          </Grid>
+
+          <TextBlock Foreground="#66FFFFFF" FontSize="11"
+                     Text="{Binding EditSystemRomPath,
+                            StringFormat='Resolved: {0}',
+                            FallbackValue='Using default ROM root'}"/>
+
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="💾 Save"
+                    Command="{Binding SaveSystemRomPathCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsSaveSystemFocused}"
+                    Background="{DynamicResource UGL.AccentColor}"
+                    Foreground="White" Padding="12,6"/>
+            <Button Content="✕ Clear"
+                    Padding="12,6"
+                    Click="OnClearSystemRomPath"/>
+          </StackPanel>
+
+        </StackPanel>
+
+      </Grid>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

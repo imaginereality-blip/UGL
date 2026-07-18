@@ -1,0 +1,353 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+             x:Class="UGL.App.Views.Config.SystemsConfigView"
+             x:DataType="vm:SystemsConfigViewModel">
+
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- ── Inner tab bar ── -->
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="0,0,0,16">
+      <Button x:Name="SystemsTabBtn"
+              Content="🖥 Systems"
+              Command="{Binding SelectSystemsTabCommand}"
+              Padding="16,6"/>
+      <Button x:Name="EmulatorsTabBtn"
+              Content="🎮 Emulators"
+              Command="{Binding SelectEmulatorsTabCommand}"
+              Padding="16,6"/>
+    </StackPanel>
+
+    <!-- ══════════════════════════════════════════════
+         SYSTEMS TAB
+         ══════════════════════════════════════════════ -->
+    <Grid Grid.Row="1"
+          IsVisible="{Binding IsSystemsTabActive}"
+          ColumnDefinitions="280,16,*">
+
+      <!-- Left: system list -->
+      <Grid Grid.Column="0" RowDefinitions="*,Auto">
+
+        <ListBox Grid.Row="0"
+                 ItemsSource="{Binding Systems}"
+                 SelectedItem="{Binding SelectedSystem}"
+                 Background="#11FFFFFF">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="12" Margin="4">
+                <TextBlock Text="{Binding Id}"   Width="80"
+                           Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Name}"
+                           Foreground="White" VerticalAlignment="Center"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+          <Button Content="＋ Add"    Command="{Binding AddNewSystemCommand}"/>
+          <Button Content="✎ Edit"   Command="{Binding EditSelectedSystemCommand}"
+                  IsEnabled="{Binding SelectedSystem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          <Button Content="✕ Delete" Command="{Binding DeleteSelectedSystemCommand}"
+                  IsEnabled="{Binding SelectedSystem, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </StackPanel>
+
+      </Grid>
+
+      <!-- Right: system detail editor -->
+      <ScrollViewer Grid.Column="2" Classes="contentScroll"
+                    IsVisible="{Binding IsSystemEditorOpen}"
+                    VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12">
+
+          <TextBlock Text="System Details"
+                     FontSize="16" FontWeight="Bold" Foreground="White"/>
+
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemIdFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="System Id (lowercase, no spaces)" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding EditSystemId}" Watermark="e.g. snes"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemNameFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Display Name" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding EditSystemName}" Watermark="e.g. Super Nintendo"/>
+            </StackPanel>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemBezelPathFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Default Bezel Image (optional — fills the space around a game that doesn't fill the screen)" Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+              <Grid ColumnDefinitions="*,8,Auto">
+                <TextBox Grid.Column="0" Text="{Binding EditSystemBezelPath}" IsReadOnly="True" Watermark="None"/>
+                <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseSystemBezelCommand}"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Save"   Command="{Binding SaveSystemCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsSaveSystemFocused}"
+                    Background="#FF0078D4" Foreground="White" Padding="12,6"/>
+            <Button Content="Cancel" Command="{Binding CancelSystemEditorCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsCancelSystemFocused}"
+                    Padding="12,6"/>
+          </StackPanel>
+
+          <TextBlock Text="{Binding StatusMessage}"
+                     Foreground="#FF44FF88"
+                     IsVisible="{Binding StatusMessage,
+                                 Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+
+    <!-- ══════════════════════════════════════════════
+         EMULATORS TAB
+         ══════════════════════════════════════════════ -->
+    <Grid Grid.Row="1"
+          IsVisible="{Binding IsEmulatorsTabActive}"
+          ColumnDefinitions="280,16,*">
+
+      <!-- Left: emulator list -->
+      <Grid Grid.Column="0" RowDefinitions="*,Auto">
+
+        <ListBox Grid.Row="0"
+                 ItemsSource="{Binding Emulators}"
+                 SelectedItem="{Binding SelectedEmulator}"
+                 Background="#11FFFFFF">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <Grid ColumnDefinitions="*,Auto" Margin="4">
+                <StackPanel Grid.Column="0" Spacing="2">
+                  <TextBlock Text="{Binding Name}"
+                             Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                  <TextBlock Text="{Binding ExecutablePath}"
+                             Foreground="#66FFFFFF" FontSize="11"
+                             TextTrimming="CharacterEllipsis"/>
+                  <TextBlock Text="{Binding SupportedSystems}"
+                             Foreground="#44FFFFFF" FontSize="10"/>
+                </StackPanel>
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+          <Button Content="＋ Add"    Command="{Binding AddNewEmulatorCommand}"/>
+          <Button Content="✎ Edit"   Command="{Binding EditSelectedEmulatorCommand}"
+                  IsEnabled="{Binding SelectedEmulator, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          <Button Content="✕ Delete" Command="{Binding DeleteSelectedEmulatorCommand}"
+                  IsEnabled="{Binding SelectedEmulator, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </StackPanel>
+
+      </Grid>
+
+      <!-- Right: emulator detail editor -->
+      <ScrollViewer Grid.Column="2" Classes="contentScroll"
+                    IsVisible="{Binding IsEmulatorEditorOpen}"
+                    VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12">
+
+          <TextBlock Text="Emulator Details"
+                     FontSize="16" FontWeight="Bold" Foreground="White"/>
+
+          <!-- Id + Name row -->
+          <Grid ColumnDefinitions="*,16,*">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsEmuIdFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Id (lowercase, no spaces)" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditEmulatorId}" Watermark="e.g. mame"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsEmuNameFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Display Name" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditEmulatorName}" Watermark="e.g. MAME 0.263"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <!-- RetroArch mode toggle -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuRetroArchToggleFocused}" Padding="4">
+            <Border Background="#22FFFFFF" CornerRadius="6" Padding="12">
+              <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding EditEmulatorIsRetroArch}"
+                          Content="RetroArch Puppeteer Mode"
+                          FontWeight="SemiBold"/>
+                <TextBlock Text="When enabled, UGL drives RetroArch as a headless core engine. Executable Path becomes the .dll core library."
+                           Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Border>
+          </Border>
+
+          <!-- Standard mode fields -->
+          <StackPanel IsVisible="{Binding !EditEmulatorIsRetroArch}" Spacing="12">
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuPathFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Executable Path" Foreground="#88FFFFFF" FontSize="11"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                  <TextBox Grid.Column="0" Text="{Binding EditEmulatorPath}"
+                           Watermark="C:\Emulators\MAME\mame.exe or relative path"/>
+                  <Button  Grid.Column="2" Content="Browse…"
+                           Command="{Binding BrowseEmulatorPathCommand}"/>
+                </Grid>
+                <TextBlock x:Name="ExeStatusText" Text="{Binding EditEmulatorExeStatus}"
+                           FontSize="12" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuArgsFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Launch Arguments" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBlock Text="{}{rom} is replaced with the full path to the ROM file."
+                           Foreground="#55FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditEmulatorArgs}" Watermark="{}{rom}"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- RetroArch mode fields -->
+          <StackPanel IsVisible="{Binding EditEmulatorIsRetroArch}" Spacing="12">
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuPathFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Core Library (.dll)" Foreground="#88FFFFFF" FontSize="11"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                  <TextBox Grid.Column="0" Text="{Binding EditEmulatorPath}"
+                           Watermark="cores\snes9x_libretro.dll"/>
+                  <Button  Grid.Column="2" Content="Browse…"
+                           Command="{Binding BrowseEmulatorPathCommand}"/>
+                </Grid>
+                <TextBlock x:Name="ExeStatusTextRA" Text="{Binding EditEmulatorExeStatus}"
+                           FontSize="12" Margin="0,2,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuRetroArchExePathFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="RetroArch Executable" Foreground="#88FFFFFF" FontSize="11"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                  <TextBox Grid.Column="0" Text="{Binding EditRetroArchExePath}"
+                           Watermark="C:\RetroArch\retroarch.exe"/>
+                  <Button  Grid.Column="2" Content="Browse…"
+                           Command="{Binding BrowseRetroArchExeCommand}"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Grid ColumnDefinitions="*,16,*">
+              <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsEmuRunAheadFramesFocused}" Padding="6">
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Run-Ahead Frames (0 = off)" Foreground="#88FFFFFF" FontSize="11"/>
+                  <NumericUpDown Value="{Binding EditRunAheadFrames}"
+                                 Minimum="0" Maximum="10" Increment="1"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsEmuRunAheadSecondInstanceFocused}" Padding="6" VerticalAlignment="Bottom">
+                <StackPanel Spacing="4">
+                  <CheckBox IsChecked="{Binding EditRunAheadSecondInstance}"
+                            Content="Use Second Instance"
+                            IsEnabled="{Binding EditRunAheadFrames, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuShaderPresetPathFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="CRT / Shader Preset (.glslp, .slangp)" Foreground="#88FFFFFF" FontSize="11"/>
+                <Grid ColumnDefinitions="*,8,Auto">
+                  <TextBox Grid.Column="0" Text="{Binding EditShaderPresetPath}"
+                           Watermark="shaders\crt-royale.glslp (leave blank to disable)"/>
+                  <Button  Grid.Column="2" Content="Browse…"
+                           Command="{Binding BrowseShaderPresetCommand}"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuAdditionalConfigFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Additional Config (raw key=value lines)" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditAdditionalConfig}"
+                         Watermark="video_fullscreen = true&#10;audio_latency = 64"
+                         AcceptsReturn="True" Height="70" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- BIOS files — applies whether or not this is a RetroArch core -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuBiosListFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="BIOS Files (A to enter, Up/Down to move, A to remove, B to exit)"
+                         Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+              <ListBox ItemsSource="{Binding EditEmulatorBiosPaths}"
+                       SelectedIndex="{Binding SelectedBiosIndex}"
+                       Background="#11FFFFFF" MinHeight="60" MaxHeight="140">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding}" Foreground="White" FontSize="12" Margin="4,2"
+                                 VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                      <Button Grid.Column="1" Content="✕" Padding="6,2" Foreground="#FFFF4444"
+                              Command="{Binding $parent[UserControl].((vm:SystemsConfigViewModel)DataContext).RemoveBiosCommand}"
+                              CommandParameter="{Binding}"/>
+                    </Grid>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </StackPanel>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuAddBiosFocused}" Padding="6">
+            <Button Content="＋ Add BIOS File…" Command="{Binding BrowseAddBiosCommand}" HorizontalAlignment="Stretch"/>
+          </Border>
+
+          <!-- Supported systems -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuSupportedSystemsFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Supported Systems (comma-separated System Ids)"
+                         Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding EditEmulatorSystems}"
+                       Watermark="arcade,mame,neogeo"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Notes / Future Settings -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuNotesFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Notes / Future Settings" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBlock Text="Reserved for per-emulator options (shaders, fullscreen flags, config paths, etc.)"
+                         Foreground="#44FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding EditEmulatorNotes}"
+                       Watermark="Optional notes about this emulator…"
+                       AcceptsReturn="True"
+                       Height="80"
+                       TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Save / Cancel -->
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+            <Button Content="💾 Save Emulator"
+                    Command="{Binding SaveEmulatorCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsEmuSaveFocused}"
+                    Background="#FF0078D4" Foreground="White" Padding="16,8"/>
+            <Button Content="✕ Cancel"
+                    Command="{Binding CancelEmulatorEditorCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsEmuCancelFocused}"
+                    Padding="16,8"/>
+          </StackPanel>
+
+          <TextBlock Text="{Binding StatusMessage}"
+                     Foreground="#FF44FF88"
+                     IsVisible="{Binding StatusMessage,
+                                 Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Placeholder when no editor is open -->
+      <Border Grid.Column="2"
+              IsVisible="{Binding !IsEmulatorEditorOpen}"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center">
+        <TextBlock Text="Select an emulator to edit, or click ＋ Add"
+                   Foreground="#44FFFFFF" FontSize="15"/>
+      </Border>
+
+    </Grid>
+
+  </Grid>
+</UserControl>

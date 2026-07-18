@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels"
+             xmlns:views="clr-namespace:UGL.App.Views"
+             x:Class="UGL.App.Views.HomeMenuView"
+             x:DataType="vm:HomeMenuViewModel"
+             Background="{DynamicResource UGL.BackgroundColor}">
+
+  <Grid RowDefinitions="*,60">
+
+    <Grid Grid.Row="0">
+      <TextBlock IsVisible="{Binding IsLoading}"
+                 Text="Loading…"
+                 Foreground="{DynamicResource UGL.TextPrimaryColor}"
+                 FontSize="20"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+
+      <ItemsControl IsVisible="{Binding !IsLoading}"
+                    ItemsSource="{Binding VisibleCards}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Rows="1" Columns="5" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:CategoryCardViewModel">
+            <views:CategoryCard DataContext="{Binding}" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Grid>
+
+    <!-- Hint bar -->
+    <Border Grid.Row="1"
+            Background="{DynamicResource UGL.HintBarBackground}"
+            BorderBrush="{DynamicResource UGL.CardBorderDefault}"
+            BorderThickness="0,1,0,0">
+      <Grid>
+        <Grid ColumnDefinitions="*,Auto" Margin="24,0">
+          <TextBlock Grid.Column="0"
+                     Text="{Binding SelectedCategoryLabel}"
+                     FontSize="{DynamicResource UGL.BodyFontSize}"
+                     FontWeight="Bold"
+                     Foreground="{DynamicResource UGL.TextPrimaryColor}"
+                     VerticalAlignment="Center" />
+          <TextBlock Grid.Column="1"
+                     Text="A  Enter      ← →  Browse      LB/RB  Change Playlist"
+                     FontSize="14"
+                     Foreground="{DynamicResource UGL.TextSecondaryColor}"
+                     VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Brief "now playing" indicator, shown for a few seconds after LB/RB
+             manually cycles the music playlist. Owned by MainWindowViewModel (not
+             HomeMenuViewModel), since it needs to show the same way from both the
+             Home Menu and the Game Browser — reached via the ancestor Window's
+             DataContext rather than duplicating this state on every screen. -->
+        <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NowPlayingPlaylistName}"
+                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsNowPlayingVisible}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="{DynamicResource UGL.BodyFontSize}"
+                   FontWeight="Bold"
+                   Foreground="{DynamicResource UGL.AccentColor}" />
+      </Grid>
+    </Border>
+
+  </Grid>
+</UserControl>
