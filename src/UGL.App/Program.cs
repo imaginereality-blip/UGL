@@ -73,6 +73,11 @@ internal static class Program
         services.AddMediaServices();
         services.AddInputServices();
         services.AddEmulatorServices();
+
+        // Registered directly here rather than inside AddDataServices() (which
+        // already registers IAudioPlaylistRepository), since that extension method
+        // lives in a file not touched by this change — functionally equivalent.
+        services.AddSingleton<UGL.Core.Interfaces.IAudioTrackRepository, UGL.Data.JsonAudioTrackRepository>();
         services.AddThemeServices();
 
         // HomeMenuViewModel and GameBrowserViewModel are Singleton: MainWindowViewModel
@@ -100,6 +105,9 @@ internal static class Program
         services.AddSingleton<UGL.Core.Interfaces.IHookSettingsRepository, JsonHookSettingsRepository>();
         services.AddSingleton<UGL.Hooks.IHookLauncher, UGL.Hooks.HookLauncher>();
         services.AddSingleton<UGL.App.ViewModels.Config.HookConfigViewModel>();
+
+        services.AddSingleton<UGL.Core.Interfaces.IUpdateService, UGL.Updates.GitHubUpdateService>();
+        services.AddSingleton<UGL.App.ViewModels.Config.UpdateConfigViewModel>();
 
         services.AddTransient<MainWindowViewModel>();
     }

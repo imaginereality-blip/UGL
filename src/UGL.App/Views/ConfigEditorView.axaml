@@ -143,6 +143,9 @@
             <Border IsVisible="{Binding IsHooksTabActive}">
               <views:HookConfigView DataContext="{Binding Hooks}"/>
             </Border>
+            <Border IsVisible="{Binding IsUpdatesTabActive}">
+              <views:UpdateConfigView DataContext="{Binding Updates}"/>
+            </Border>
           </Grid>
         </Border>
       </Grid>

@@ -16,8 +16,17 @@ public enum ControllerAction
     Info,         // Y
 
     // Shoulder
-    CategoryLeft,   // LB
-    CategoryRight,  // RB
+    CategoryLeft,   // LB (used only within Settings for sub-tab switching now —
+                    // freed up outside Settings for a future function)
+    CategoryRight,  // RB (same)
+
+    // D-Pad — repurposed for music control now that Left Stick handles menu
+    // navigation. Up/Down changes the active playlist, Left/Right changes the
+    // current track within it.
+    PlaylistNext,     // D-Pad Up
+    PlaylistPrevious, // D-Pad Down
+    TrackNext,        // D-Pad Right
+    TrackPrevious,    // D-Pad Left
 
     // Triggers
     FastScrollLeft,  // LT

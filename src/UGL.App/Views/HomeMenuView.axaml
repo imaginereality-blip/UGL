@@ -45,17 +45,18 @@
                      Foreground="{DynamicResource UGL.TextPrimaryColor}"
                      VerticalAlignment="Center" />
           <TextBlock Grid.Column="1"
-                     Text="A  Enter      ← →  Browse      LB/RB  Change Playlist"
+                     Text="A  Enter      ← →  Browse      D-Pad ↑↓ Playlist  ←→ Track"
                      FontSize="14"
                      Foreground="{DynamicResource UGL.TextSecondaryColor}"
                      VerticalAlignment="Center" />
         </Grid>
 
-        <!-- Brief "now playing" indicator, shown for a few seconds after LB/RB
-             manually cycles the music playlist. Owned by MainWindowViewModel (not
-             HomeMenuViewModel), since it needs to show the same way from both the
-             Home Menu and the Game Browser — reached via the ancestor Window's
-             DataContext rather than duplicating this state on every screen. -->
+        <!-- Brief "now playing" indicator, shown for a few seconds after D-Pad Up/Down
+             manually cycles the music playlist, or D-Pad Left/Right changes the
+             current track. Owned by MainWindowViewModel (not HomeMenuViewModel),
+             since it needs to show the same way from both the Home Menu and the
+             Game Browser — reached via the ancestor Window's DataContext rather
+             than duplicating this state on every screen. -->
         <TextBlock Text="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NowPlayingPlaylistName}"
                    IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).IsNowPlayingVisible}"
                    HorizontalAlignment="Center"

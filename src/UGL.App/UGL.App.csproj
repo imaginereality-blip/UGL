@@ -10,6 +10,7 @@
     <AssemblyName>UGL</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,14 +37,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
-  </ItemGroup>
-
-  <!-- Copy config folder to build output using Content instead of None -->
-  <ItemGroup>
-    <Content Include="..\..\config\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>config\%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </Content>
   </ItemGroup>
 
 </Project>

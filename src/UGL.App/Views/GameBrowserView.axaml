@@ -64,7 +64,7 @@
                        VerticalAlignment="Center" />
           </StackPanel>
           <TextBlock Grid.Column="1"
-                     Text="A  Launch      B  Back      ← →  Browse      X  Favorite      LB/RB  Change Playlist"
+                     Text="A  Launch      B  Back      ← →  Browse      X  Favorite      D-Pad ↑↓  Playlist   ←→  Track"
                      FontSize="14"
                      Foreground="{DynamicResource UGL.TextSecondaryColor}"
                      VerticalAlignment="Center" />

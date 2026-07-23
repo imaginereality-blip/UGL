@@ -250,6 +250,26 @@
           <Button Content="＋ Add BIOS Override File…" Command="{Binding BrowseAddBiosOverrideCommand}" HorizontalAlignment="Stretch"/>
         </Border>
 
+        <!-- Disabled peripherals -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDisabledDeviceTypesFocused}" Padding="8">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Disabled Peripherals (optional — e.g. Lightgun/Wheel for a fighting game, so they can't interfere; A to enter, Up/Down to move, A to toggle, B to exit)"
+                       Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+            <ItemsControl ItemsSource="{Binding Editor.DisabledDeviceTypeOptions}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:DeviceTypeCheckItem">
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsHighlighted}" Margin="0,2,8,2" Padding="4,2">
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}"/>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
+
         <!-- Validation error -->
         <TextBlock Text="{Binding Editor.ValidationError}"
                    Foreground="#FFFF4444"

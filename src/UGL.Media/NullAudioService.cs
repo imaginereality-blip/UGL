@@ -15,10 +15,13 @@ public sealed class NullAudioService : IAudioService
 
     public Task StartAsync(CancellationToken ct = default)                    => Task.CompletedTask;
     public Task SwitchPlaylistAsync(string categoryId, CancellationToken ct = default) => Task.CompletedTask;
-    public Task CyclePlaylistAsync(int direction, CancellationToken ct = default) => Task.CompletedTask;
+    public Task CyclePlaylistAsync(int direction, string? currentCategoryId, CancellationToken ct = default) => Task.CompletedTask;
 #pragma warning disable CS0067 // intentionally never raised — this is a no-op implementation
     public event Action<string>? PlaylistChanged;
+    public event Action<string>? TrackChanged;
 #pragma warning restore CS0067
+    public void SkipToNextTrack()     { }
+    public void SkipToPreviousTrack() { }
     public void Pause()         { }
     public void Resume()        { }
     public void Stop()          { }

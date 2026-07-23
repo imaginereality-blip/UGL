@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       x:Class="UGL.App.Views.Config.UpdateConfigView"
+       x:DataType="vm:UpdateConfigViewModel">
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" Margin="0,0,0,16">
+
+      <TextBlock Text="Updates" FontSize="18" FontWeight="Bold" Foreground="White"/>
+
+      <Border Background="#110D0D1A" CornerRadius="6" Padding="16">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Current Version" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Text="{Binding CurrentVersion}" FontSize="20" FontWeight="Bold" Foreground="White"/>
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="{Binding StatusMessage}" Foreground="#FFAADDFF" FontSize="14" TextWrapping="Wrap"
+                 IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+      <!-- Release notes, shown once a check finds something -->
+      <Border Background="#110D0D1A" CornerRadius="6" Padding="16"
+              IsVisible="{Binding IsAwaitingConfirmation}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="{Binding LastCheckResult.LatestVersion, StringFormat='Release notes for {0}:'}"
+                     FontWeight="SemiBold" Foreground="White"/>
+          <TextBlock Text="{Binding LastCheckResult.ReleaseNotes}" Foreground="#CCFFFFFF"
+                     FontSize="13" TextWrapping="Wrap" MaxHeight="200"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Check button (normal state) -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCheckFocused}"
+              IsVisible="{Binding !IsAwaitingConfirmation}"
+              HorizontalAlignment="Left">
+        <Button Content="🔄 Check for Updates" Command="{Binding CheckForUpdatesCommand}"
+                IsEnabled="{Binding !IsChecking}"
+                Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
+      </Border>
+
+      <!-- Install / Not Now (confirmation state) -->
+      <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsAwaitingConfirmation}">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsInstallFocused}">
+          <Button Content="⬇ Install and Restart" Command="{Binding ApplyUpdateCommand}"
+                  IsEnabled="{Binding !IsApplying}"
+                  Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsNotNowFocused}">
+          <Button Content="Not Now" Command="{Binding DismissUpdateCommand}"
+                  IsEnabled="{Binding !IsApplying}"
+                  Padding="16,8"/>
+        </Border>
+      </StackPanel>
+
+      <TextBlock Text="Installing will close and restart UGL automatically."
+                 Foreground="#66FFFFFF" FontSize="12"
+                 IsVisible="{Binding IsAwaitingConfirmation}"/>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

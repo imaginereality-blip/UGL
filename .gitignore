@@ -44,6 +44,7 @@ src/config/
 ## spec documents and are meant to be tracked.
 _backup/
 _zip files/
+output.txt
 
 ## Publish output (Milestone 17 packaging)
 publish/

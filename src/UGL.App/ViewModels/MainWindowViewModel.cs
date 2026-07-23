@@ -22,6 +22,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly IInputService _inputService;
     private readonly IAudioService _audioService;
     private readonly IEmulatorLauncher _launcher;
+    private readonly IUpdateService _updateService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
     private readonly HomeMenuViewModel _homeMenu;
@@ -43,6 +44,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
     [ObservableProperty] private bool _isEmulatorRunning;
     [ObservableProperty] private string _launchError = string.Empty;
 
+    // ── Update notification — shown after a background check finds a new version.
+    // Unlike the "now playing" toast, this stays visible (not auto-hidden) until the
+    // user opens Settings and sees the Updates tab, since it's more actionable and
+    // easy to miss if it vanished after a few seconds. ─────────────────────────────
+    [ObservableProperty] private bool _isUpdateNotificationVisible;
+    [ObservableProperty] private string _updateNotificationText = string.Empty;
+
     public FilterOverlayViewModel FilterOverlay => _filterOverlay;
     public ConfigEditorViewModel  ConfigEditor  => _configEditor;
 
@@ -52,6 +60,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         IInputService inputService,
         IAudioService audioService,
         IEmulatorLauncher launcher,
+        IUpdateService updateService,
         HomeMenuViewModel homeMenu,
         GameBrowserViewModel gameBrowser,
         FilterOverlayViewModel filterOverlay,
@@ -63,6 +72,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _inputService = inputService;
         _audioService = audioService;
         _launcher = launcher;
+        _updateService = updateService;
         _logger = logger;
 
         _homeMenu = homeMenu;
@@ -82,6 +92,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _launcher.EmulatorExited += OnEmulatorExited;
 
         _audioService.PlaylistChanged += OnPlaylistChanged;
+        _audioService.TrackChanged += OnTrackChanged;
+        _updateService.UpdateAvailable += OnUpdateAvailable;
 
         CurrentView = _homeMenu;
 
@@ -105,6 +117,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
             await _homeMenu.InitializeAsync();
             await _audioService.StartAsync();
+
+            // Non-blocking — never delay startup on a network round-trip, and never
+            // let a failed check (no internet, GitHub down, etc.) be disruptive.
+            _updateService.CheckForUpdateInBackground();
 
             _logger.LogInformation(
                 "UGL started. Active theme: {ThemeId}",
@@ -173,9 +189,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     // ── "Now playing" toast ─────────────────────────────────────────────────
 
-    private void OnPlaylistChanged(string playlistName)
+    private void OnPlaylistChanged(string playlistName) => ShowNowPlayingToast(playlistName);
+
+    private void OnTrackChanged(string trackName) => ShowNowPlayingToast(trackName);
+
+    private void ShowNowPlayingToast(string text)
     {
-        NowPlayingPlaylistName = playlistName;
+        NowPlayingPlaylistName = text;
         IsNowPlayingVisible = true;
 
         _nowPlayingHideTimer?.Stop();
@@ -187,6 +207,27 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _nowPlayingHideTimer = null;
         };
         _nowPlayingHideTimer.Start();
+    }
+
+    /// <summary>Which category's playlist should be eligible for LB/RB cycling
+    /// alongside Global, depending on where we currently are — null if at the Home
+    /// Menu with nothing meaningfully selected yet (shouldn't normally happen once
+    /// categories exist, but handled defensively).</summary>
+    /// <summary>Which category's playlist should be eligible for LB/RB cycling
+    /// alongside Global, depending on where we currently are. At the Home Menu this
+    /// is always null — browsing left/right past category cards only highlights
+    /// them, it doesn't mean you're "in" that category the way actually entering
+    /// its Game Browser does, so a category's playlist shouldn't be cyclable just
+    /// because its card happens to be highlighted.</summary>
+    private string? CurrentCategoryIdForPlaylistCycling(bool atHome) =>
+        atHome ? null : _gameBrowser.ActiveCategory?.Id;
+
+    // ── Update notification ─────────────────────────────────────────────────
+
+    private void OnUpdateAvailable(UpdateCheckResult update)
+    {
+        UpdateNotificationText = $"Update available: {update.LatestVersion} — see Settings";
+        IsUpdateNotificationVisible = true;
     }
 
     // ── Filter overlay ─────────────────────────────────────────────────────
@@ -231,6 +272,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         await _configEditor.InitializeAsync();
         _audioService.Pause();
         IsSettingsOpen = true;
+        IsUpdateNotificationVisible = false;
         _logger.LogInformation("Settings opened.");
     }
 
@@ -422,13 +464,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 if (!atHome) await _gameBrowser.ToggleFavoriteOnSelectedAsync();
                 break;
 
-            case ControllerAction.CategoryLeft:
-                await _audioService.CyclePlaylistAsync(-1);
+            case ControllerAction.PlaylistNext:
+                await _audioService.CyclePlaylistAsync(1, CurrentCategoryIdForPlaylistCycling(atHome));
                 break;
 
-            case ControllerAction.CategoryRight:
-                await _audioService.CyclePlaylistAsync(1);
+            case ControllerAction.PlaylistPrevious:
+                await _audioService.CyclePlaylistAsync(-1, CurrentCategoryIdForPlaylistCycling(atHome));
                 break;
+
+            case ControllerAction.TrackNext:
+                _audioService.SkipToNextTrack();
+                break;
+
+            case ControllerAction.TrackPrevious:
+                _audioService.SkipToPreviousTrack();
+                break;
+
+            // CategoryLeft/CategoryRight (LB/RB) intentionally have no case here —
+            // they're free outside Settings for a future function. They still work
+            // for sub-tab switching inside Settings (see the IsSettingsOpen branch
+            // above), which is unaffected by this.
 
             case ControllerAction.Start:
                 OnOpenSettings();

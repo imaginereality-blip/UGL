@@ -52,7 +52,11 @@ public sealed class XInputPollingService : IInputService, IDisposable
         ControllerAction.ScrollDown,
     };
 
-    // Navigation actions that support button-repeat when held
+    // Navigation actions that support button-repeat when held. Note: NavigateLeft/
+    // Right/Up/Down are no longer reached via CheckButton (D-Pad drives different
+    // actions now — see ProcessControllerState) — they're driven by the Left Stick
+    // via UpdateHeldState instead, which always repeats regardless of this set.
+    // Left here as harmless, in case a button is ever remapped back to Navigate*.
     private static readonly HashSet<ControllerAction> RepeatableActions = new()
     {
         ControllerAction.NavigateLeft,
@@ -138,15 +142,18 @@ public sealed class XInputPollingService : IInputService, IDisposable
         byte   lt       = pad.bLeftTrigger;
         byte   rt       = pad.bRightTrigger;
 
-        // ── D-Pad & buttons: fire on the rising edge (press, not hold) ────
+        // ── D-Pad: repurposed for music control now that Left Stick handles
+        // menu navigation (below). Up/Down changes playlist, Left/Right changes
+        // track — fires on press only, no repeat-while-held (skipping tracks
+        // rapidly on a held button isn't useful the way holding to navigate is).
         CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.DPadLeft,      ControllerAction.NavigateLeft);
+            XInput.DPadUp,        ControllerAction.PlaylistNext);
         CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.DPadRight,     ControllerAction.NavigateRight);
+            XInput.DPadDown,      ControllerAction.PlaylistPrevious);
         CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.DPadUp,        ControllerAction.NavigateUp);
+            XInput.DPadRight,     ControllerAction.TrackNext);
         CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.DPadDown,      ControllerAction.NavigateDown);
+            XInput.DPadLeft,      ControllerAction.TrackPrevious);
         CheckButton(controllerIndex, buttons, prevBtns,
             XInput.LeftShoulder,  ControllerAction.CategoryLeft);
         CheckButton(controllerIndex, buttons, prevBtns,
@@ -164,12 +171,17 @@ public sealed class XInputPollingService : IInputService, IDisposable
         CheckButton(controllerIndex, buttons, prevBtns,
             XInput.Back,          ControllerAction.FilterOverlay);
 
-        // ── Left stick: treat as navigation (with dead zone) ──────────────
+        // ── Left stick: full menu navigation — everything D-Pad used to drive,
+        // now that D-Pad is repurposed for music control above. ───────────────
         bool stickLeft  = pad.sThumbLX < -XInput.ThumbDeadZone;
         bool stickRight = pad.sThumbLX >  XInput.ThumbDeadZone;
+        bool stickUp    = pad.sThumbLY >  XInput.ThumbDeadZone;
+        bool stickDown  = pad.sThumbLY < -XInput.ThumbDeadZone;
 
         UpdateHeldState(controllerIndex, stickLeft,  ControllerAction.NavigateLeft);
         UpdateHeldState(controllerIndex, stickRight, ControllerAction.NavigateRight);
+        UpdateHeldState(controllerIndex, stickUp,    ControllerAction.NavigateUp);
+        UpdateHeldState(controllerIndex, stickDown,  ControllerAction.NavigateDown);
 
         // ── Right stick: scroll whatever scrollable content is on screen ──
         bool scrollUp   = pad.sThumbRY >  XInput.ThumbDeadZone;

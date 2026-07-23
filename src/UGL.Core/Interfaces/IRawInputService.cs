@@ -25,5 +25,13 @@ public interface IRawInputService : IDisposable
     /// <summary>Stops the message pump and unregisters all devices.</summary>
     void Stop();
 
+    /// <summary>
+    /// Sets which device types should have their input silently dropped before
+    /// RawInputReceived is raised at all — e.g. disabling Lightgun and Wheel while a
+    /// fighting game is running, so they can't interfere. Pass an empty set to
+    /// re-enable everything (the normal state outside of an active game launch).
+    /// </summary>
+    void SetDisabledDeviceTypes(IReadOnlySet<RawInputDeviceType> disabledTypes);
+
     bool IsRunning { get; }
 }

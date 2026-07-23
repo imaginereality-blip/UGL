@@ -39,4 +39,13 @@ public sealed class Game
     /// instead (e.g. matching that specific game's own cabinet artwork).
     /// </summary>
     public string BezelOverridePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Peripheral types to silently ignore input from while this game is running —
+    /// e.g. disabling Lightgun and Wheel for a fighting game so they can't
+    /// interfere. Empty by default (nothing disabled). Applies only to RawInput
+    /// peripherals (lightguns, wheels, spinners, trackballs); the primary XInput
+    /// controller used for menu navigation is never affected by this.
+    /// </summary>
+    public List<RawInputDeviceType> DisabledDeviceTypes { get; set; } = [];
 }

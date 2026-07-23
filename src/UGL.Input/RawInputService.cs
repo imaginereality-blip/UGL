@@ -25,6 +25,13 @@ public sealed class RawInputService : IRawInputService
 
     public bool IsRunning { get; private set; }
 
+    // Empty by default (nothing disabled) — set by ProcessEmulatorLauncher right
+    // before a game launches, cleared back to empty when it exits. Read from the
+    // pump thread in ProcessRawInput, written from whatever thread launches/exits
+    // a game — a plain HashSet reference swap (not mutated in place) is safe here
+    // without extra locking, since ProcessRawInput only ever reads the reference.
+    private volatile IReadOnlySet<RawInputDeviceType> _disabledDeviceTypes = new HashSet<RawInputDeviceType>();
+
     private Thread? _pumpThread;
     private nint    _messageHwnd;
     private volatile bool _stopRequested;
@@ -70,6 +77,14 @@ public sealed class RawInputService : IRawInputService
         _pumpThread?.Join(2000);
         IsRunning = false;
         _logger.LogInformation("RawInput service stopped.");
+    }
+
+    public void SetDisabledDeviceTypes(IReadOnlySet<RawInputDeviceType> disabledTypes)
+    {
+        _disabledDeviceTypes = disabledTypes;
+        _logger.LogInformation(
+            "Disabled peripheral types set: {Types}",
+            disabledTypes.Count == 0 ? "(none)" : string.Join(", ", disabledTypes));
     }
 
     public IReadOnlyList<RawInputDevice> EnumerateDevices()
@@ -293,6 +308,11 @@ public sealed class RawInputService : IRawInputService
                 DeviceType   = deviceType,
             };
         }
+
+        // Silently drop input from any device type disabled for the currently
+        // running game — the event never even reaches subscribers, rather than
+        // relying on every consumer to remember to check this themselves.
+        if (_disabledDeviceTypes.Contains(deviceType)) return;
 
         RawInputReceived?.Invoke(this, evt);
     }

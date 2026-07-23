@@ -17,6 +17,8 @@ namespace UGL.Input;
 ///   Enter / Space     → Select
 ///   Escape / Backspace→ Back
 ///   Tab               → FilterOverlay
+///   F1                → Start (opens Settings — there is no on-screen gear icon,
+///                       so this is the only keyboard-only way in)
 /// </summary>
 public sealed class KeyboardInputService
 {
@@ -37,6 +39,7 @@ public sealed class KeyboardInputService
         [Key.Escape]    = ControllerAction.Back,
         [Key.Back]      = ControllerAction.Back,
         [Key.Tab]       = ControllerAction.FilterOverlay,
+        [Key.F1]        = ControllerAction.Start,
     };
 
     public KeyboardInputService(IInputService inputService, ILogger<KeyboardInputService> logger)

@@ -25,6 +25,7 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
     private readonly IRetroArchConfigGenerator _retroArchGenerator;
     private readonly IHookLauncher _hookLauncher;
     private readonly IConfigurationService _config;
+    private readonly IRawInputService _rawInputService;
     private readonly ILogger<ProcessEmulatorLauncher> _logger;
 
     private Process? _currentProcess;
@@ -40,12 +41,14 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         IRetroArchConfigGenerator retroArchGenerator,
         IHookLauncher hookLauncher,
         IConfigurationService config,
+        IRawInputService rawInputService,
         ILogger<ProcessEmulatorLauncher> logger)
     {
         _emulatorRepo = emulatorRepo;
         _retroArchGenerator = retroArchGenerator;
         _hookLauncher = hookLauncher;
         _config = config;
+        _rawInputService = rawInputService;
         _logger = logger;
     }
 
@@ -136,6 +139,16 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
             var pid = _currentProcess.Id;
             _logger.LogInformation("Emulator started (PID {Pid}).", pid);
+
+            // Disable whichever peripheral types this game specifies (e.g. Lightgun
+            // and Wheel for a fighting game) so they can't interfere while it's
+            // running. Placed here — only after a confirmed successful start —
+            // rather than earlier, so a failed launch attempt (missing exe, bad
+            // RetroArch config, Process.Start() returning false) can never leave
+            // peripherals disabled with nothing around to re-enable them. Cleared
+            // back to none in OnProcessExited.
+            _rawInputService.SetDisabledDeviceTypes(game.DisabledDeviceTypes.ToHashSet());
+
             return pid;
         }
         catch (Exception ex)
@@ -224,6 +237,10 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
         // Clean up RetroArch override config if one was generated
         _retroArchGenerator.Cleanup();
+
+        // Re-enable any peripheral types this game had disabled - back to the
+        // normal "nothing disabled" state for whatever's browsed/launched next.
+        _rawInputService.SetDisabledDeviceTypes(new HashSet<RawInputDeviceType>());
 
         // Fire-and-forget — OnProcessExited is a synchronous event handler (Process.Exited),
         // so it can't await this directly. StopAsync() is safe to call even if hook

@@ -33,7 +33,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     /// convention as Audio's track sub-list.
     /// </summary>
     [ObservableProperty] private int _editorFocusIndex;
-    private const int EditorPositionCount = 18;
+    private const int EditorPositionCount = 19;
 
     // ── Category checkbox sub-mode — entered via Confirm at EditorFocusIndex==2 ───────
     [ObservableProperty] private bool _isCategoryOptionsFocused;
@@ -48,6 +48,15 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Editor.CategoryOptions[i].IsHighlighted = IsCategoryOptionsFocused && i == SelectedCategoryOptionIndex;
     }
 
+    partial void OnIsBrowsingDisabledDeviceTypesChanged(bool value) => RefreshDeviceTypeHighlight();
+    partial void OnSelectedDeviceTypeCheckIndexChanged(int value) => RefreshDeviceTypeHighlight();
+
+    private void RefreshDeviceTypeHighlight()
+    {
+        for (int i = 0; i < Editor.DisabledDeviceTypeOptions.Count; i++)
+            Editor.DisabledDeviceTypeOptions[i].IsHighlighted = IsBrowsingDisabledDeviceTypes && i == SelectedDeviceTypeCheckIndex;
+    }
+
     // ── BIOS override sub-mode — entered via Confirm at EditorFocusIndex==14 ──────────
     // Nearly always empty; only needed for the rare game that requires a BIOS
     // different from its emulator's own default list (Emulator.BiosPaths). Plain
@@ -55,6 +64,12 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     // highlight directly, same pattern as Audio's track list.
     [ObservableProperty] private bool _isBrowsingBiosOverrides;
     [ObservableProperty] private int _selectedBiosOverrideIndex;
+
+    // ── Disabled peripherals sub-mode — entered via Confirm at EditorFocusIndex==16 ──
+    // Nearly always all unchecked; only needed for the rare game where a lightgun,
+    // wheel, etc. would interfere (e.g. disabling both for a fighting game).
+    [ObservableProperty] private bool _isBrowsingDisabledDeviceTypes;
+    [ObservableProperty] private int _selectedDeviceTypeCheckIndex;
 
     // ── Editor field highlight (drives the same Classes-binding highlight trick used
     // everywhere else — sidebar menu, Peripheral Hooks, keyboard keys) ────────────────
@@ -74,8 +89,9 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     public bool IsBezelOverrideFocused    => EditorFocusIndex == 13;
     public bool IsBiosOverrideListFocused => EditorFocusIndex == 14;
     public bool IsAddBiosOverrideFocused  => EditorFocusIndex == 15;
-    public bool IsSaveFocused           => EditorFocusIndex == 16;
-    public bool IsCancelFocused         => EditorFocusIndex == 17;
+    public bool IsDisabledDeviceTypesFocused => EditorFocusIndex == 16;
+    public bool IsSaveFocused           => EditorFocusIndex == 17;
+    public bool IsCancelFocused         => EditorFocusIndex == 18;
 
     partial void OnEditorFocusIndexChanged(int value)
     {
@@ -95,6 +111,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsBezelOverrideFocused));
         OnPropertyChanged(nameof(IsBiosOverrideListFocused));
         OnPropertyChanged(nameof(IsAddBiosOverrideFocused));
+        OnPropertyChanged(nameof(IsDisabledDeviceTypesFocused));
         OnPropertyChanged(nameof(IsSaveFocused));
         OnPropertyChanged(nameof(IsCancelFocused));
     }
@@ -268,6 +285,13 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        if (IsBrowsingDisabledDeviceTypes)
+        {
+            if (Editor.DisabledDeviceTypeOptions.Count == 0) return;
+            SelectedDeviceTypeCheckIndex = (SelectedDeviceTypeCheckIndex - 1 + Editor.DisabledDeviceTypeOptions.Count) % Editor.DisabledDeviceTypeOptions.Count;
+            return;
+        }
+
         if (IsEditorOpen)
         {
             EditorFocusIndex = (EditorFocusIndex - 1 + EditorPositionCount) % EditorPositionCount;
@@ -296,6 +320,13 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        if (IsBrowsingDisabledDeviceTypes)
+        {
+            if (Editor.DisabledDeviceTypeOptions.Count == 0) return;
+            SelectedDeviceTypeCheckIndex = (SelectedDeviceTypeCheckIndex + 1) % Editor.DisabledDeviceTypeOptions.Count;
+            return;
+        }
+
         if (IsEditorOpen)
         {
             EditorFocusIndex = (EditorFocusIndex + 1) % EditorPositionCount;
@@ -310,7 +341,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     public void NavigateLeft()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides) return;
+        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes) return;
         switch (EditorFocusIndex)
         {
             case 1: CycleSystem(-1); break;
@@ -321,7 +352,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     public void NavigateRight()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides) return;
+        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes) return;
         switch (EditorFocusIndex)
         {
             case 1: CycleSystem(1); break;
@@ -366,6 +397,16 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Back while browsing the disabled-peripherals grid exits just that,
+    /// back to the flat field list — same convention as every other nested
+    /// list/grid in this editor.</summary>
+    public bool TryExitDisabledDeviceTypes()
+    {
+        if (!IsBrowsingDisabledDeviceTypes) return false;
+        IsBrowsingDisabledDeviceTypes = false;
+        return true;
+    }
+
     public async Task ConfirmAsync()
     {
         if (!IsEditorOpen)
@@ -391,6 +432,16 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 Editor.BiosOverridePaths.RemoveAt(SelectedBiosOverrideIndex);
                 if (Editor.BiosOverridePaths.Count == 0) IsBrowsingBiosOverrides = false;
                 else SelectedBiosOverrideIndex = Math.Clamp(SelectedBiosOverrideIndex, 0, Editor.BiosOverridePaths.Count - 1);
+            }
+            return;
+        }
+
+        if (IsBrowsingDisabledDeviceTypes)
+        {
+            if (SelectedDeviceTypeCheckIndex >= 0 && SelectedDeviceTypeCheckIndex < Editor.DisabledDeviceTypeOptions.Count)
+            {
+                var opt = Editor.DisabledDeviceTypeOptions[SelectedDeviceTypeCheckIndex];
+                opt.IsChecked = !opt.IsChecked;
             }
             return;
         }
@@ -421,8 +472,15 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 }
                 break;
             case 15: await BrowseAddBiosOverrideAsync(); break;
-            case 16: await SaveEditorAsync(); break;
-            case 17: CancelEditor(); break;
+            case 16:
+                if (Editor.DisabledDeviceTypeOptions.Count > 0)
+                {
+                    IsBrowsingDisabledDeviceTypes = true;
+                    SelectedDeviceTypeCheckIndex = Math.Clamp(SelectedDeviceTypeCheckIndex, 0, Editor.DisabledDeviceTypeOptions.Count - 1);
+                }
+                break;
+            case 17: await SaveEditorAsync(); break;
+            case 18: CancelEditor(); break;
             case 6: Editor.IsFavorite = !Editor.IsFavorite; break;
             // 1, 3, 5 (System/Emulator/Players) are adjusted via Left/Right, not Confirm.
         }
@@ -456,6 +514,8 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         SelectedCategoryOptionIndex = 0;
         IsBrowsingBiosOverrides = false;
         SelectedBiosOverrideIndex = 0;
+        IsBrowsingDisabledDeviceTypes = false;
+        SelectedDeviceTypeCheckIndex = 0;
         SelectedGame = null;
     }
 
@@ -470,6 +530,8 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         SelectedCategoryOptionIndex = 0;
         IsBrowsingBiosOverrides = false;
         SelectedBiosOverrideIndex = 0;
+        IsBrowsingDisabledDeviceTypes = false;
+        SelectedDeviceTypeCheckIndex = 0;
     }
 
     [RelayCommand]
@@ -626,6 +688,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Players = game.Players, IsFavorite = game.IsFavorite,
             BezelOverridePath = game.BezelOverridePath,
             BiosOverridePaths = game.BiosOverridePaths,
+            DisabledDeviceTypes = game.DisabledDeviceTypes,
             Media = new GameMedia
             {
                 CoverPath      = cover      ?? game.Media.CoverPath,

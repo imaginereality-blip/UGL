@@ -62,5 +62,22 @@
                        FontWeight="SemiBold"/>
         </Border>
 
+        <!-- Update notification — shown after a background check finds a new
+             version. Stays visible (not auto-hidden) until Settings is opened,
+             since it's more actionable than the playlist/launch-error toasts and
+             easy to miss if it vanished on its own after a few seconds. -->
+        <Border VerticalAlignment="Top"
+                HorizontalAlignment="Center"
+                Margin="0,24,0,0"
+                Padding="20,10"
+                CornerRadius="6"
+                Background="#CC2266CC"
+                IsVisible="{Binding IsUpdateNotificationVisible}">
+            <TextBlock Text="{Binding UpdateNotificationText}"
+                       Foreground="White"
+                       FontSize="16"
+                       FontWeight="SemiBold"/>
+        </Border>
+
     </Panel>
 </Window>

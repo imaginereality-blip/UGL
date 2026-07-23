@@ -5,7 +5,7 @@ using UGL.Core.Models;
 
 namespace UGL.Data;
 
-internal sealed class JsonAudioPlaylistRepository : IAudioPlaylistRepository
+public sealed class JsonAudioPlaylistRepository : IAudioPlaylistRepository
 {
     private readonly ILogger<JsonAudioPlaylistRepository> _logger;
     private readonly string _path;
@@ -80,8 +80,10 @@ internal sealed class JsonAudioPlaylistRepository : IAudioPlaylistRepository
             if (_playlists is not null) return;
             if (!File.Exists(_path))
             {
-                // Seed with an empty global playlist on first run.
-                _playlists = [new AudioPlaylist { Id = "global", Name = "Global Music" }];
+                // Seed with an empty global playlist on first run — IsGlobal, not the
+                // old special "global" Id convention, is what makes this THE global
+                // playlist under the new model.
+                _playlists = [new AudioPlaylist { Id = Guid.NewGuid().ToString("N"), Name = "My Playlist", IsGlobal = true }];
                 return;
             }
             await using var stream = File.OpenRead(_path);

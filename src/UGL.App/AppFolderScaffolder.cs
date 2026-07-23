@@ -73,11 +73,67 @@ internal static class AppFolderScaffolder
             "(for example, a 4:3 game on a 16:9 display). Configure a bezel\r\n" +
             "per system (as a default) or per game (as an override) in\r\n" +
             "Settings.");
+
+        WriteReadmeIfMissing(Path.Combine(root, "media"),
+            "This folder holds all the artwork, video, and audio UGL displays\r\n" +
+            "and plays. You don't usually need to drop files in here directly —\r\n" +
+            "when you Browse to an image/video/sound file anywhere in Settings,\r\n" +
+            "UGL copies it into the right spot below automatically.\r\n" +
+            "\r\n" +
+            "  categories\\           Category card art (Home Menu)\r\n" +
+            "  games\\covers\\         Game cover art\r\n" +
+            "  games\\video\\          Game preview video, plays when a game is selected\r\n" +
+            "  games\\logos\\          Game logo/wheel art\r\n" +
+            "  games\\marquees\\       Game marquee art\r\n" +
+            "  games\\screenshots\\    Game screenshots\r\n" +
+            "  sounds\\               Navigate/confirm/back/error sound effects\r\n" +
+            "  music\\                Background music tracks (Settings -> Audio)\r\n" +
+            "  themes\\               UI themes\r\n");
+
+        // A single, ordered overview at the app's own root — not tucked inside any
+        // one folder — since a first-time user extracting the portable ZIP sees this
+        // before they've even opened any sub-folder, let alone the app itself.
+        WriteReadmeIfMissing(root, GettingStartedText, fileName: "START HERE.txt");
     }
 
-    private static void WriteReadmeIfMissing(string folder, string contents)
+    private const string GettingStartedText =
+        "Welcome to UltimateGameLauncher (UGL)!\r\n" +
+        "\r\n" +
+        "This is a portable app — everything it needs lives in the folders\r\n" +
+        "right next to this file. Here's the recommended order to set it up:\r\n" +
+        "\r\n" +
+        "1. EMULATORS\r\n" +
+        "   Put your emulator(s) in the emulators\\ folder (or note where they\r\n" +
+        "   already are — they don't have to move). See emulators\\README.txt.\r\n" +
+        "\r\n" +
+        "2. ROMS\r\n" +
+        "   Put your ROM files in roms\\, one sub-folder per system\r\n" +
+        "   (e.g. roms\\nes\\, roms\\snes\\). See roms\\README.txt.\r\n" +
+        "\r\n" +
+        "3. BIOS FILES (if any of your systems need them)\r\n" +
+        "   Put them in bios\\. See bios\\README.txt.\r\n" +
+        "\r\n" +
+        "4. RUN UGL.exe AND OPEN SETTINGS\r\n" +
+        "   Press Start on a controller (or click the gear icon) to open\r\n" +
+        "   Settings. Add your systems and emulators under Settings -> Systems,\r\n" +
+        "   pointing at the ROM/emulator/BIOS locations from steps 1-3.\r\n" +
+        "\r\n" +
+        "5. ADD GAMES\r\n" +
+        "   Under Settings -> Games, add each game and Browse to its ROM file\r\n" +
+        "   and cover art — UGL organizes the art into media\\ automatically.\r\n" +
+        "\r\n" +
+        "6. OPTIONAL EXTRAS\r\n" +
+        "   - Category art:      Settings -> Categories\r\n" +
+        "   - Background music:  Settings -> Audio\r\n" +
+        "   - Bezels:             Settings -> Systems (per system) or per game\r\n" +
+        "   - Light gun/lighting: Settings -> Output Hooks (see addons\\README.txt)\r\n" +
+        "\r\n" +
+        "That's it — everything else (favorites, playlists, updates) is\r\n" +
+        "discoverable from inside Settings once you're up and running.\r\n";
+
+    private static void WriteReadmeIfMissing(string folder, string contents, string fileName = "README.txt")
     {
-        var path = Path.Combine(folder, "README.txt");
+        var path = Path.Combine(folder, fileName);
         if (File.Exists(path)) return;
         try { File.WriteAllText(path, contents); }
         catch { /* non-critical — a missing README never blocks startup */ }

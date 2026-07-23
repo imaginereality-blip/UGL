@@ -38,6 +38,7 @@ public sealed partial class HomeMenuViewModel : ObservableObject
 
     [ObservableProperty] private bool _isLoading = true;
     [ObservableProperty] private string _selectedCategoryLabel = string.Empty;
+    [ObservableProperty] private string _selectedCategoryId = string.Empty;
 
     public event Func<Category, Task>? CategoryConfirmed;
 
@@ -304,5 +305,6 @@ public sealed partial class HomeMenuViewModel : ObservableObject
             VisibleCards.RemoveAt(VisibleCards.Count - 1);
 
         SelectedCategoryLabel = _allCategories[_categoryIndex].Label;
+        SelectedCategoryId = _allCategories[_categoryIndex].Id;
     }
 }

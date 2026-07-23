@@ -7,14 +7,46 @@ using UGL.Core.Models;
 
 namespace UGL.App.ViewModels.Config;
 
+/// <summary>One category checkbox in a playlist's category-assignment grid.</summary>
+public sealed partial class PlaylistCategoryCheckItem : ObservableObject
+{
+    public string Id { get; }
+    public string Label { get; }
+    [ObservableProperty] private bool _isChecked;
+    [ObservableProperty] private bool _isHighlighted;
+
+    public PlaylistCategoryCheckItem(string id, string label)
+    {
+        Id = id;
+        Label = label;
+    }
+}
+
+/// <summary>One track entry shown in the Available or Assigned pane.</summary>
+public sealed partial class PlaylistTrackItem : ObservableObject
+{
+    public string Id { get; }
+    public string Name { get; }
+    [ObservableProperty] private bool _isHighlighted;
+
+    public PlaylistTrackItem(string id, string name)
+    {
+        Id = id;
+        Name = name;
+    }
+}
+
 public sealed partial class AudioConfigViewModel : ObservableObject
 {
-    private readonly IAudioPlaylistRepository _audioRepo;
+    private readonly IAudioPlaylistRepository _playlistRepo;
+    private readonly IAudioTrackRepository _trackRepo;
     private readonly IConfigurationService _config;
     private readonly IAudioService _audioService;
+    private readonly VirtualKeyboardViewModel _virtualKeyboard;
     private readonly ILogger<AudioConfigViewModel> _logger;
 
     // ── Tab selection ──────────────────────────────────────────────────────
+    // Two tabs: Music (playlists + shared track library, combined) and Sounds.
     [ObservableProperty] private bool _isMusicTabActive = true;
     [ObservableProperty] private bool _isSoundsTabActive;
 
@@ -24,16 +56,28 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     [ObservableProperty] private float _masterMusicVolume = 0.5f;
     [ObservableProperty] private float _masterSoundVolume = 1.0f;
 
-    // ── Playlist management ────────────────────────────────────────────────
+    // ── Playlists ──────────────────────────────────────────────────────────
     public ObservableCollection<AudioPlaylist> Playlists { get; } = [];
     [ObservableProperty] private AudioPlaylist? _selectedPlaylist;
-    public ObservableCollection<string> SelectedPlaylistTracks { get; } = [];
-    [ObservableProperty] private float _playlistVolume = 0.5f;
-    [ObservableProperty] private bool _playlistShuffle = true;
 
-    // ── Category overrides ─────────────────────────────────────────────────
-    public ObservableCollection<Category> Categories { get; } = [];
-    [ObservableProperty] private Category? _selectedCategory;
+    // Editable copies of the selected playlist's fields — not written back to the
+    // playlist itself until Save, same reasoning as every other editor in Settings.
+    [ObservableProperty] private string _editPlaylistName = string.Empty;
+    [ObservableProperty] private bool _editPlaylistIsGlobal;
+    [ObservableProperty] private float _editPlaylistVolume = 0.5f;
+    [ObservableProperty] private bool _editPlaylistShuffle = true;
+    public ObservableCollection<PlaylistCategoryCheckItem> EditPlaylistCategories { get; } = [];
+
+    // ── Track library + assignment ──────────────────────────────────────────
+    public ObservableCollection<AudioTrack> Library { get; } = [];
+
+    /// <summary>Tracks NOT currently in the selected playlist — drag to Assigned, or
+    /// Confirm while this pane is focused, to add.</summary>
+    public ObservableCollection<PlaylistTrackItem> AvailableTracks { get; } = [];
+
+    /// <summary>Tracks currently in the selected playlist — drag to Available, or
+    /// Confirm while this pane is focused, to remove.</summary>
+    public ObservableCollection<PlaylistTrackItem> AssignedTracks { get; } = [];
 
     // ── System sound file paths ────────────────────────────────────────────
     [ObservableProperty] private string _soundNavigatePath = string.Empty;
@@ -48,55 +92,86 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     // ── Music tab field navigation ───────────────────────────────────────
-    // Two zones, same convention as the Categories tab: IsMusicListFocused=true means
-    // Up/Down browses the Playlists list (original behavior); false means Up/Down
-    // cycles the flat field sequence below. Right from the list enters field mode;
-    // Up at field position 0 returns to the list.
-    [ObservableProperty] private bool _isMusicListFocused = true;
+    // Single flat sequence — simpler and lower-risk than true left/right zone
+    // navigation, at the cost of a longer Up/Down sequence.
     [ObservableProperty] private int _musicFocusIndex;
-    private const int MusicPositionCount = 9;
-    // 0 EnableBackgroundMusic, 1 MasterMusicVolume, 2 Category override combo,
-    // 3 Use/Create-for-Category button, 4 PlaylistVolume, 5 PlaylistShuffle,
-    // 6 Tracks (enters track sub-list), 7 Add Tracks button, 8 Save button.
+    // 0 EnableBackgroundMusic, 1 MasterMusicVolume, 2 Playlist selector,
+    // 3 New Playlist, 4 Name, 5 IsGlobal, 6 Categories (sub-mode), 7 Volume,
+    // 8 Shuffle, 9 Delete Playlist, 10 Add Track to Library, 11 Available Tracks
+    // (sub-mode), 12 Assigned Tracks (sub-mode). Save/Cancel are always-visible
+    // buttons reached the same way (14/15) — see below.
+    private const int SavePosition = 13;
+    private const int CancelPosition = 14;
+    private const int MusicPositionCountTotal = 15;
 
-    // Track sub-list — entered via Confirm at MusicFocusIndex 6, exited via Back.
-    [ObservableProperty] private bool _isTrackListFocused;
-    [ObservableProperty] private int _selectedTrackIndex;
+    // Category / track sub-modes — entered via Confirm at MusicFocusIndex 6/11/12.
+    [ObservableProperty] private bool _isCategoriesSubModeFocused;
+    [ObservableProperty] private int _selectedCategoryCheckIndex;
+    [ObservableProperty] private bool _isAvailableTracksSubModeFocused;
+    [ObservableProperty] private int _selectedAvailableTrackIndex;
+    [ObservableProperty] private bool _isAssignedTracksSubModeFocused;
+    [ObservableProperty] private int _selectedAssignedTrackIndex;
 
-    public bool IsEnableMusicFocused        => !IsMusicListFocused && MusicFocusIndex == 0;
-    public bool IsMasterMusicVolumeFocused  => !IsMusicListFocused && MusicFocusIndex == 1;
-    public bool IsCategoryOverrideFocused   => !IsMusicListFocused && MusicFocusIndex == 2;
-    public bool IsUseForCategoryFocused     => !IsMusicListFocused && MusicFocusIndex == 3;
-    public bool IsPlaylistVolumeFocused     => !IsMusicListFocused && MusicFocusIndex == 4;
-    public bool IsPlaylistShuffleFocused    => !IsMusicListFocused && MusicFocusIndex == 5;
-    public bool IsTracksFocused             => !IsMusicListFocused && MusicFocusIndex == 6;
-    public bool IsAddTracksFocused          => !IsMusicListFocused && MusicFocusIndex == 7;
-    public bool IsSaveMusicFocused          => !IsMusicListFocused && MusicFocusIndex == 8;
+    public bool IsEnableMusicFocused    => MusicFocusIndex == 0;
+    public bool IsMasterMusicVolumeFocused => MusicFocusIndex == 1;
+    public bool IsPlaylistSelectorFocused => MusicFocusIndex == 2;
+    public bool IsNewPlaylistFocused    => MusicFocusIndex == 3;
+    public bool IsPlaylistNameFocused   => MusicFocusIndex == 4;
+    public bool IsPlaylistGlobalFocused => MusicFocusIndex == 5;
+    public bool IsPlaylistCategoriesFocused => MusicFocusIndex == 6;
+    public bool IsPlaylistVolumeFocused => MusicFocusIndex == 7;
+    public bool IsPlaylistShuffleFocused => MusicFocusIndex == 8;
+    public bool IsDeletePlaylistFocused  => MusicFocusIndex == 9;
+    public bool IsAddTrackFocused       => MusicFocusIndex == 10;
+    public bool IsAvailableTracksFocused => MusicFocusIndex == 11;
+    public bool IsAssignedTracksFocused => MusicFocusIndex == 12;
+    public bool IsSaveMusicFocused      => MusicFocusIndex == SavePosition;
+    public bool IsCancelMusicFocused    => MusicFocusIndex == CancelPosition;
 
-    partial void OnMusicFocusIndexChanged(int value)
+    partial void OnMusicFocusIndexChanged(int value) => RaiseMusicFocusChanged();
+
+    private void RaiseMusicFocusChanged()
     {
         OnPropertyChanged(nameof(IsEnableMusicFocused));
         OnPropertyChanged(nameof(IsMasterMusicVolumeFocused));
-        OnPropertyChanged(nameof(IsCategoryOverrideFocused));
-        OnPropertyChanged(nameof(IsUseForCategoryFocused));
+        OnPropertyChanged(nameof(IsPlaylistSelectorFocused));
+        OnPropertyChanged(nameof(IsNewPlaylistFocused));
+        OnPropertyChanged(nameof(IsPlaylistNameFocused));
+        OnPropertyChanged(nameof(IsPlaylistGlobalFocused));
+        OnPropertyChanged(nameof(IsPlaylistCategoriesFocused));
         OnPropertyChanged(nameof(IsPlaylistVolumeFocused));
         OnPropertyChanged(nameof(IsPlaylistShuffleFocused));
-        OnPropertyChanged(nameof(IsTracksFocused));
-        OnPropertyChanged(nameof(IsAddTracksFocused));
+        OnPropertyChanged(nameof(IsDeletePlaylistFocused));
+        OnPropertyChanged(nameof(IsAddTrackFocused));
+        OnPropertyChanged(nameof(IsAvailableTracksFocused));
+        OnPropertyChanged(nameof(IsAssignedTracksFocused));
         OnPropertyChanged(nameof(IsSaveMusicFocused));
+        OnPropertyChanged(nameof(IsCancelMusicFocused));
     }
 
-    partial void OnIsMusicListFocusedChanged(bool value)
+    partial void OnIsCategoriesSubModeFocusedChanged(bool value) => RefreshCategoryHighlight();
+    partial void OnSelectedCategoryCheckIndexChanged(int value) => RefreshCategoryHighlight();
+    partial void OnIsAvailableTracksSubModeFocusedChanged(bool value) => RefreshAvailableTrackHighlight();
+    partial void OnSelectedAvailableTrackIndexChanged(int value) => RefreshAvailableTrackHighlight();
+    partial void OnIsAssignedTracksSubModeFocusedChanged(bool value) => RefreshAssignedTrackHighlight();
+    partial void OnSelectedAssignedTrackIndexChanged(int value) => RefreshAssignedTrackHighlight();
+
+    private void RefreshCategoryHighlight()
     {
-        OnPropertyChanged(nameof(IsEnableMusicFocused));
-        OnPropertyChanged(nameof(IsMasterMusicVolumeFocused));
-        OnPropertyChanged(nameof(IsCategoryOverrideFocused));
-        OnPropertyChanged(nameof(IsUseForCategoryFocused));
-        OnPropertyChanged(nameof(IsPlaylistVolumeFocused));
-        OnPropertyChanged(nameof(IsPlaylistShuffleFocused));
-        OnPropertyChanged(nameof(IsTracksFocused));
-        OnPropertyChanged(nameof(IsAddTracksFocused));
-        OnPropertyChanged(nameof(IsSaveMusicFocused));
+        for (int i = 0; i < EditPlaylistCategories.Count; i++)
+            EditPlaylistCategories[i].IsHighlighted = IsCategoriesSubModeFocused && i == SelectedCategoryCheckIndex;
+    }
+
+    private void RefreshAvailableTrackHighlight()
+    {
+        for (int i = 0; i < AvailableTracks.Count; i++)
+            AvailableTracks[i].IsHighlighted = IsAvailableTracksSubModeFocused && i == SelectedAvailableTrackIndex;
+    }
+
+    private void RefreshAssignedTrackHighlight()
+    {
+        for (int i = 0; i < AssignedTracks.Count; i++)
+            AssignedTracks[i].IsHighlighted = IsAssignedTracksSubModeFocused && i == SelectedAssignedTrackIndex;
     }
 
     // ── Sounds tab field highlight ───────────────────────────────────────
@@ -134,18 +209,21 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsSaveSoundsFocused));
     }
 
-    public event Func<string, string[], Task<IReadOnlyList<string>>>? BrowseFilesRequested;
     public event Func<string, string[], Task<string?>>? BrowseFileRequested;
 
     public AudioConfigViewModel(
-        IAudioPlaylistRepository audioRepo,
+        IAudioPlaylistRepository playlistRepo,
+        IAudioTrackRepository trackRepo,
         IConfigurationService config,
         IAudioService audioService,
+        VirtualKeyboardViewModel virtualKeyboard,
         ILogger<AudioConfigViewModel> logger)
     {
-        _audioRepo = audioRepo;
+        _playlistRepo = playlistRepo;
+        _trackRepo = trackRepo;
         _config = config;
         _audioService = audioService;
+        _virtualKeyboard = virtualKeyboard;
         _logger = logger;
     }
 
@@ -164,14 +242,16 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         EnableVideoPreviewAudio = _config.Settings.VideoPreviewAudio;
         VideoPreviewVolume      = _config.Settings.VideoPreviewVolume;
 
-        var playlists = await _audioRepo.GetAllAsync();
+        var playlists = await _playlistRepo.GetAllAsync();
         Playlists.Clear();
         foreach (var p in playlists) Playlists.Add(p);
-        SelectedPlaylist = Playlists.FirstOrDefault(p => p.Id == "global") ?? Playlists.FirstOrDefault();
 
-        var categories = await _config.GetCategoriesAsync();
-        Categories.Clear();
-        foreach (var c in categories) Categories.Add(c);
+        var tracks = await _trackRepo.GetAllAsync();
+        Library.Clear();
+        foreach (var t in tracks) Library.Add(t);
+
+        SelectedPlaylist = Playlists.FirstOrDefault(p => p.IsGlobal) ?? Playlists.FirstOrDefault();
+        await LoadPlaylistIntoEditorAsync(SelectedPlaylist);
     }
 
     // ── Tab switching ──────────────────────────────────────────────────────
@@ -179,38 +259,89 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     [RelayCommand]
     private void SelectMusicTab()
     {
-        IsMusicTabActive  = true;
+        IsMusicTabActive = true;
         IsSoundsTabActive = false;
     }
 
     [RelayCommand]
     private void SelectSoundsTab()
     {
-        IsMusicTabActive  = false;
+        IsMusicTabActive = false;
         IsSoundsTabActive = true;
     }
 
-    /// <summary>Dedicated LB/RB sub-tab switching (Music ↔ Sounds), always available
-    /// regardless of current field focus — separate from Left/Right, which also
-    /// switches tabs from the list but is overloaded to adjust values in field mode.</summary>
     public void SwitchSubTabLeft() => SelectMusicTab();
     public void SwitchSubTabRight() => SelectSoundsTab();
 
-    // ── Playlist ───────────────────────────────────────────────────────────
+    // ── Playlist editing ────────────────────────────────────────────────────
 
-    partial void OnSelectedPlaylistChanged(AudioPlaylist? value)
+    partial void OnSelectedPlaylistChanged(AudioPlaylist? value) => _ = LoadPlaylistIntoEditorAsync(value);
+
+    /// <summary>Categories are re-fetched every time a playlist is loaded for
+    /// editing (not just once when Settings opens), so a category added or renamed
+    /// while Audio is already open shows up here without needing to close and
+    /// reopen Settings.</summary>
+    private async Task LoadPlaylistIntoEditorAsync(AudioPlaylist? playlist)
     {
-        SelectedPlaylistTracks.Clear();
-        if (value is null) return;
-        foreach (var t in value.Tracks) SelectedPlaylistTracks.Add(t);
-        PlaylistVolume  = value.Volume;
-        PlaylistShuffle = value.Shuffle;
-        SelectedTrackIndex = 0;
+        EditPlaylistName = playlist?.Name ?? string.Empty;
+        EditPlaylistIsGlobal = playlist?.IsGlobal ?? false;
+        EditPlaylistVolume = playlist?.Volume ?? 0.5f;
+        EditPlaylistShuffle = playlist?.Shuffle ?? true;
+
+        var categories = await _config.GetCategoriesAsync();
+        var checkedCategoryIds = new HashSet<string>(playlist?.CategoryIds ?? [], StringComparer.OrdinalIgnoreCase);
+        EditPlaylistCategories.Clear();
+        foreach (var c in categories)
+            EditPlaylistCategories.Add(new PlaylistCategoryCheckItem(c.Id, c.Label) { IsChecked = checkedCategoryIds.Contains(c.Id) });
+
+        var assignedTrackIds = new HashSet<string>(playlist?.TrackIds ?? [], StringComparer.OrdinalIgnoreCase);
+        AvailableTracks.Clear();
+        AssignedTracks.Clear();
+        foreach (var track in Library)
+        {
+            var item = new PlaylistTrackItem(track.Id, track.Name);
+            if (assignedTrackIds.Contains(track.Id)) AssignedTracks.Add(item);
+            else AvailableTracks.Add(item);
+        }
+
+        IsCategoriesSubModeFocused = false;
+        IsAvailableTracksSubModeFocused = false;
+        IsAssignedTracksSubModeFocused = false;
+        SelectedCategoryCheckIndex = 0;
+        SelectedAvailableTrackIndex = 0;
+        SelectedAssignedTrackIndex = 0;
+    }
+
+    /// <summary>Moves a track from Available to Assigned — used by both the
+    /// controller sub-mode (Confirm) and drag-and-drop (dropping onto the Assigned
+    /// pane).</summary>
+    public void AssignTrack(string trackId)
+    {
+        var item = AvailableTracks.FirstOrDefault(t => t.Id == trackId);
+        if (item is null) return;
+        AvailableTracks.Remove(item);
+        AssignedTracks.Add(item);
+        if (AvailableTracks.Count > 0)
+            SelectedAvailableTrackIndex = Math.Clamp(SelectedAvailableTrackIndex, 0, AvailableTracks.Count - 1);
+        else
+            IsAvailableTracksSubModeFocused = false;
+    }
+
+    /// <summary>Moves a track from Assigned back to Available — same dual use as
+    /// AssignTrack above.</summary>
+    public void UnassignTrack(string trackId)
+    {
+        var item = AssignedTracks.FirstOrDefault(t => t.Id == trackId);
+        if (item is null) return;
+        AssignedTracks.Remove(item);
+        AvailableTracks.Add(item);
+        if (AssignedTracks.Count > 0)
+            SelectedAssignedTrackIndex = Math.Clamp(SelectedAssignedTrackIndex, 0, AssignedTracks.Count - 1);
+        else
+            IsAssignedTracksSubModeFocused = false;
     }
 
     // ── Controller navigation ────────────────────────────────────────────
-    // Music tab: two zones (list vs fields), same convention as Categories.
-    // Sounds tab: full flat field navigation, since it has no embedded list.
     public void NavigateUp()
     {
         if (IsSoundsTabActive)
@@ -219,25 +350,26 @@ public sealed partial class AudioConfigViewModel : ObservableObject
             return;
         }
 
-        // Music tab
-        if (IsMusicListFocused)
+        if (IsCategoriesSubModeFocused)
         {
-            if (Playlists.Count == 0) return;
-            int idx = SelectedPlaylist is null ? 0 : Playlists.IndexOf(SelectedPlaylist);
-            idx = (idx - 1 + Playlists.Count) % Playlists.Count;
-            SelectedPlaylist = Playlists[idx];
+            if (EditPlaylistCategories.Count == 0) return;
+            SelectedCategoryCheckIndex = (SelectedCategoryCheckIndex - 1 + EditPlaylistCategories.Count) % EditPlaylistCategories.Count;
+            return;
+        }
+        if (IsAvailableTracksSubModeFocused)
+        {
+            if (AvailableTracks.Count == 0) return;
+            SelectedAvailableTrackIndex = (SelectedAvailableTrackIndex - 1 + AvailableTracks.Count) % AvailableTracks.Count;
+            return;
+        }
+        if (IsAssignedTracksSubModeFocused)
+        {
+            if (AssignedTracks.Count == 0) return;
+            SelectedAssignedTrackIndex = (SelectedAssignedTrackIndex - 1 + AssignedTracks.Count) % AssignedTracks.Count;
             return;
         }
 
-        if (IsTrackListFocused)
-        {
-            if (SelectedPlaylistTracks.Count == 0) return;
-            SelectedTrackIndex = (SelectedTrackIndex - 1 + SelectedPlaylistTracks.Count) % SelectedPlaylistTracks.Count;
-            return;
-        }
-
-        if (MusicFocusIndex == 0) { IsMusicListFocused = true; return; }
-        MusicFocusIndex = (MusicFocusIndex - 1 + MusicPositionCount) % MusicPositionCount;
+        MusicFocusIndex = (MusicFocusIndex - 1 + MusicPositionCountTotal) % MusicPositionCountTotal;
     }
 
     public void NavigateDown()
@@ -248,23 +380,26 @@ public sealed partial class AudioConfigViewModel : ObservableObject
             return;
         }
 
-        if (IsMusicListFocused)
+        if (IsCategoriesSubModeFocused)
         {
-            if (Playlists.Count == 0) return;
-            int idx = SelectedPlaylist is null ? 0 : Playlists.IndexOf(SelectedPlaylist);
-            idx = (idx + 1) % Playlists.Count;
-            SelectedPlaylist = Playlists[idx];
+            if (EditPlaylistCategories.Count == 0) return;
+            SelectedCategoryCheckIndex = (SelectedCategoryCheckIndex + 1) % EditPlaylistCategories.Count;
+            return;
+        }
+        if (IsAvailableTracksSubModeFocused)
+        {
+            if (AvailableTracks.Count == 0) return;
+            SelectedAvailableTrackIndex = (SelectedAvailableTrackIndex + 1) % AvailableTracks.Count;
+            return;
+        }
+        if (IsAssignedTracksSubModeFocused)
+        {
+            if (AssignedTracks.Count == 0) return;
+            SelectedAssignedTrackIndex = (SelectedAssignedTrackIndex + 1) % AssignedTracks.Count;
             return;
         }
 
-        if (IsTrackListFocused)
-        {
-            if (SelectedPlaylistTracks.Count == 0) return;
-            SelectedTrackIndex = (SelectedTrackIndex + 1) % SelectedPlaylistTracks.Count;
-            return;
-        }
-
-        MusicFocusIndex = (MusicFocusIndex + 1) % MusicPositionCount;
+        MusicFocusIndex = (MusicFocusIndex + 1) % MusicPositionCountTotal;
     }
 
     public void NavigateLeft()
@@ -273,29 +408,19 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         {
             if (SoundsFocusIndex == 1) { MasterSoundVolume = Math.Max(0f, MasterSoundVolume - 0.05f); return; }
             if (SoundsFocusIndex == 11) { VideoPreviewVolume = Math.Max(0f, VideoPreviewVolume - 0.05f); return; }
-            SelectMusicTab(); // any other position — Left switches back to Music, not just position 0
+            SwitchSubTabLeft();
             return;
         }
 
-        // Music tab
-        if (IsTrackListFocused)
-        {
-            MoveTrackUp(CurrentTrackOrNull());
-            return;
-        }
+        if (IsCategoriesSubModeFocused || IsAvailableTracksSubModeFocused || IsAssignedTracksSubModeFocused) return;
 
-        if (!IsMusicListFocused)
+        switch (MusicFocusIndex)
         {
-            switch (MusicFocusIndex)
-            {
-                case 1: MasterMusicVolume = Math.Max(0f, MasterMusicVolume - 0.05f); return;
-                case 2: CycleCategoryOverride(-1); return;
-                case 4: PlaylistVolume = Math.Max(0f, PlaylistVolume - 0.05f); return;
-            }
-            return; // no-op elsewhere in field mode
+            case 1: MasterMusicVolume = Math.Max(0f, MasterMusicVolume - 0.05f); return;
+            case 2: CyclePlaylistSelector(-1); return;
+            case 7: EditPlaylistVolume = Math.Max(0f, EditPlaylistVolume - 0.05f); return;
         }
-
-        SelectSoundsTab(); // list mode: Left/Right both switch tabs, matching the Sounds tab's convention
+        SwitchSubTabLeft();
     }
 
     public void NavigateRight()
@@ -304,171 +429,166 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         {
             if (SoundsFocusIndex == 1) { MasterSoundVolume = Math.Min(1f, MasterSoundVolume + 0.05f); return; }
             if (SoundsFocusIndex == 11) { VideoPreviewVolume = Math.Min(1f, VideoPreviewVolume + 0.05f); return; }
-            return; // no-op elsewhere
-        }
-
-        // Music tab
-        if (IsTrackListFocused)
-        {
-            MoveTrackDown(CurrentTrackOrNull());
+            SwitchSubTabRight();
             return;
         }
 
-        if (IsMusicListFocused)
+        if (IsCategoriesSubModeFocused || IsAvailableTracksSubModeFocused || IsAssignedTracksSubModeFocused) return;
+
+        switch (MusicFocusIndex)
         {
-            IsMusicListFocused = false;
-            MusicFocusIndex = 0;
+            case 1: MasterMusicVolume = Math.Min(1f, MasterMusicVolume + 0.05f); return;
+            case 2: CyclePlaylistSelector(1); return;
+            case 7: EditPlaylistVolume = Math.Min(1f, EditPlaylistVolume + 0.05f); return;
+        }
+        SwitchSubTabRight();
+    }
+
+    private void CyclePlaylistSelector(int delta)
+    {
+        if (Playlists.Count == 0) return;
+        int idx = SelectedPlaylist is null ? 0 : Playlists.IndexOf(SelectedPlaylist);
+        idx = (idx + delta + Playlists.Count) % Playlists.Count;
+        SelectedPlaylist = Playlists[idx];
+    }
+
+    /// <summary>Back while any sub-mode (Categories/Available/Assigned) is focused
+    /// exits just that — same convention as every other nested list/grid in
+    /// Settings.</summary>
+    public bool TryExitSubMode()
+    {
+        if (IsCategoriesSubModeFocused) { IsCategoriesSubModeFocused = false; return true; }
+        if (IsAvailableTracksSubModeFocused) { IsAvailableTracksSubModeFocused = false; return true; }
+        if (IsAssignedTracksSubModeFocused) { IsAssignedTracksSubModeFocused = false; return true; }
+        return false;
+    }
+
+    public async Task ConfirmAsync()
+    {
+        if (IsSoundsTabActive)
+        {
+            switch (SoundsFocusIndex)
+            {
+                case 0: EnableNavigationSounds = !EnableNavigationSounds; break;
+                case 2: await BrowseNavigateSoundAsync(); break;
+                case 3: TestNavigateSound(); break;
+                case 4: await BrowseConfirmSoundAsync(); break;
+                case 5: TestConfirmSound(); break;
+                case 6: await BrowseBackSoundAsync(); break;
+                case 7: TestBackSound(); break;
+                case 8: await BrowseErrorSoundAsync(); break;
+                case 9: TestErrorSound(); break;
+                case 10: EnableVideoPreviewAudio = !EnableVideoPreviewAudio; break;
+                case 12: await SaveAsync(); break;
+                // 1, 11 (volume sliders) are adjusted via Left/Right, not Confirm.
+            }
+            return;
+        }
+
+        if (IsCategoriesSubModeFocused)
+        {
+            if (SelectedCategoryCheckIndex >= 0 && SelectedCategoryCheckIndex < EditPlaylistCategories.Count)
+                EditPlaylistCategories[SelectedCategoryCheckIndex].IsChecked = !EditPlaylistCategories[SelectedCategoryCheckIndex].IsChecked;
+            return;
+        }
+        if (IsAvailableTracksSubModeFocused)
+        {
+            if (SelectedAvailableTrackIndex >= 0 && SelectedAvailableTrackIndex < AvailableTracks.Count)
+                AssignTrack(AvailableTracks[SelectedAvailableTrackIndex].Id);
+            return;
+        }
+        if (IsAssignedTracksSubModeFocused)
+        {
+            if (SelectedAssignedTrackIndex >= 0 && SelectedAssignedTrackIndex < AssignedTracks.Count)
+                UnassignTrack(AssignedTracks[SelectedAssignedTrackIndex].Id);
             return;
         }
 
         switch (MusicFocusIndex)
         {
-            case 1: MasterMusicVolume = Math.Min(1f, MasterMusicVolume + 0.05f); return;
-            case 2: CycleCategoryOverride(1); return;
-            case 4: PlaylistVolume = Math.Min(1f, PlaylistVolume + 0.05f); return;
-        }
-    }
-
-    private string? CurrentTrackOrNull() =>
-        SelectedTrackIndex >= 0 && SelectedTrackIndex < SelectedPlaylistTracks.Count
-            ? SelectedPlaylistTracks[SelectedTrackIndex]
-            : null;
-
-    private void CycleCategoryOverride(int delta)
-    {
-        if (Categories.Count == 0) return;
-        int idx = SelectedCategory is null ? 0 : Categories.IndexOf(SelectedCategory);
-        idx = (idx + delta + Categories.Count) % Categories.Count;
-        SelectedCategory = Categories[idx];
-    }
-
-    /// <summary>Back while the track sub-list is focused exits just that, back to the
-    /// flat field list — same reasoning as GamesConfigViewModel.TryExitCategoryOptions.</summary>
-    public bool TryExitTrackList()
-    {
-        if (!IsTrackListFocused) return false;
-        IsTrackListFocused = false;
-        return true;
-    }
-
-    public async Task ConfirmAsync()
-    {
-        if (!IsSoundsTabActive)
-        {
-            // Music tab
-            if (IsTrackListFocused)
-            {
-                var track = CurrentTrackOrNull();
-                if (track is not null) RemoveTrack(track);
-                return;
-            }
-
-            if (IsMusicListFocused) return; // playlist selection already applies live
-
-            switch (MusicFocusIndex)
-            {
-                case 0: EnableBackgroundMusic = !EnableBackgroundMusic; break;
-                case 3: SelectCategoryOverride(); break;
-                case 5: PlaylistShuffle = !PlaylistShuffle; break;
-                case 6:
-                    if (SelectedPlaylistTracks.Count > 0)
-                    {
-                        IsTrackListFocused = true;
-                        SelectedTrackIndex = Math.Clamp(SelectedTrackIndex, 0, SelectedPlaylistTracks.Count - 1);
-                    }
-                    break;
-                case 7: await AddTracksAsync(); break;
-                case 8: await SaveAsync(); break;
-                // 1, 2, 4 are adjusted via Left/Right, not Confirm.
-            }
-            return;
-        }
-
-        switch (SoundsFocusIndex)
-        {
-            case 0: EnableNavigationSounds = !EnableNavigationSounds; break;
-            case 2: await BrowseNavigateSoundAsync(); break;
-            case 3: TestNavigateSound(); break;
-            case 4: await BrowseConfirmSoundAsync(); break;
-            case 5: TestConfirmSound(); break;
-            case 6: await BrowseBackSoundAsync(); break;
-            case 7: TestBackSound(); break;
-            case 8: await BrowseErrorSoundAsync(); break;
-            case 9: TestErrorSound(); break;
-            case 10: EnableVideoPreviewAudio = !EnableVideoPreviewAudio; break;
-            case 12: await SaveAsync(); break;
-            // 1, 11 (volume sliders) are adjusted via Left/Right, not Confirm.
+            case 0: EnableBackgroundMusic = !EnableBackgroundMusic; break;
+            case 3: AddNewPlaylist(); break;
+            case 4: _virtualKeyboard.Open("Playlist Name", EditPlaylistName, v => EditPlaylistName = v); break;
+            case 5: EditPlaylistIsGlobal = !EditPlaylistIsGlobal; break;
+            case 6:
+                if (EditPlaylistCategories.Count > 0)
+                {
+                    IsCategoriesSubModeFocused = true;
+                    SelectedCategoryCheckIndex = Math.Clamp(SelectedCategoryCheckIndex, 0, EditPlaylistCategories.Count - 1);
+                }
+                break;
+            case 8: EditPlaylistShuffle = !EditPlaylistShuffle; break;
+            case 9: await DeleteSelectedPlaylistAsync(); break;
+            case 10: await BrowseAddTrackAsync(); break;
+            case 11:
+                if (AvailableTracks.Count > 0)
+                {
+                    IsAvailableTracksSubModeFocused = true;
+                    SelectedAvailableTrackIndex = Math.Clamp(SelectedAvailableTrackIndex, 0, AvailableTracks.Count - 1);
+                }
+                break;
+            case 12:
+                if (AssignedTracks.Count > 0)
+                {
+                    IsAssignedTracksSubModeFocused = true;
+                    SelectedAssignedTrackIndex = Math.Clamp(SelectedAssignedTrackIndex, 0, AssignedTracks.Count - 1);
+                }
+                break;
+            case SavePosition: await SaveAsync(); break;
+            case CancelPosition: await CancelPlaylistEditsAsync(); break;
+            // 1, 2, 7 (volume/selector) are adjusted via Left/Right, not Confirm.
         }
     }
 
     [RelayCommand]
-    private async Task AddTracksAsync()
-    {
-        if (SelectedPlaylist is null || BrowseFilesRequested is null) return;
-        var files = await BrowseFilesRequested.Invoke(
-            "Audio Files", ["*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a"]);
-        foreach (var f in files)
-        {
-            // Stored relative to the app's own folder when possible, so playback
-            // keeps working if the whole portable install moves to a different
-            // drive letter or machine — LibVlcAudioService.PlayCurrentTrack already
-            // resolves either form back to an absolute path before playing it.
-            var portable = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(f);
-            SelectedPlaylist.Tracks.Add(portable);
-            SelectedPlaylistTracks.Add(portable);
-        }
-    }
+    private async Task CancelPlaylistEditsAsync() => await LoadPlaylistIntoEditorAsync(SelectedPlaylist);
 
     [RelayCommand]
-    private void RemoveTrack(string track)
+    private void AddNewPlaylist()
     {
-        if (SelectedPlaylist is null) return;
-        var idx = SelectedPlaylistTracks.IndexOf(track);
-        SelectedPlaylist.Tracks.Remove(track);
-        SelectedPlaylistTracks.Remove(track);
-        if (SelectedPlaylistTracks.Count > 0)
-            SelectedTrackIndex = Math.Clamp(idx, 0, SelectedPlaylistTracks.Count - 1);
-        else
-            IsTrackListFocused = false; // nothing left to browse — back out to the fields
-    }
-
-    [RelayCommand]
-    private void MoveTrackUp(string? track)
-    {
-        if (track is null || SelectedPlaylist is null) return;
-        var idx = SelectedPlaylist.Tracks.IndexOf(track);
-        if (idx <= 0) return;
-        SelectedPlaylist.Tracks.RemoveAt(idx);
-        SelectedPlaylist.Tracks.Insert(idx - 1, track);
-        SelectedPlaylistTracks.Move(idx, idx - 1);
-        SelectedTrackIndex = idx - 1;
-    }
-
-    [RelayCommand]
-    private void MoveTrackDown(string? track)
-    {
-        if (track is null || SelectedPlaylist is null) return;
-        var idx = SelectedPlaylist.Tracks.IndexOf(track);
-        if (idx < 0 || idx >= SelectedPlaylist.Tracks.Count - 1) return;
-        SelectedPlaylist.Tracks.RemoveAt(idx);
-        SelectedPlaylist.Tracks.Insert(idx + 1, track);
-        SelectedPlaylistTracks.Move(idx, idx + 1);
-        SelectedTrackIndex = idx + 1;
-    }
-
-    [RelayCommand]
-    private void SelectCategoryOverride()
-    {
-        if (SelectedCategory is null) return;
-        var existing = Playlists.FirstOrDefault(p => p.Id == SelectedCategory.Id);
-        if (existing is not null) { SelectedPlaylist = existing; return; }
         var newPlaylist = new AudioPlaylist
         {
-            Id   = SelectedCategory.Id,
-            Name = $"{SelectedCategory.Label} Music",
+            Id = Guid.NewGuid().ToString("N"),
+            Name = "New Playlist",
         };
         Playlists.Add(newPlaylist);
         SelectedPlaylist = newPlaylist;
+        MusicFocusIndex = 4; // land on the Name field, ready to rename
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedPlaylistAsync()
+    {
+        if (SelectedPlaylist is null) return;
+        var removedId = SelectedPlaylist.Id;
+        Playlists.Remove(SelectedPlaylist);
+        await _playlistRepo.DeleteAsync(removedId);
+        await _playlistRepo.SaveAsync();
+        SelectedPlaylist = Playlists.FirstOrDefault();
+        StatusMessage = "Playlist deleted.";
+        _logger.LogInformation("Playlist deleted: {Id}", removedId);
+    }
+
+    // ── Track library management ────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task BrowseAddTrackAsync()
+    {
+        if (BrowseFileRequested is null) return;
+        var path = await BrowseFileRequested.Invoke("Audio Files", ["*.mp3", "*.ogg", "*.wav", "*.flac", "*.m4a"]);
+        if (path is null) return;
+
+        var track = new AudioTrack
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = System.IO.Path.GetFileNameWithoutExtension(path),
+            Path = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(path),
+        };
+        Library.Add(track);
+        await _trackRepo.AddOrUpdateAsync(track);
+        await _trackRepo.SaveAsync();
+
+        AvailableTracks.Add(new PlaylistTrackItem(track.Id, track.Name));
     }
 
     // ── Sound file browse ──────────────────────────────────────────────────
@@ -492,11 +612,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     private async Task<string?> BrowseSoundAsync()
     {
         if (BrowseFileRequested is null) return null;
-        var path = await BrowseFileRequested.Invoke(
-            "Sound Files", ["*.wav", "*.ogg", "*.mp3"]);
-        // Stored relative to the app's own folder when possible — see AddTracksAsync
-        // above for the same reasoning; LibVlcAudioService.PlaySoundFromPath already
-        // resolves either form back to an absolute path before playing it.
+        var path = await BrowseFileRequested.Invoke("Sound Files", ["*.wav", "*.ogg", "*.mp3"]);
         return path is not null ? UGL.Core.Utilities.PortablePathHelper.ToPortablePath(path) : null;
     }
 
@@ -514,21 +630,28 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     {
         if (SelectedPlaylist is not null)
         {
-            SelectedPlaylist.Volume  = PlaylistVolume;
-            SelectedPlaylist.Shuffle = PlaylistShuffle;
+            SelectedPlaylist.Name = EditPlaylistName.Trim();
+            SelectedPlaylist.IsGlobal = EditPlaylistIsGlobal;
+            SelectedPlaylist.Volume = EditPlaylistVolume;
+            SelectedPlaylist.Shuffle = EditPlaylistShuffle;
+            SelectedPlaylist.CategoryIds = EditPlaylistCategories.Where(c => c.IsChecked).Select(c => c.Id).ToList();
+            SelectedPlaylist.TrackIds = AssignedTracks.Select(t => t.Id).ToList();
+
+            // IsGlobal is exclusive in practice — only one playlist should be THE
+            // global one at a time — enforced here, not by the model itself.
+            if (SelectedPlaylist.IsGlobal)
+                foreach (var other in Playlists.Where(p => p.Id != SelectedPlaylist.Id))
+                    other.IsGlobal = false;
         }
 
         foreach (var p in Playlists)
-            await _audioRepo.AddOrUpdateAsync(p);
-
-        await _audioRepo.SaveAsync();
+            await _playlistRepo.AddOrUpdateAsync(p);
+        await _playlistRepo.SaveAsync();
 
         // Persist sound settings back to AppSettings / settings.json.
         // AppSettings properties are mutable (`set`, not `init`), but every field must
-        // still be carried over explicitly here — this reconstruction was previously
-        // missing EmulatorsRootPath/AddonsRootPath/LogsRootPath and all four
-        // CardHighlight* fields, which meant saving Audio settings silently reset the
-        // Paths tab and Card Highlight tab back to their defaults every time.
+        // still be carried over explicitly here — every field, since a reconstruction
+        // like this silently resets anything left out.
         var s = _config.Settings;
         var updated = new AppSettings
         {
@@ -561,7 +684,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
 
         await _config.UpdateSettingsAsync(updated);
 
-        // Apply volume changes immediately without restart
+        // Apply volume/enable changes immediately without restart
         _audioService.IsMusicEnabled  = EnableBackgroundMusic;
         _audioService.IsSoundEnabled  = EnableNavigationSounds;
         _audioService.MusicVolume     = MasterMusicVolume;

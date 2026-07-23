@@ -22,6 +22,23 @@ public sealed partial class CategoryCheckItem : ObservableObject
     }
 }
 
+/// <summary>One selectable peripheral-type checkbox in the game editor's disabled-
+/// peripherals list — checking it means this type is silently ignored while this
+/// game is running (see ProcessEmulatorLauncher/RawInputService).</summary>
+public sealed partial class DeviceTypeCheckItem : ObservableObject
+{
+    public RawInputDeviceType Type { get; }
+    public string Label { get; }
+    [ObservableProperty] private bool _isChecked;
+    [ObservableProperty] private bool _isHighlighted;
+
+    public DeviceTypeCheckItem(RawInputDeviceType type, string label)
+    {
+        Type = type;
+        Label = label;
+    }
+}
+
 /// <summary>
 /// Editable form backing model for a single game.
 /// Populated from an existing Game on edit, or blank on add.
@@ -62,6 +79,33 @@ public sealed partial class GameEditViewModel : ObservableObject
     /// <summary>Rare per-game override of the emulator's default BIOS file list. Empty
     /// in the overwhelming majority of cases.</summary>
     public ObservableCollection<string> BiosOverridePaths { get; } = [];
+
+    /// <summary>
+    /// One checkbox per assignable peripheral type (the same set RawInputService
+    /// considers meaningful to assign a player index to — Gamepad, Lightgun, Wheel,
+    /// Spinner, Trackball; not Unknown/Keyboard/Mouse). Checking one disables input
+    /// from that type of device while this game is running — e.g. Lightgun and
+    /// Wheel for a fighting game, so they can't interfere. Nearly always all
+    /// unchecked. Fixed list, not data-driven — unlike categories, these types
+    /// don't change at runtime, so this is populated once in the constructor rather
+    /// than synced from elsewhere.
+    /// </summary>
+    public ObservableCollection<DeviceTypeCheckItem> DisabledDeviceTypeOptions { get; } = [];
+
+    public GameEditViewModel()
+    {
+        foreach (var type in new[]
+        {
+            RawInputDeviceType.Gamepad,
+            RawInputDeviceType.Lightgun,
+            RawInputDeviceType.Wheel,
+            RawInputDeviceType.Spinner,
+            RawInputDeviceType.Trackball,
+        })
+        {
+            DisabledDeviceTypeOptions.Add(new DeviceTypeCheckItem(type, type.ToString()));
+        }
+    }
 
     // Validation
     [ObservableProperty] private string _validationError = string.Empty;
@@ -111,6 +155,10 @@ public sealed partial class GameEditViewModel : ObservableObject
         BiosOverridePaths.Clear();
         foreach (var bios in game.BiosOverridePaths) BiosOverridePaths.Add(bios);
 
+        var disabledTypes = new HashSet<RawInputDeviceType>(game.DisabledDeviceTypes);
+        foreach (var option in DisabledDeviceTypeOptions)
+            option.IsChecked = disabledTypes.Contains(option.Type);
+
         var checkedIds = new HashSet<string>(game.CategoryIds, StringComparer.OrdinalIgnoreCase);
         foreach (var option in CategoryOptions)
             option.IsChecked = checkedIds.Contains(option.Id);
@@ -153,6 +201,10 @@ public sealed partial class GameEditViewModel : ObservableObject
             BezelOverridePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(BezelOverridePath.Trim()),
             BiosOverridePaths = BiosOverridePaths
                 .Select(p => UGL.Core.Utilities.PortablePathHelper.ToPortablePath(p))
+                .ToList(),
+            DisabledDeviceTypes = DisabledDeviceTypeOptions
+                .Where(o => o.IsChecked)
+                .Select(o => o.Type)
                 .ToList(),
         };
     }
