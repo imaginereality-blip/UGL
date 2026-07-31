@@ -234,11 +234,27 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         await _lock.WaitAsync();
         try
         {
-            if (_currentProcess is null || _currentProcess.HasExited) return;
+            // Captured into a local rather than re-reading the field below — Kill()
+            // causes the process to exit almost immediately, and OnProcessExited (which
+            // runs on its own ThreadPool callback thread, entirely outside this lock,
+            // since Process.Exited fires independently of it) can null out and dispose
+            // _currentProcess while this method is still awaiting WaitForExitAsync on
+            // it. Using a local avoids racing against the field itself; the process
+            // object being disposed out from under the await is still possible and is
+            // still handled below.
+            var process = _currentProcess;
+            if (process is null || process.HasExited) return;
 
-            _logger.LogInformation("Killing emulator process (PID {Pid}).", _currentProcess.Id);
-            _currentProcess.Kill(entireProcessTree: true);
-            await _currentProcess.WaitForExitAsync();
+            _logger.LogInformation("Killing emulator process (PID {Pid}).", process.Id);
+            process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected race: OnProcessExited already tore down the process object
+            // (it had, in fact, just been killed) before WaitForExitAsync got to
+            // observe it — not a real failure, so no warning-level noise for it.
+            _logger.LogDebug("Process object was already torn down by OnProcessExited while awaiting exit — expected race, not an error.");
         }
         catch (Exception ex)
         {
@@ -498,20 +514,21 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
     /// <summary>
     /// Polls for the launched game/emulator's main window and brings it to the
-    /// foreground whenever a new one appears — deliberately keeps polling for the
-    /// whole timeout window (not just until the first success) rather than stopping
-    /// after one activation, since a hand-off launcher (Steam) commonly shows a
-    /// short-lived splash/dialog window first whose handle is different from the
-    /// eventual real game window; re-checking catches the real one without needing
-    /// to guess which window is "the" window. Reads _currentProcess fresh on every
-    /// iteration (not a captured reference) so this keeps working correctly across a
-    /// hand-off swap in TrackProcessNameOverrideAsync.
+    /// foreground — deliberately keeps polling for the whole timeout window rather
+    /// than stopping after the first attempt, for two reasons confirmed in real
+    /// testing: a hand-off launcher (Steam) commonly shows a short-lived splash/
+    /// dialog window first whose handle differs from the eventual real game window,
+    /// and a single SetForegroundWindow attempt can simply fail (observed: returned
+    /// false against a real emulator window) and deserves a retry rather than being
+    /// abandoned. Reads _currentProcess fresh on every iteration (not a captured
+    /// reference) so this keeps working correctly across a hand-off swap in
+    /// TrackProcessNameOverrideAsync.
     /// </summary>
     private async Task ActivateWindowWhenReadyAsync(int launchedPid)
     {
         var deadline = DateTime.UtcNow + WindowActivationTimeout;
-        nint lastActivatedHandle = 0;
-        bool everActivated = false;
+        nint successfullyActivatedHandle = 0;
+        bool everFoundWindow = false;
 
         while (DateTime.UtcNow < deadline)
         {
@@ -531,22 +548,57 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
                 continue; // process object mid-swap/disposal — retry next tick
             }
 
-            if (handle == 0 || handle == lastActivatedHandle) continue;
-            lastActivatedHandle = handle;
-            everActivated = true;
+            // Nothing to do yet, or this exact window was already successfully
+            // activated — a *failed* attempt is deliberately not remembered here, so
+            // the same handle keeps getting retried every tick until it succeeds or
+            // the deadline passes, rather than being tried once and abandoned.
+            if (handle == 0 || handle == successfullyActivatedHandle) continue;
+            everFoundWindow = true;
 
-            if (WindowActivationNative.IsIconic(handle))
-                WindowActivationNative.ShowWindow(handle, WindowActivationNative.SW_RESTORE);
-            WindowActivationNative.BringWindowToTop(handle);
-            bool ok = WindowActivationNative.SetForegroundWindow(handle);
+            bool ok = ForceForegroundWindow(handle);
             _logger.LogInformation("Activated game window (PID {Pid}, hwnd={Handle}, success={Ok}).",
                 process.Id, handle, ok);
+
+            if (ok) successfullyActivatedHandle = handle;
         }
 
-        if (!everActivated)
+        if (!everFoundWindow)
             _logger.LogWarning(
                 "No main window ever appeared for PID {Pid} within {Timeout}s — could not bring it to the foreground.",
                 launchedPid, WindowActivationTimeout.TotalSeconds);
+    }
+
+    /// <summary>
+    /// AttachThreadInput-based foreground activation — a plain SetForegroundWindow
+    /// call (even preceded by AllowSetForegroundWindow) was confirmed insufficient in
+    /// real testing (returned false against a genuine emulator window). Temporarily
+    /// attaching UGL's calling thread's input state to whichever thread currently
+    /// owns the foreground window shares that thread's permission to change the
+    /// foreground window for the duration of the attachment — the same mechanism
+    /// used internally by Explorer/the taskbar for this exact scenario.
+    /// </summary>
+    private static bool ForceForegroundWindow(nint hWnd)
+    {
+        uint currentThreadId = WindowActivationNative.GetCurrentThreadId();
+        nint currentForeground = WindowActivationNative.GetForegroundWindow();
+        uint foregroundThreadId = WindowActivationNative.GetWindowThreadProcessId(currentForeground, out _);
+
+        bool attached = foregroundThreadId != 0
+            && foregroundThreadId != currentThreadId
+            && WindowActivationNative.AttachThreadInput(currentThreadId, foregroundThreadId, true);
+
+        try
+        {
+            if (WindowActivationNative.IsIconic(hWnd))
+                WindowActivationNative.ShowWindow(hWnd, WindowActivationNative.SW_RESTORE);
+            WindowActivationNative.BringWindowToTop(hWnd);
+            return WindowActivationNative.SetForegroundWindow(hWnd);
+        }
+        finally
+        {
+            if (attached)
+                WindowActivationNative.AttachThreadInput(currentThreadId, foregroundThreadId, false);
+        }
     }
 
     private async Task<GameSystem?> ResolveSystemAsync(string systemId)

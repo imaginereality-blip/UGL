@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using UGL.App.ViewModels;
 using UGL.Input;
@@ -52,16 +53,30 @@ public sealed partial class MainWindow : Window
                         break;
 
                     case nameof(MainWindowViewModel.IsEmulatorRunning):
-                        if (vm.IsEmulatorRunning)
+                        // MainWindowViewModel.OnEmulatorExited (the false case) is invoked
+                        // directly from ProcessEmulatorLauncher.OnProcessExited, which runs
+                        // on a raw ThreadPool thread via Process.Exited — not the UI thread.
+                        // Touching WindowState/Activate/Focus from there throws
+                        // "Call from invalid thread" and crashes the whole process (this was
+                        // a real, reproduced crash, not a hypothetical). The true case is
+                        // already always raised from the UI thread (OnGameConfirmed runs off
+                        // controller input, itself already dispatched), but routing both
+                        // through the same Post keeps this correct regardless of what calls
+                        // the setter next.
+                        bool running = vm.IsEmulatorRunning;
+                        Dispatcher.UIThread.Post(() =>
                         {
-                            WindowState = WindowState.Minimized;
-                        }
-                        else
-                        {
-                            WindowState = WindowState.FullScreen;
-                            Activate();
-                            Focus();
-                        }
+                            if (running)
+                            {
+                                WindowState = WindowState.Minimized;
+                            }
+                            else
+                            {
+                                WindowState = WindowState.FullScreen;
+                                Activate();
+                                Focus();
+                            }
+                        });
                         break;
                 }
             };
