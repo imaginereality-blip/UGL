@@ -37,6 +37,10 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
     private static readonly TimeSpan ProcessNameOverridePollInterval = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan ProcessNameOverrideTimeout      = TimeSpan.FromSeconds(60);
 
+    // ── Foreground window activation ──────────────────────────────────────────
+    private static readonly TimeSpan WindowActivationPollInterval = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan WindowActivationTimeout      = TimeSpan.FromSeconds(45);
+
     public event EventHandler<int>? EmulatorExited;
 
     public bool IsEmulatorRunning =>
@@ -196,6 +200,17 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             var effectiveDisplayMode = game.DisplayModeOverride
                 ?? (await ResolveSystemAsync(game.SystemId))?.DisplayMode;
             _displayModeService.Apply(effectiveDisplayMode);
+
+            // Bring the game's own window to the foreground. Windows only grants
+            // SetForegroundWindow to whatever the user most recently interacted with —
+            // a window that appears later (after emulator startup work, or after a
+            // launcher protocol hands off to the real game process) is routinely
+            // denied focus and just sits there until clicked manually, which breaks
+            // controller-only operation entirely. AllowSetForegroundWindow pre-
+            // authorizes this specific process; the polling loop then waits for its
+            // main window to actually exist (often not immediate) and activates it.
+            WindowActivationNative.AllowSetForegroundWindow((uint)pid);
+            _ = ActivateWindowWhenReadyAsync(pid);
 
             if (hasOverride)
                 _ = TrackProcessNameOverrideAsync(game, pid, preExistingPids);
@@ -479,6 +494,59 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
         if (idsToHide.Count > 0)
             await _hidHideService.HideAsync(idsToHide, ct);
+    }
+
+    /// <summary>
+    /// Polls for the launched game/emulator's main window and brings it to the
+    /// foreground whenever a new one appears — deliberately keeps polling for the
+    /// whole timeout window (not just until the first success) rather than stopping
+    /// after one activation, since a hand-off launcher (Steam) commonly shows a
+    /// short-lived splash/dialog window first whose handle is different from the
+    /// eventual real game window; re-checking catches the real one without needing
+    /// to guess which window is "the" window. Reads _currentProcess fresh on every
+    /// iteration (not a captured reference) so this keeps working correctly across a
+    /// hand-off swap in TrackProcessNameOverrideAsync.
+    /// </summary>
+    private async Task ActivateWindowWhenReadyAsync(int launchedPid)
+    {
+        var deadline = DateTime.UtcNow + WindowActivationTimeout;
+        nint lastActivatedHandle = 0;
+        bool everActivated = false;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(WindowActivationPollInterval);
+
+            var process = _currentProcess;
+            if (process is null || process.HasExited) return;
+
+            nint handle;
+            try
+            {
+                process.Refresh();
+                handle = process.MainWindowHandle;
+            }
+            catch (InvalidOperationException)
+            {
+                continue; // process object mid-swap/disposal — retry next tick
+            }
+
+            if (handle == 0 || handle == lastActivatedHandle) continue;
+            lastActivatedHandle = handle;
+            everActivated = true;
+
+            if (WindowActivationNative.IsIconic(handle))
+                WindowActivationNative.ShowWindow(handle, WindowActivationNative.SW_RESTORE);
+            WindowActivationNative.BringWindowToTop(handle);
+            bool ok = WindowActivationNative.SetForegroundWindow(handle);
+            _logger.LogInformation("Activated game window (PID {Pid}, hwnd={Handle}, success={Ok}).",
+                process.Id, handle, ok);
+        }
+
+        if (!everActivated)
+            _logger.LogWarning(
+                "No main window ever appeared for PID {Pid} within {Timeout}s — could not bring it to the foreground.",
+                launchedPid, WindowActivationTimeout.TotalSeconds);
     }
 
     private async Task<GameSystem?> ResolveSystemAsync(string systemId)

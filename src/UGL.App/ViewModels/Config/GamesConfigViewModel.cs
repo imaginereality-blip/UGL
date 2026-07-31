@@ -426,6 +426,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case 5: Editor.Players = Math.Max(1, Editor.Players - 1); break;
             case 22: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
             case 23: CyclePendingAssignmentDevice(-1); break;
+            case 28: _ = CycleScrapeResultAsync(-1); break;
         }
     }
 
@@ -439,6 +440,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case 5: Editor.Players = Math.Min(8, Editor.Players + 1); break;
             case 22: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
             case 23: CyclePendingAssignmentDevice(1); break;
+            case 28: _ = CycleScrapeResultAsync(1); break;
         }
     }
 
@@ -635,12 +637,31 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     // which handle the actual API calls.
     private static readonly HttpClient _imageDownloadClient = new();
 
+    // Scratch location for downloaded-but-not-yet-saved images. Deliberately inside
+    // the app's own media\ folder (not the OS temp directory) — this app is meant to
+    // stay portable, and Path.GetTempPath() always resolves to the *system* temp
+    // folder (C:\Users\...\AppData\Local\Temp) regardless of which drive UGL itself
+    // runs from, which both breaks portability and leaves orphaned files behind
+    // forever since nothing ever cleaned that location up. CopyMediaFileAsync
+    // deletes the source file from here once it's been copied to its real
+    // destination on Save (see there), so this folder stays essentially empty in
+    // normal use rather than accumulating downloads indefinitely.
+    private static string ScrapeScratchDir => Path.Combine(AppContext.BaseDirectory, "media", "_scrape_temp");
+
+    // Search results from the most recent Scrape, kept so Left/Right on the Scrape
+    // field can step through alternate matches instead of being stuck with whatever
+    // the first (possibly wrong-platform/wrong-game) result was — see CycleScrapeResultAsync.
+    private List<ScraperSearchResult> _lastScrapeResults = [];
+    private int _scrapeResultIndex;
+    private ScraperSourceType _lastScrapeSource;
+
     /// <summary>
-    /// Searches the preferred scraper source by the editor's current Title and
-    /// auto-applies the first result's metadata + cover art. There's no result-picker
-    /// UI yet — for an ambiguous title, this may pick the wrong game; StatusMessage
-    /// always reports exactly what was matched so it's obvious when to fix it
-    /// manually via Cancel and a more specific title.
+    /// Searches the preferred scraper source by the editor's current Title, narrowed
+    /// to the selected System's name so a title shared across multiple platforms
+    /// (e.g. a game ported between systems) is much less likely to match the wrong
+    /// version — and applies the first result. If that's still the wrong match,
+    /// Left/Right while this field is focused steps through the other results
+    /// (see CycleScrapeResultAsync) rather than requiring a re-search.
     /// </summary>
     [RelayCommand]
     private async Task ScrapeAsync()
@@ -653,44 +674,68 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
         var settings = await _scraperSettingsRepo.GetSettingsAsync();
         var source = settings.PreferredSource;
+        var systemName = Systems.FirstOrDefault(s => s.Id == Editor.SelectedSystemId)?.Name;
 
         StatusMessage = $"Searching {source}…";
-        var results = await _scraperService.SearchAsync(source, Editor.Title);
-        var first = results.FirstOrDefault();
-        if (first is null)
+        var results = await _scraperService.SearchAsync(source, Editor.Title, systemName);
+        _lastScrapeResults = results.ToList();
+        _lastScrapeSource = source;
+        _scrapeResultIndex = 0;
+
+        if (_lastScrapeResults.Count == 0)
         {
             StatusMessage = $"No {source} results for '{Editor.Title}'.";
             return;
         }
 
-        var details = await _scraperService.GetDetailsAsync(source, first.SourceGameId);
+        await ApplyScrapeResultAsync();
+    }
+
+    /// <summary>Left/Right on the Scrape field — steps through the other matches from
+    /// the most recent search without re-querying the source.</summary>
+    public async Task CycleScrapeResultAsync(int delta)
+    {
+        if (_lastScrapeResults.Count == 0) return;
+        _scrapeResultIndex = (_scrapeResultIndex + delta + _lastScrapeResults.Count) % _lastScrapeResults.Count;
+        await ApplyScrapeResultAsync();
+    }
+
+    private async Task ApplyScrapeResultAsync()
+    {
+        var picked = _lastScrapeResults[_scrapeResultIndex];
+        var source = _lastScrapeSource;
+
+        StatusMessage = $"Match {_scrapeResultIndex + 1}/{_lastScrapeResults.Count}: fetching '{picked.Title}'…";
+        var details = await _scraperService.GetDetailsAsync(source, picked.SourceGameId);
         if (details is null)
         {
-            StatusMessage = $"Matched '{first.Title}' on {source} but couldn't fetch details.";
+            StatusMessage = $"Match {_scrapeResultIndex + 1}/{_lastScrapeResults.Count}: '{picked.Title}' on {source} but couldn't fetch details.";
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(details.Genre)) Editor.Genre = details.Genre;
         if (details.Players is { } p) Editor.Players = Math.Clamp(p, 1, 8);
 
-        var coverPath = await DownloadToTempFileAsync(details.CoverImageUrl, "cover");
+        var coverPath = await DownloadToScratchAsync(details.CoverImageUrl, "cover");
         if (coverPath is not null) Editor.CoverPath = coverPath;
 
-        var logoPath = await DownloadToTempFileAsync(details.LogoImageUrl, "logo");
+        var logoPath = await DownloadToScratchAsync(details.LogoImageUrl, "logo");
         if (logoPath is not null) Editor.LogoPath = logoPath;
 
-        var marqueePath = await DownloadToTempFileAsync(details.MarqueeImageUrl, "marquee");
+        var marqueePath = await DownloadToScratchAsync(details.MarqueeImageUrl, "marquee");
         if (marqueePath is not null) Editor.MarqueePath = marqueePath;
 
-        StatusMessage = $"Matched '{details.Title}' on {source}. Review fields, then Save.";
-        _logger.LogInformation("Scraped '{Title}' from {Source} (matched '{MatchedTitle}').", Editor.Title, source, details.Title);
+        var platformSuffix = string.IsNullOrWhiteSpace(picked.Platform) ? "" : $" [{picked.Platform}]";
+        StatusMessage = $"Match {_scrapeResultIndex + 1}/{_lastScrapeResults.Count}: '{details.Title}'{platformSuffix} on {source} — Left/Right for other matches, review, then Save.";
+        _logger.LogInformation("Scraped '{Title}' from {Source} (matched '{MatchedTitle}', {Index}/{Count}).",
+            Editor.Title, source, details.Title, _scrapeResultIndex + 1, _lastScrapeResults.Count);
     }
 
     /// <summary>
     /// Generates card art via the configured ComfyUI workflow, using the game's
     /// Title/Genre as the prompt, and applies it as the Cover Art field (like
     /// ScrapeAsync, the actual file copy happens on Save — this just points
-    /// Editor.CoverPath at a downloaded temp file).
+    /// Editor.CoverPath at a downloaded scratch file).
     /// </summary>
     [RelayCommand]
     private async Task GenerateCardAsync()
@@ -709,25 +754,26 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         var imageBytes = await _comfyUiClient.GenerateImageAsync(prompt);
         if (imageBytes is null)
         {
-            StatusMessage = "ComfyUI generation failed — check the Scraper tab's endpoint/workflow settings and that ComfyUI is running.";
+            StatusMessage = "ComfyUI generation failed — check logs\\ugl.log for the actual error (endpoint unreachable, workflow rejected, no {{PROMPT}} token, or a timed-out render).";
             return;
         }
 
         try
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), $"ugl_comfyui_{Guid.NewGuid():N}.png");
-            await File.WriteAllBytesAsync(tempPath, imageBytes);
-            Editor.CoverPath = tempPath;
+            Directory.CreateDirectory(ScrapeScratchDir);
+            var scratchPath = Path.Combine(ScrapeScratchDir, $"comfyui_{Guid.NewGuid():N}.png");
+            await File.WriteAllBytesAsync(scratchPath, imageBytes);
+            Editor.CoverPath = scratchPath;
             StatusMessage = "Card art generated. Review it, then Save.";
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to save ComfyUI-generated image to a temp file.");
+            _logger.LogWarning(ex, "Failed to save ComfyUI-generated image to the scratch folder.");
             StatusMessage = "Generated the image but failed to save it locally — see logs.";
         }
     }
 
-    private async Task<string?> DownloadToTempFileAsync(string? url, string label)
+    private async Task<string?> DownloadToScratchAsync(string? url, string label)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
         try
@@ -735,9 +781,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             var bytes = await _imageDownloadClient.GetByteArrayAsync(url);
             var ext = Path.GetExtension(new Uri(url).AbsolutePath);
             if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
-            var tempPath = Path.Combine(Path.GetTempPath(), $"ugl_scrape_{label}_{Guid.NewGuid():N}{ext}");
-            await File.WriteAllBytesAsync(tempPath, bytes);
-            return tempPath;
+            Directory.CreateDirectory(ScrapeScratchDir);
+            var scratchPath = Path.Combine(ScrapeScratchDir, $"{label}_{Guid.NewGuid():N}{ext}");
+            await File.WriteAllBytesAsync(scratchPath, bytes);
+            return scratchPath;
         }
         catch (Exception ex)
         {
@@ -1025,6 +1072,15 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         _cache.EvictImage(destPath);
 
         _logger.LogInformation("Media copied: {Source} → {Dest}", absoluteSource, destPath);
+
+        // A scraped/ComfyUI-generated source lives in the scratch folder purely
+        // pending this copy — delete it now so the scratch folder doesn't
+        // accumulate every download ever made, portable or not.
+        if (normalSource.StartsWith(Path.GetFullPath(ScrapeScratchDir), StringComparison.OrdinalIgnoreCase))
+        {
+            try { File.Delete(absoluteSource); }
+            catch (Exception ex) { _logger.LogDebug(ex, "Could not delete scratch file {Path} after copy (non-fatal).", absoluteSource); }
+        }
 
         // Stored relative to the app's own folder when possible, so this keeps
         // working if the whole portable install moves to a different drive letter

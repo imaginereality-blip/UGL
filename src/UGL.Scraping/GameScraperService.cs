@@ -13,8 +13,8 @@ public sealed class GameScraperService : IGameScraperService
         _sources = sources.ToDictionary(s => s.SourceType);
     }
 
-    public Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(ScraperSourceType source, string title, CancellationToken ct = default) =>
-        _sources.TryGetValue(source, out var s) ? s.SearchAsync(title, ct) : Task.FromResult<IReadOnlyList<ScraperSearchResult>>([]);
+    public Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(ScraperSourceType source, string title, string? platformHint, CancellationToken ct = default) =>
+        _sources.TryGetValue(source, out var s) ? s.SearchAsync(title, platformHint, ct) : Task.FromResult<IReadOnlyList<ScraperSearchResult>>([]);
 
     public Task<ScraperGameMetadata?> GetDetailsAsync(ScraperSourceType source, string sourceGameId, CancellationToken ct = default) =>
         _sources.TryGetValue(source, out var s) ? s.GetDetailsAsync(sourceGameId, ct) : Task.FromResult<ScraperGameMetadata?>(null);

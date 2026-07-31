@@ -31,7 +31,9 @@ public sealed class TheGamesDbScraperSource : IGameScraperSource
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, CancellationToken ct = default)
+    // platformHint accepted for interface parity but not yet applied — same reasoning
+    // as ScreenScraperSource (no UGL system → TheGamesDB platform-id mapping yet).
+    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, string? platformHint, CancellationToken ct = default)
     {
         var settings = await _settingsRepo.GetSettingsAsync(ct);
         if (string.IsNullOrWhiteSpace(settings.TheGamesDbApiKey)) return [];

@@ -38,13 +38,35 @@ public sealed class IgdbScraperSource : IGameScraperSource
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, string? platformHint, CancellationToken ct = default)
     {
         var settings = await _settingsRepo.GetSettingsAsync(ct);
         if (!await TryAuthenticateAsync(settings, ct)) return [];
 
+        // Filtered-by-platform first — a title shared across multiple platforms
+        // (very common; the NFL Blitz 2001 GBA port vs. the Dreamcast original is
+        // exactly this case) otherwise returns whichever version IGDB ranks highest,
+        // with no guarantee it matches the system the game is actually being added
+        // for. Falls back to an unfiltered search only if the filtered one comes back
+        // empty (system name not recognized/typo'd, or genuinely not on IGDB for that
+        // platform) rather than silently only ever trying one or the other.
+        if (!string.IsNullOrWhiteSpace(platformHint))
+        {
+            var filtered = await SearchInternalAsync(settings, title, platformHint, ct);
+            if (filtered.Count > 0) return filtered;
+        }
+
+        return await SearchInternalAsync(settings, title, null, ct);
+    }
+
+    private async Task<IReadOnlyList<ScraperSearchResult>> SearchInternalAsync(
+        ScraperSettings settings, string title, string? platformHint, CancellationToken ct)
+    {
         var escapedTitle = title.Replace("\"", "\\\"");
-        var body = $"fields name, platforms.name, first_release_date; search \"{escapedTitle}\"; limit 15;";
+        var where = string.IsNullOrWhiteSpace(platformHint)
+            ? string.Empty
+            : $" where platforms.name ~ *\"{platformHint.Replace("\"", "\\\"")}\"*;";
+        var body = $"fields name, platforms.name, first_release_date; search \"{escapedTitle}\";{where} limit 15;";
 
         try
         {

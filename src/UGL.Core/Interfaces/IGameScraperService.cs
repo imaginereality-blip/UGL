@@ -10,6 +10,6 @@ namespace UGL.Core.Interfaces;
 /// </summary>
 public interface IGameScraperService
 {
-    Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(ScraperSourceType source, string title, CancellationToken ct = default);
+    Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(ScraperSourceType source, string title, string? platformHint, CancellationToken ct = default);
     Task<ScraperGameMetadata?> GetDetailsAsync(ScraperSourceType source, string sourceGameId, CancellationToken ct = default);
 }

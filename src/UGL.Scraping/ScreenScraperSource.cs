@@ -39,7 +39,13 @@ public sealed class ScreenScraperSource : IGameScraperSource
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, CancellationToken ct = default)
+    // platformHint is accepted for interface parity but not yet applied — ScreenScraper's
+    // jeuRecherche.php does support a numeric systemeid filter, but that needs a UGL
+    // system Id/name → ScreenScraper system ID lookup table this implementation
+    // doesn't have yet (see IGameScraperSource.SearchAsync's remarks on why this
+    // matters). Titles shared across platforms may return the wrong version's data
+    // until that mapping is added.
+    public async Task<IReadOnlyList<ScraperSearchResult>> SearchAsync(string title, string? platformHint, CancellationToken ct = default)
     {
         var settings = await _settingsRepo.GetSettingsAsync(ct);
         if (!IsConfigured(settings)) return [];

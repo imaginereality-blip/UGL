@@ -369,7 +369,7 @@
           <Button Content="🔍 Scrape Metadata/Art" Command="{Binding ScrapeCommand}"
                   Classes="cfgField" Classes.fieldFocused="{Binding IsScrapeFocused}"
                   Padding="16,8"
-                  ToolTip.Tip="Searches the preferred source (Settings → Scraper) by Title and applies the first match's genre/players/cover/logo/marquee. Review before saving."/>
+                  ToolTip.Tip="Searches the preferred source (Settings → Scraper) by Title, narrowed to the selected System, and applies the first match's genre/players/cover/logo/marquee. Wrong match? Left/Right on this button steps through the other results without re-searching. Review before saving."/>
           <Button Content="🖼 Generate Card (ComfyUI)" Command="{Binding GenerateCardCommand}"
                   Classes="cfgField" Classes.fieldFocused="{Binding IsGenerateCardFocused}"
                   Padding="16,8"

@@ -15,7 +15,6 @@ namespace UGL.Emulators;
 public sealed class Win32DisplayModeService : IDisplayModeService
 {
     private readonly ILogger<Win32DisplayModeService> _logger;
-    private bool _hasPendingRestore;
 
     public Win32DisplayModeService(ILogger<Win32DisplayModeService> logger)
     {
@@ -63,14 +62,22 @@ public sealed class Win32DisplayModeService : IDisplayModeService
 
         _logger.LogInformation("Switched display mode to {Width}x{Height}@{Hz}Hz.",
             mode.Width, mode.Height, mode.RefreshHz);
-        _hasPendingRestore = true;
         return true;
     }
 
+    /// <summary>
+    /// Always attempts the revert, regardless of whether Apply() was ever called on
+    /// this instance — not gated behind a "did we change it" flag. Many emulators
+    /// (redream, RetroArch's own fullscreen-exclusive video drivers, etc.) switch the
+    /// actual display resolution themselves, entirely outside UGL's own DisplayMode
+    /// config; killing that process abruptly (the quit-to-launcher combo uses
+    /// Process.Kill, not a graceful close) skips whatever cleanup the emulator would
+    /// otherwise have done on its own, and nothing else in Windows restores the mode
+    /// automatically. Reverting to the registry-stored mode unconditionally on every
+    /// exit is a safe no-op when nothing actually changed.
+    /// </summary>
     public void Restore()
     {
-        if (!_hasPendingRestore) return;
-
         int result = DisplayModeNative.ChangeDisplaySettingsExToDefault(
             null, IntPtr.Zero, IntPtr.Zero, 0, IntPtr.Zero);
 
@@ -78,7 +85,5 @@ public sealed class Win32DisplayModeService : IDisplayModeService
             _logger.LogWarning("ChangeDisplaySettingsEx (restore to default) failed (code {Code}).", result);
         else
             _logger.LogInformation("Restored display mode to the user's normal desktop settings.");
-
-        _hasPendingRestore = false;
     }
 }

@@ -509,7 +509,11 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         EditEmulatorIsRetroArch = false;
         EditEmulatorIsDirectLaunch = false;
         EditEmulatorPath = string.Empty;
-        EditEmulatorArgs = string.Empty;
+        // Defaults to the {rom} token rather than empty — a Standard-mode emulator
+        // with no {rom} anywhere in Arguments launches with nothing to load at all
+        // (the emulator opens to its own UI/menu instead of the game), which is easy
+        // to miss since the launch still "succeeds" with no error.
+        EditEmulatorArgs = "{rom}";
         EditEmulatorSystems = string.Empty;
         EditEmulatorNotes = string.Empty;
         EditRetroArchExePath = string.Empty;

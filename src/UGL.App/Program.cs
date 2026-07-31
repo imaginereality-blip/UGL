@@ -33,11 +33,20 @@ internal static class Program
 
         try
         {
+            var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "ugl.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+
             IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging =>
                 {
                     logging.ClearProviders();
                     logging.AddConsole();
+                    // FileLoggerProvider exists specifically so logs are readable while
+                    // the fullscreen window covers the console — it was implemented but
+                    // never actually registered here, so logs\ugl.log never got written
+                    // and runtime failures (e.g. a rejected ComfyUI workflow) had no
+                    // record anywhere.
+                    logging.AddProvider(new FileLoggerProvider(logPath));
                     logging.SetMinimumLevel(LogLevel.Debug);
                 })
                 .ConfigureServices((_, services) => RegisterServices(services))
