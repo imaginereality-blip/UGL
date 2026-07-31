@@ -54,4 +54,64 @@ internal static class WindowActivationNative
     internal static extern uint GetCurrentThreadId();
 
     internal const int SW_RESTORE = 9;
+
+    // ── Process-tree + top-level window enumeration ───────────────────────────
+    // Process.MainWindowHandle was confirmed unreliable in real testing (zero
+    // window ever found, for either a native emulator or a native Windows game, in
+    // sessions that ran under its own 45s search window) — its heuristic covers only
+    // windows owned by threads of the exact process handle .NET is holding, which
+    // misses the common case of a game whose actual render window belongs to a
+    // separate child process (launcher/anti-cheat wrapper, engine subprocess, etc.).
+    // Scanning the full process tree and matching real top-level windows directly is
+    // the same technique full-featured launchers use for this.
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern nint CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
+
+    internal const uint TH32CS_SNAPPROCESS = 0x00000002;
+    internal static readonly nint InvalidHandleValue = new(-1);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct PROCESSENTRY32
+    {
+        internal uint dwSize;
+        internal uint cntUsage;
+        internal uint th32ProcessID;
+        internal nint th32DefaultHeapID;
+        internal uint th32ModuleID;
+        internal uint cntThreads;
+        internal uint th32ParentProcessID;
+        internal int pcPriClassBase;
+        internal uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+        internal string szExeFile;
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool Process32First(nint hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool Process32Next(nint hSnapshot, ref PROCESSENTRY32 lppe);
+
+    [DllImport("kernel32.dll")]
+    internal static extern bool CloseHandle(nint hObject);
+
+    internal delegate bool EnumWindowsProc(nint hWnd, nint lParam);
+
+    [DllImport(DllName)]
+    internal static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
+
+    [DllImport(DllName)]
+    internal static extern bool IsWindowVisible(nint hWnd);
+
+    [DllImport(DllName, CharSet = CharSet.Unicode)]
+    internal static extern int GetWindowTextLength(nint hWnd);
+
+    [DllImport(DllName)]
+    internal static extern nint GetWindow(nint hWnd, uint uCmd);
+
+    // A top-level window with a non-null owner is a tool/dialog window, not a "real"
+    // application window — the same heuristic distinction Process.MainWindowHandle's
+    // own internal search uses.
+    internal const uint GW_OWNER = 4;
 }

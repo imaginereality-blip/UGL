@@ -27,6 +27,12 @@ internal static class DisplayModeNative
 
     internal const int ENUM_CURRENT_SETTINGS = -1;
 
+    /// <summary>The mode Windows normally boots into / would apply on its own —
+    /// distinct from ENUM_CURRENT_SETTINGS (whatever's active right now, which may
+    /// have been changed by a fullscreen-exclusive game/emulator). Used to detect
+    /// whether a restore is actually needed before triggering one.</summary>
+    internal const int ENUM_REGISTRY_SETTINGS = -2;
+
     internal const int DM_PELSWIDTH       = 0x80000;
     internal const int DM_PELSHEIGHT      = 0x100000;
     internal const int DM_DISPLAYFREQUENCY = 0x400000;

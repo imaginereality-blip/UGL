@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using UGL.Core.Interfaces;
 using UGL.Core.Models;
@@ -513,21 +514,27 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
     }
 
     /// <summary>
-    /// Polls for the launched game/emulator's main window and brings it to the
-    /// foreground — deliberately keeps polling for the whole timeout window rather
-    /// than stopping after the first attempt, for two reasons confirmed in real
-    /// testing: a hand-off launcher (Steam) commonly shows a short-lived splash/
-    /// dialog window first whose handle differs from the eventual real game window,
-    /// and a single SetForegroundWindow attempt can simply fail (observed: returned
-    /// false against a real emulator window) and deserves a retry rather than being
-    /// abandoned. Reads _currentProcess fresh on every iteration (not a captured
-    /// reference) so this keeps working correctly across a hand-off swap in
-    /// TrackProcessNameOverrideAsync.
+    /// Polls for the launched game/emulator's real top-level window and brings it to
+    /// the foreground. Deliberately does NOT rely on Process.MainWindowHandle for the
+    /// launched process alone — confirmed unreliable in real testing (zero window
+    /// ever found, for both a native emulator and a native Windows game, within the
+    /// full timeout window). Instead scans the launched process's entire descendant
+    /// tree (rescanned every tick, since a child render/launcher process can spawn
+    /// well after the initial Process.Start()) and matches real top-level windows
+    /// directly via EnumWindows — the same technique full-featured launchers use,
+    /// and the only one that reliably covers a game whose visible window belongs to
+    /// a child process rather than the one .NET's Process object represents.
+    ///
+    /// Keeps polling for the whole timeout window rather than stopping after the
+    /// first attempt: a hand-off launcher commonly shows a short-lived splash/dialog
+    /// window first whose handle differs from the eventual real game window, and a
+    /// single SetForegroundWindow attempt can simply fail (observed in testing) and
+    /// deserves a retry rather than being abandoned.
     /// </summary>
     private async Task ActivateWindowWhenReadyAsync(int launchedPid)
     {
         var deadline = DateTime.UtcNow + WindowActivationTimeout;
-        nint successfullyActivatedHandle = 0;
+        var successfullyActivated = new HashSet<nint>();
         bool everFoundWindow = false;
 
         while (DateTime.UtcNow < deadline)
@@ -537,35 +544,96 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             var process = _currentProcess;
             if (process is null || process.HasExited) return;
 
-            nint handle;
-            try
+            var family = BuildProcessFamily(process.Id);
+            var candidates = FindTopLevelWindowsForFamily(family);
+
+            foreach (var handle in candidates)
             {
-                process.Refresh();
-                handle = process.MainWindowHandle;
+                everFoundWindow = true;
+                // A *failed* attempt is deliberately not remembered, so the same
+                // window keeps getting retried every tick until it succeeds or the
+                // deadline passes, rather than being tried once and abandoned.
+                if (successfullyActivated.Contains(handle)) continue;
+
+                bool ok = ForceForegroundWindow(handle);
+                _logger.LogInformation("Activated game window (PID {Pid}, hwnd={Handle}, success={Ok}).",
+                    process.Id, handle, ok);
+
+                if (ok) successfullyActivated.Add(handle);
             }
-            catch (InvalidOperationException)
-            {
-                continue; // process object mid-swap/disposal — retry next tick
-            }
-
-            // Nothing to do yet, or this exact window was already successfully
-            // activated — a *failed* attempt is deliberately not remembered here, so
-            // the same handle keeps getting retried every tick until it succeeds or
-            // the deadline passes, rather than being tried once and abandoned.
-            if (handle == 0 || handle == successfullyActivatedHandle) continue;
-            everFoundWindow = true;
-
-            bool ok = ForceForegroundWindow(handle);
-            _logger.LogInformation("Activated game window (PID {Pid}, hwnd={Handle}, success={Ok}).",
-                process.Id, handle, ok);
-
-            if (ok) successfullyActivatedHandle = handle;
         }
 
         if (!everFoundWindow)
             _logger.LogWarning(
-                "No main window ever appeared for PID {Pid} within {Timeout}s — could not bring it to the foreground.",
+                "No top-level window ever appeared for PID {Pid} (or its child processes) within {Timeout}s — could not bring it to the foreground.",
                 launchedPid, WindowActivationTimeout.TotalSeconds);
+    }
+
+    /// <summary>Every process ID descended from rootPid (rootPid included), via a
+    /// full process-table snapshot walked top-down from the root.</summary>
+    private static HashSet<uint> BuildProcessFamily(int rootPid)
+    {
+        var family = new HashSet<uint> { (uint)rootPid };
+        var childrenByParent = new Dictionary<uint, List<uint>>();
+
+        nint snapshot = WindowActivationNative.CreateToolhelp32Snapshot(WindowActivationNative.TH32CS_SNAPPROCESS, 0);
+        if (snapshot == WindowActivationNative.InvalidHandleValue) return family;
+
+        try
+        {
+            var entry = new WindowActivationNative.PROCESSENTRY32
+            {
+                dwSize = (uint)Marshal.SizeOf<WindowActivationNative.PROCESSENTRY32>(),
+            };
+
+            if (WindowActivationNative.Process32First(snapshot, ref entry))
+            {
+                do
+                {
+                    if (!childrenByParent.TryGetValue(entry.th32ParentProcessID, out var list))
+                        childrenByParent[entry.th32ParentProcessID] = list = [];
+                    list.Add(entry.th32ProcessID);
+                } while (WindowActivationNative.Process32Next(snapshot, ref entry));
+            }
+        }
+        finally
+        {
+            WindowActivationNative.CloseHandle(snapshot);
+        }
+
+        var queue = new Queue<uint>();
+        queue.Enqueue((uint)rootPid);
+        while (queue.Count > 0)
+        {
+            if (!childrenByParent.TryGetValue(queue.Dequeue(), out var children)) continue;
+            foreach (var child in children)
+                if (family.Add(child)) queue.Enqueue(child);
+        }
+
+        return family;
+    }
+
+    /// <summary>Real (visible, unowned, titled) top-level windows belonging to any
+    /// process in the given family.</summary>
+    private static List<nint> FindTopLevelWindowsForFamily(HashSet<uint> family)
+    {
+        var results = new List<nint>();
+
+        WindowActivationNative.EnumWindows((hwnd, _) =>
+        {
+            if (!WindowActivationNative.IsWindowVisible(hwnd)) return true;
+            if (WindowActivationNative.GetWindow(hwnd, WindowActivationNative.GW_OWNER) != 0) return true;
+
+            WindowActivationNative.GetWindowThreadProcessId(hwnd, out var pid);
+            if (!family.Contains(pid)) return true;
+
+            if (WindowActivationNative.GetWindowTextLength(hwnd) == 0) return true;
+
+            results.Add(hwnd);
+            return true;
+        }, 0);
+
+        return results;
     }
 
     /// <summary>
