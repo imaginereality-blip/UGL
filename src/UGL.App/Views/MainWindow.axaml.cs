@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using UGL.App.ViewModels;
 using UGL.Input;
 using Window = Avalonia.Controls.Window;
@@ -22,6 +23,7 @@ public sealed partial class MainWindow : Window
 {
     private KeyboardInputService? _keyboard;
     private UGL.Core.Interfaces.IInputService? _inputService;
+    private ILogger<MainWindow>? _logger;
 
     public MainWindow()
     {
@@ -34,6 +36,7 @@ public sealed partial class MainWindow : Window
 
         _keyboard     = App.Services.GetRequiredService<KeyboardInputService>();
         _inputService = App.Services.GetRequiredService<UGL.Core.Interfaces.IInputService>();
+        _logger       = App.Services.GetRequiredService<ILogger<MainWindow>>();
         _inputService.Start();
 
         if (DataContext is MainWindowViewModel vm)
@@ -69,13 +72,27 @@ public sealed partial class MainWindow : Window
                             if (running)
                             {
                                 WindowState = WindowState.Minimized;
+                                return;
                             }
-                            else
-                            {
-                                WindowState = WindowState.FullScreen;
-                                Activate();
-                                Focus();
-                            }
+
+                            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                            // Going straight from Minimized to FullScreen is a known
+                            // trouble spot on Win32 — some window-manager states don't
+                            // correctly recompute bounds unless the window passes
+                            // through Normal first, which can leave it visually stuck
+                            // at a stale, smaller size despite WindowState reporting
+                            // FullScreen. Confirmed in testing that this happens even
+                            // when the OS display resolution itself never changed, which
+                            // rules out a display-mode cause and points here instead.
+                            WindowState = WindowState.Normal;
+                            WindowState = WindowState.FullScreen;
+                            Activate();
+                            Focus();
+
+                            _logger?.LogInformation(
+                                "Restored fullscreen after emulator exit in {Ms}ms (WindowState={State}, ClientSize={Width}x{Height}).",
+                                sw.ElapsedMilliseconds, WindowState, ClientSize.Width, ClientSize.Height);
                         });
                         break;
                 }
