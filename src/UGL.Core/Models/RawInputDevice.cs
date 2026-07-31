@@ -42,6 +42,18 @@ public sealed class RawInputDevice
     public bool IsConnected { get; set; } = false;
 
     /// <summary>
+    /// Best-effort: whether this device exposes a sibling Physical Interface Device
+    /// (force-feedback) HID collection alongside its joystick/gamepad collection.
+    /// Runtime-only, recomputed on every enumeration. This is a capability *probe*,
+    /// not a guarantee — it has not been verified against real force-feedback
+    /// hardware, only reasoned from the HID PID usage-page convention. Actually
+    /// driving force feedback is the game/emulator's own responsibility via its
+    /// native DirectInput calls; UGL never does this itself.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsForceFeedbackCapable { get; set; } = false;
+
+    /// <summary>
     /// Raw Win32 device handle (runtime only, changes each session).
     /// Excluded from JSON: System.Text.Json cannot serialize nint/IntPtr,
     /// and this value is meaningless across process restarts anyway.

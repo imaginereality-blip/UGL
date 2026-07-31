@@ -21,6 +21,28 @@
       <TextBlock Text="Peripheral Devices" FontSize="18" FontWeight="Bold" Foreground="White"/>
       <TextBlock FontSize="13" Foreground="#88FFFFFF" TextWrapping="Wrap"
                  Text="Assign player indices to lightguns, wheels, and other HID peripherals. Player 0 = unassigned."/>
+
+      <!-- HidHide — makes Game.DisabledDeviceTypes (Games tab) a real, OS-level
+           per-game disable instead of only affecting UGL's own input pipeline. -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsHidHideEnabledFocused}" Padding="4" Margin="0,8,0,0">
+        <Border Background="#22FFFFFF" CornerRadius="6" Padding="12">
+          <StackPanel Spacing="4">
+            <CheckBox IsChecked="{Binding HidHideEnabled}"
+                      Content="Enable HidHide (real per-game peripheral disable)"
+                      FontWeight="SemiBold"/>
+            <TextBlock Text="Requires HidHide (github.com/nefarius/HidHide) installed separately. Without this, a game's Disabled Peripherals (Games tab) only silences UGL's own input handling — the emulator itself still sees the device."
+                       Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </Border>
+      <Border IsVisible="{Binding HidHideEnabled}"
+              Classes="cfgField" Classes.fieldFocused="{Binding IsHidHideCliPathFocused}" Padding="6">
+        <StackPanel Spacing="4">
+          <TextBlock Text="HidHideCLI.exe Path" Foreground="#88FFFFFF" FontSize="11"/>
+          <TextBox Text="{Binding HidHideCliPath}" IsReadOnly="True" Watermark="Browse to select…"/>
+        </StackPanel>
+      </Border>
+
       <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
         <Button Content="🔍 Rescan Devices"
                 Command="{Binding RescanDevicesCommand}"
@@ -58,6 +80,10 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <TextBlock Text="{Binding DeviceType}"
                              Foreground="#66FFFFFF" FontSize="11"/>
+                  <TextBlock Text="FFB?"
+                             ToolTip.Tip="Best-effort: this device exposes a force-feedback HID collection. Not a guarantee, and UGL never drives FFB itself — the game/emulator does that via its own DirectInput calls."
+                             IsVisible="{Binding IsForceFeedbackCapable}"
+                             Foreground="#FFFFD700" FontSize="10" FontWeight="Bold"/>
                   <TextBlock Text="{Binding HardwarePath}"
                              Foreground="#33FFFFFF" FontSize="10"
                              TextTrimming="CharacterEllipsis" MaxWidth="200"/>

@@ -33,6 +33,7 @@
     <ProjectReference Include="..\UGL.Input\UGL.Input.csproj" />
     <ProjectReference Include="..\UGL.Hooks\UGL.Hooks.csproj" />
     <ProjectReference Include="..\UGL.Updates\UGL.Updates.csproj" />
+    <ProjectReference Include="..\UGL.Scraping\UGL.Scraping.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -146,6 +146,9 @@
             <Border IsVisible="{Binding IsUpdatesTabActive}">
               <views:UpdateConfigView DataContext="{Binding Updates}"/>
             </Border>
+            <Border IsVisible="{Binding IsScraperTabActive}">
+              <views:ScraperConfigView DataContext="{Binding Scraper}"/>
+            </Border>
           </Grid>
         </Border>
       </Grid>

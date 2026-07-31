@@ -36,6 +36,10 @@ internal static class XInput
     internal const ushort ButtonX       = 0x4000;
     internal const ushort ButtonY       = 0x8000;
 
+    // Quit-to-launcher combo, held simultaneously (LB+RB+Start+Back) — deliberately
+    // a four-button combo, unlikely to be hit by accident during normal gameplay.
+    internal const ushort QuitComboMask = LeftShoulder | RightShoulder | Start | Back;
+
     // Trigger threshold: values are 0–255
     internal const byte TriggerThreshold = 100;
 

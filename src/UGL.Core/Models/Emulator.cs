@@ -22,10 +22,25 @@ public sealed class Emulator
     /// </summary>
     public bool IsRetroArchCore { get; set; } = false;
 
-    /// <summary>Exe path (standard) or .dll core path (RetroArch mode).</summary>
+    /// <summary>
+    /// When true: direct-launch mode, for native Windows games and launcher-protocol
+    /// titles (Steam, Epic, GOG Galaxy) that have no separate "emulator" — the game
+    /// itself is what gets launched.
+    ///   ExecutablePath = ignored.
+    ///   Game.RomPath   = the actual target: either an absolute path to the game's own
+    ///                    .exe, or a launcher protocol URI (e.g. "steam://rungameid/12345").
+    ///   Arguments      = literal CLI args passed as-is (no {rom} token — the target
+    ///                    itself already comes from Game.RomPath).
+    /// Mutually exclusive with IsRetroArchCore in practice (checked in that order by
+    /// the launcher; not separately validated on the model itself, same convention as
+    /// AudioPlaylist.IsGlobal's exclusivity — see SDS §9.6).
+    /// </summary>
+    public bool IsDirectLaunch { get; set; } = false;
+
+    /// <summary>Exe path (standard) or .dll core path (RetroArch mode). Unused in direct-launch mode.</summary>
     public string ExecutablePath    { get; set; } = string.Empty;
 
-    /// <summary>CLI arguments with {rom} token. Unused in RetroArch mode.</summary>
+    /// <summary>CLI arguments with {rom} token. Unused in RetroArch mode; literal (no token) in direct-launch mode.</summary>
     public string Arguments         { get; set; } = string.Empty;
 
     public string SupportedSystems  { get; set; } = string.Empty;

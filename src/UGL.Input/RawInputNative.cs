@@ -156,6 +156,18 @@ internal static class RawInputNative
         uint dnDevInst,
         uint ulFlags);
 
+    public const int MAX_DEVICE_ID_LEN = 200;
+
+    // Reverse of CM_Locate_DevNodeW — a devnode handle back to its instance ID
+    // string, used to walk from a sibling collection's devnode up to a comparable
+    // parent identity for force-feedback sibling-collection matching.
+    [DllImport("cfgmgr32.dll", CharSet = CharSet.Unicode)]
+    public static extern uint CM_Get_Device_IDW(
+        uint dnDevInst,
+        System.Text.StringBuilder buffer,
+        uint bufferLen,
+        uint ulFlags);
+
     public const uint DEVPROP_TYPE_STRING = 0x00000012;
 
     // Resolves indirect string references (e.g. "@oem6.inf,%hid.devicedesc%;Fallback Text",
@@ -386,6 +398,13 @@ internal static class RawInputNative
     public const ushort HID_USAGE_GENERIC_JOYSTICK = 0x04;
     public const ushort HID_USAGE_GENERIC_GAMEPAD  = 0x05;
     public const ushort HID_USAGE_GENERIC_KEYBOARD = 0x06;
+
+    // Physical Interface Device (force feedback) usage page — a separate top-level
+    // HID collection a device exposes alongside its joystick/gamepad collection when
+    // it supports force feedback. Detected as a best-effort capability probe (see
+    // RawInputService.ProbeForceFeedback) — not independently verified against real
+    // hardware, per the known-limitation note there.
+    public const ushort HID_USAGE_PAGE_PID = 0x0F;
 
     // Quit message for our message pump
     public const uint WM_UGL_QUIT = 0x8000 + 1;

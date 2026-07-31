@@ -84,6 +84,29 @@
               </Grid>
             </StackPanel>
           </Border>
+          <TextBlock Text="Default Display Mode (optional — many emulators and lightgun games only behave correctly at one specific resolution/refresh rate)"
+                     Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"/>
+          <Grid ColumnDefinitions="*,16,*,16,*">
+            <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsSystemDisplayWidthFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Width" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditSystemDisplayWidthText}" IsReadOnly="True"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsSystemDisplayHeightFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Height" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditSystemDisplayHeightText}" IsReadOnly="True"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Classes="cfgField" Classes.fieldFocused="{Binding IsSystemDisplayRefreshHzFocused}" Padding="6">
+              <StackPanel Spacing="4">
+                <TextBlock Text="Refresh Hz" Foreground="#88FFFFFF" FontSize="11"/>
+                <TextBox Text="{Binding EditSystemDisplayRefreshHzText}" IsReadOnly="True"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button Content="Save"   Command="{Binding SaveSystemCommand}"
                     Classes="cfgField" Classes.fieldFocused="{Binding IsSaveSystemFocused}"
@@ -180,9 +203,25 @@
             </Border>
           </Border>
 
+          <!-- Direct-launch mode toggle (native Windows / Steam / Epic / GOG Galaxy) -->
+          <StackPanel IsVisible="{Binding !EditEmulatorIsRetroArch}">
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuDirectLaunchToggleFocused}" Padding="4">
+              <Border Background="#22FFFFFF" CornerRadius="6" Padding="12">
+                <StackPanel Spacing="4">
+                  <CheckBox IsChecked="{Binding EditEmulatorIsDirectLaunch}"
+                            Content="Direct Launch (native Windows game / Steam / Epic / GOG Galaxy)"
+                            FontWeight="SemiBold"/>
+                  <TextBlock Text="No separate emulator process. Each game's own ROM Path field (Games tab) holds the target instead — either the game's own .exe, or a launcher protocol URI such as steam://rungameid/12345."
+                             Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </Border>
+          </StackPanel>
+
           <!-- Standard mode fields -->
           <StackPanel IsVisible="{Binding !EditEmulatorIsRetroArch}" Spacing="12">
-            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuPathFocused}" Padding="6">
+            <Border IsVisible="{Binding !EditEmulatorIsDirectLaunch}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsEmuPathFocused}" Padding="6">
               <StackPanel Spacing="4">
                 <TextBlock Text="Executable Path" Foreground="#88FFFFFF" FontSize="11"/>
                 <Grid ColumnDefinitions="*,8,Auto">
@@ -199,7 +238,11 @@
               <StackPanel Spacing="4">
                 <TextBlock Text="Launch Arguments" Foreground="#88FFFFFF" FontSize="11"/>
                 <TextBlock Text="{}{rom} is replaced with the full path to the ROM file."
-                           Foreground="#55FFFFFF" FontSize="11"/>
+                           Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"
+                           IsVisible="{Binding !EditEmulatorIsDirectLaunch}"/>
+                <TextBlock Text="Passed literally to the target — no {rom} token in Direct Launch mode."
+                           Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"
+                           IsVisible="{Binding EditEmulatorIsDirectLaunch}"/>
                 <TextBox Text="{Binding EditEmulatorArgs}" Watermark="{}{rom}"/>
               </StackPanel>
             </Border>
@@ -268,8 +311,10 @@
             </Border>
           </StackPanel>
 
-          <!-- BIOS files — applies whether or not this is a RetroArch core -->
-          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuBiosListFocused}" Padding="6">
+          <!-- BIOS files — applies whether or not this is a RetroArch core; not applicable
+               to direct-launch mode (native/Steam/Epic games manage their own BIOS/data). -->
+          <Border IsVisible="{Binding !EditEmulatorIsDirectLaunch}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsEmuBiosListFocused}" Padding="6">
             <StackPanel Spacing="4">
               <TextBlock Text="BIOS Files (A to enter, Up/Down to move, A to remove, B to exit)"
                          Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
@@ -290,7 +335,8 @@
               </ListBox>
             </StackPanel>
           </Border>
-          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmuAddBiosFocused}" Padding="6">
+          <Border IsVisible="{Binding !EditEmulatorIsDirectLaunch}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsEmuAddBiosFocused}" Padding="6">
             <Button Content="＋ Add BIOS File…" Command="{Binding BrowseAddBiosCommand}" HorizontalAlignment="Stretch"/>
           </Border>
 

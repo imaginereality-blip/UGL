@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+       xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+       x:Class="UGL.App.Views.Config.ScraperConfigView"
+       x:DataType="vm:ScraperConfigViewModel">
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" Margin="0,0,0,16">
+
+      <TextBlock Text="Scraper &amp; Card Art" FontSize="18" FontWeight="Bold" Foreground="White"/>
+      <TextBlock TextWrapping="Wrap" Foreground="#88FFFFFF" FontSize="13"
+                 Text="Credentials for game metadata/art sources, used from the Games tab's Scrape action. All three can be configured — pick whichever is preferred as the default. ComfyUI (below) is for generating card art from a workflow you supply; UGL doesn't build or understand the workflow graph itself."/>
+
+      <!-- Preferred source -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPreferredSourceFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Preferred Source (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Text="{Binding PreferredSourceLabel}" FontSize="15" Foreground="White"/>
+        </StackPanel>
+      </Border>
+
+      <!-- IGDB -->
+      <TextBlock Text="IGDB" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
+      <TextBlock Text="Free — create a Twitch Developer app at dev.twitch.tv to get a Client ID and Client Secret."
+                 Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsIgdbClientIdFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Client ID" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding IgdbClientId}" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsIgdbClientSecretFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Client Secret" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding IgdbClientSecret}" PasswordChar="*" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+
+      <!-- ScreenScraper -->
+      <TextBlock Text="ScreenScraper.fr" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
+      <TextBlock Text="Best for retro/arcade art coverage. Dev Id/Password require registering UGL as an application with the ScreenScraper team — not fully self-service."
+                 Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperUsernameFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Username" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding ScreenScraperUsername}" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperPasswordFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Password" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding ScreenScraperPassword}" PasswordChar="*" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperDevIdFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Dev Id" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding ScreenScraperDevId}" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperDevPasswordFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Dev Password" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding ScreenScraperDevPassword}" PasswordChar="*" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+
+      <!-- TheGamesDB -->
+      <TextBlock Text="TheGamesDB" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
+      <TextBlock Text="Free — request an API key at forums.thegamesdb.net."
+                 Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTheGamesDbApiKeyFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="API Key" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding TheGamesDbApiKey}" PasswordChar="*" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+
+      <!-- ComfyUI -->
+      <TextBlock Text="ComfyUI (card art generation)" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
+      <TextBlock Text="Requires a ComfyUI server already running (default local address is http://127.0.0.1:8188) and a workflow exported from ComfyUI's own UI using 'Save (API Format)'. Put the literal text {{PROMPT}} in whichever node's text field should receive the game title/genre prompt."
+                 Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsComfyUiEndpointFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Server Endpoint" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBox Text="{Binding ComfyUiEndpoint}" Watermark="http://127.0.0.1:8188" IsReadOnly="True"/>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsComfyUiWorkflowPathFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Workflow JSON (API format)" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding ComfyUiWorkflowPath}" IsReadOnly="True" Watermark="None"/>
+            <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseWorkflowFileCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Button Content="💾 Save"
+              Command="{Binding SaveCommand}"
+              Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}"
+              Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"
+              HorizontalAlignment="Left" Margin="0,8,0,0"/>
+
+      <TextBlock Text="{Binding StatusMessage}"
+                 Foreground="#FF44FF88"
+                 IsVisible="{Binding StatusMessage,
+                             Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -8,6 +8,7 @@ using UGL.Data;
 using UGL.Emulators;
 using UGL.Input;
 using UGL.Media;
+using UGL.Scraping;
 using UGL.Themes;
 
 namespace UGL.App;
@@ -108,6 +109,11 @@ internal static class Program
 
         services.AddSingleton<UGL.Core.Interfaces.IUpdateService, UGL.Updates.GitHubUpdateService>();
         services.AddSingleton<UGL.App.ViewModels.Config.UpdateConfigViewModel>();
+
+        // Scraper (IGDB / ScreenScraper / TheGamesDB) + ComfyUI card generation
+        services.AddSingleton<UGL.Core.Interfaces.IScraperSettingsRepository, JsonScraperSettingsRepository>();
+        services.AddScrapingServices();
+        services.AddSingleton<UGL.App.ViewModels.Config.ScraperConfigViewModel>();
 
         services.AddTransient<MainWindowViewModel>();
     }

@@ -155,10 +155,6 @@ public sealed class XInputPollingService : IInputService, IDisposable
         CheckButton(controllerIndex, buttons, prevBtns,
             XInput.DPadLeft,      ControllerAction.TrackPrevious);
         CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.LeftShoulder,  ControllerAction.CategoryLeft);
-        CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.RightShoulder, ControllerAction.CategoryRight);
-        CheckButton(controllerIndex, buttons, prevBtns,
             XInput.ButtonA,       ControllerAction.Select);
         CheckButton(controllerIndex, buttons, prevBtns,
             XInput.ButtonB,       ControllerAction.Back);
@@ -166,10 +162,31 @@ public sealed class XInputPollingService : IInputService, IDisposable
             XInput.ButtonX,       ControllerAction.Secondary);
         CheckButton(controllerIndex, buttons, prevBtns,
             XInput.ButtonY,       ControllerAction.Info);
-        CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.Start,         ControllerAction.Start);
-        CheckButton(controllerIndex, buttons, prevBtns,
-            XInput.Back,          ControllerAction.FilterOverlay);
+
+        // ── Quit-to-launcher combo (LB+RB+Start+Back) ─────────────────────
+        // Checked before the individual LB/RB/Start/Back actions below so that
+        // completing the combo doesn't also fire CategoryLeft/CategoryRight/Start/
+        // FilterOverlay on the same frame. While any subset of the combo is held,
+        // the individual button checks are skipped entirely (not just suppressed
+        // once) so nothing spuriously fires as the combo is built up or released
+        // one finger at a time.
+        bool comboActive    = (buttons  & XInput.QuitComboMask) == XInput.QuitComboMask;
+        bool comboWasActive = (prevBtns & XInput.QuitComboMask) == XInput.QuitComboMask;
+
+        if (comboActive && !comboWasActive)
+            FireAction(controllerIndex, ControllerAction.QuitToLauncher);
+
+        if (!comboActive)
+        {
+            CheckButton(controllerIndex, buttons, prevBtns,
+                XInput.LeftShoulder,  ControllerAction.CategoryLeft);
+            CheckButton(controllerIndex, buttons, prevBtns,
+                XInput.RightShoulder, ControllerAction.CategoryRight);
+            CheckButton(controllerIndex, buttons, prevBtns,
+                XInput.Start,         ControllerAction.Start);
+            CheckButton(controllerIndex, buttons, prevBtns,
+                XInput.Back,          ControllerAction.FilterOverlay);
+        }
 
         // ── Left stick: full menu navigation — everything D-Pad used to drive,
         // now that D-Pad is repurposed for music control above. ───────────────

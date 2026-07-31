@@ -15,7 +15,7 @@ namespace UGL.Hooks;
 public interface IHookLauncher
 {
     bool IsRunning { get; }
-    Task StartAsync(string systemId, CancellationToken ct = default);
+    Task StartAsync(Game game, CancellationToken ct = default);
     Task StopAsync();
 }
 
@@ -24,6 +24,7 @@ public sealed class HookLauncher : IHookLauncher
     private readonly IHookSettingsRepository _hookSettings;
     private readonly ILogger<HookLauncher> _logger;
     private Process? _process;
+    private Process? _demulShooterProcess;
 
     public HookLauncher(IHookSettingsRepository hookSettings, ILogger<HookLauncher> logger)
     {
@@ -31,9 +32,9 @@ public sealed class HookLauncher : IHookLauncher
         _logger = logger;
     }
 
-    public bool IsRunning => _process is { HasExited: false };
+    public bool IsRunning => _process is { HasExited: false } || _demulShooterProcess is { HasExited: false };
 
-    public async Task StartAsync(string systemId, CancellationToken ct = default)
+    public async Task StartAsync(Game game, CancellationToken ct = default)
     {
         // Always start from a clean slate — if a previous hook process is somehow
         // still running (e.g. a prior StopAsync didn't fully clean up), don't leave two
@@ -42,15 +43,24 @@ public sealed class HookLauncher : IHookLauncher
 
         var settings = await _hookSettings.GetSettingsAsync(ct);
 
+        await StartOutputHookToolAsync(settings, game.SystemId, ct);
+        await StartDemulShooterAsync(settings, game, ct);
+    }
+
+    /// <summary>MameHooker / Hook of the Reaper — listens for the emulator's own
+    /// MAME-standard output signals. Mutually exclusive between the two (ToolType),
+    /// and skippable per-system.</summary>
+    private async Task StartOutputHookToolAsync(HookSettings settings, string systemId, CancellationToken ct)
+    {
         if (!settings.EnabledGlobally || settings.ToolType == HookToolType.None)
         {
-            _logger.LogDebug("Hook integration disabled — skipping launch.");
+            _logger.LogDebug("Hook integration disabled — skipping output-hook tool launch.");
             return;
         }
 
         if (settings.DisabledForSystemIds.Any(id => string.Equals(id, systemId, StringComparison.OrdinalIgnoreCase)))
         {
-            _logger.LogDebug("Hook integration disabled for system {SystemId} — skipping launch.", systemId);
+            _logger.LogDebug("Hook integration disabled for system {SystemId} — skipping output-hook tool launch.", systemId);
             return;
         }
 
@@ -92,21 +102,68 @@ public sealed class HookLauncher : IHookLauncher
         }
     }
 
+    /// <summary>DemulShooter translates lightgun/mouse aiming into what a specific
+    /// game/emulator combo expects — a different concern from the output-hook tool
+    /// above, so it runs independently of ToolType/EnabledGlobally, gated only by its
+    /// own enabled flag and whether this specific game has a target configured.</summary>
+    private async Task StartDemulShooterAsync(HookSettings settings, Game game, CancellationToken ct)
+    {
+        if (!settings.DemulShooterEnabled || string.IsNullOrWhiteSpace(game.DemulShooterTarget))
+        {
+            _logger.LogDebug("DemulShooter disabled or no target configured for '{Title}' — skipping.", game.Title);
+            return;
+        }
+
+        var executablePath = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(settings.DemulShooterExecutablePath);
+        if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+        {
+            _logger.LogWarning("DemulShooter executable not found at '{Path}' — skipping launch.", executablePath);
+            return;
+        }
+
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = executablePath,
+                Arguments = $"-target={game.DemulShooterTarget}",
+                WorkingDirectory = Path.GetDirectoryName(executablePath) ?? AppContext.BaseDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+            };
+            _demulShooterProcess = Process.Start(psi);
+            _logger.LogInformation("Launched DemulShooter (-target={Target}) for '{Title}'.",
+                game.DemulShooterTarget, game.Title);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to launch DemulShooter at '{Path}'.", executablePath);
+            _demulShooterProcess = null;
+        }
+    }
+
     public Task StopAsync()
     {
-        if (_process is { HasExited: false })
+        StopProcess(ref _process, "hook tool");
+        StopProcess(ref _demulShooterProcess, "DemulShooter");
+        return Task.CompletedTask;
+    }
+
+    private void StopProcess(ref Process? process, string label)
+    {
+        if (process is { HasExited: false })
         {
             try
             {
-                _process.Kill(entireProcessTree: true);
-                _logger.LogInformation("Hook tool process stopped.");
+                process.Kill(entireProcessTree: true);
+                _logger.LogInformation("{Label} process stopped.", label);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to stop hook tool process cleanly.");
+                _logger.LogWarning(ex, "Failed to stop {Label} process cleanly.", label);
             }
         }
-        _process = null;
-        return Task.CompletedTask;
+        process = null;
     }
 }

@@ -4,9 +4,9 @@ using UGL.App.ViewModels.Config;
 
 namespace UGL.App.Views.Config;
 
-public sealed partial class PeripheralConfigView : UserControl
+public sealed partial class ScraperConfigView : UserControl
 {
-    public PeripheralConfigView()
+    public ScraperConfigView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
@@ -14,7 +14,7 @@ public sealed partial class PeripheralConfigView : UserControl
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        if (DataContext is PeripheralConfigViewModel vm)
+        if (DataContext is ScraperConfigViewModel vm)
             vm.BrowseFileRequested += OnBrowseFileRequestedAsync;
     }
 
@@ -25,7 +25,7 @@ public sealed partial class PeripheralConfigView : UserControl
 
         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Executable",
+            Title = "Select File",
             AllowMultiple = false,
             FileTypeFilter = [new FilePickerFileType(filterName) { Patterns = patterns }],
         });

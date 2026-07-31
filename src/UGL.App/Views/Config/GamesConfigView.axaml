@@ -145,10 +145,23 @@
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRomPathFocused}" Padding="8">
           <StackPanel Spacing="4">
             <TextBlock Text="ROM Path" Foreground="#88FFFFFF" FontSize="12"/>
+            <TextBlock Text="For a Direct Launch emulator (Games tab → Systems → Emulators): the game's own .exe path, or a launcher protocol URI (e.g. steam://rungameid/12345)."
+                       Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"/>
             <Grid ColumnDefinitions="*,8,Auto">
               <TextBox Grid.Column="0" Text="{Binding Editor.RomPath}" Watermark="Path to ROM file"/>
               <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseRomCommand}"/>
             </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Process name override (Direct Launch hand-off titles only — Steam/Epic/GOG) -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsProcessNameOverrideFocused}" Padding="8">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Process Name Override (rare — Steam/Epic/GOG hand-off titles only)"
+                       Foreground="#88FFFFFF" FontSize="12"/>
+            <TextBlock Text="Leave blank for a plain .exe game. For a launcher protocol title where the launched process hands off to a separate game process, name that process here (no .exe extension) so UGL waits for it instead of ending the session when the launcher itself exits."
+                       Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+            <TextBox Text="{Binding Editor.ProcessNameOverride}" Watermark="e.g. GTA5"/>
           </StackPanel>
         </Border>
 
@@ -224,6 +237,30 @@
           </StackPanel>
         </Border>
 
+        <!-- Display mode override -->
+        <TextBlock Text="Display Mode Override (optional — only if this game needs a different resolution/refresh rate than its system's default)"
+                   Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        <Grid ColumnDefinitions="*,16,*,16,*">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayWidthOverrideFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Width" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding Editor.DisplayModeOverrideWidthText}" IsReadOnly="True"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayHeightOverrideFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Height" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding Editor.DisplayModeOverrideHeightText}" IsReadOnly="True"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="4" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayRefreshHzOverrideFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Refresh Hz" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding Editor.DisplayModeOverrideRefreshHzText}" IsReadOnly="True"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+
         <!-- BIOS override -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBiosOverrideListFocused}" Padding="8">
           <StackPanel Spacing="4">
@@ -270,11 +307,74 @@
           </StackPanel>
         </Border>
 
+        <!-- DemulShooter target (lightgun aiming translation — rare) -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterTargetFocused}" Padding="8">
+          <StackPanel Spacing="4">
+            <TextBlock Text="DemulShooter Target (optional — only for lightgun games behind DemulShooter, e.g. &quot;hotd2&quot;)"
+                       Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
+            <TextBox Text="{Binding Editor.DemulShooterTarget}" Watermark="e.g. hotd2" IsReadOnly="True"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Player device assignments — richer, per-slot alternative to Disabled
+             Peripherals above. Nearly always empty. -->
+        <TextBlock Text="Player Device Assignments (optional — pick specific devices per player slot, ranked; falls back to the next entry if the first isn't connected. Hides every other device of an assignable type from this game via HidHide, so multiplayer/wheel-vs-pad setups resolve unambiguously.)"
+                   Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        <Grid ColumnDefinitions="*,16,2*,16,Auto">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsPendingAssignmentPlayerIndexFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Player (Left/Right)" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBlock Text="{Binding PendingAssignmentPlayerIndex}" Foreground="White" FontSize="14"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsPendingAssignmentDeviceFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Device (Left/Right)" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBlock Text="{Binding PendingAssignmentDeviceLabel}" Foreground="White" FontSize="14" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="4" Classes="cfgField" Classes.fieldFocused="{Binding IsAddAssignmentFocused}" Padding="6" VerticalAlignment="Bottom">
+            <Button Content="＋ Add" Command="{Binding AddPendingPlayerDeviceAssignmentCommand}"/>
+          </Border>
+        </Grid>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlayerDeviceAssignmentsFocused}" Padding="8">
+          <StackPanel Spacing="4">
+            <TextBlock Text="Assigned (A to enter, Up/Down to move, A to remove, B to exit)"
+                       Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+            <ListBox ItemsSource="{Binding Editor.PlayerDeviceAssignmentEntries}"
+                     SelectedIndex="{Binding SelectedPlayerAssignmentIndex}"
+                     Background="#11FFFFFF" MinHeight="50" MaxHeight="140">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:PlayerDeviceAssignmentEntry">
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsHighlighted}" Padding="4,2">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="{Binding PlayerIndex, StringFormat='P{0}:'}" FontWeight="Bold" Foreground="{DynamicResource UGL.AccentColor}"/>
+                      <TextBlock Text="{Binding FriendlyName}" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </StackPanel>
+        </Border>
+
         <!-- Validation error -->
         <TextBlock Text="{Binding Editor.ValidationError}"
                    Foreground="#FFFF4444"
                    IsVisible="{Binding Editor.ValidationError,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <!-- Scraper / ComfyUI -->
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+          <Button Content="🔍 Scrape Metadata/Art" Command="{Binding ScrapeCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsScrapeFocused}"
+                  Padding="16,8"
+                  ToolTip.Tip="Searches the preferred source (Settings → Scraper) by Title and applies the first match's genre/players/cover/logo/marquee. Review before saving."/>
+          <Button Content="🖼 Generate Card (ComfyUI)" Command="{Binding GenerateCardCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsGenerateCardFocused}"
+                  Padding="16,8"
+                  ToolTip.Tip="Generates cover art via the ComfyUI workflow configured in Settings → Scraper, using Title/Genre as the prompt."/>
+        </StackPanel>
 
         <!-- Save / Cancel -->
         <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">

@@ -32,6 +32,13 @@ public sealed partial class HookConfigViewModel : ObservableObject
     [ObservableProperty] private HookToolType _toolType = HookToolType.None;
     [ObservableProperty] private string _executablePath = string.Empty;
     [ObservableProperty] private int _startupDelayMs = 500;
+
+    /// <summary>Separate from ToolType above — DemulShooter translates lightgun aiming
+    /// rather than listening for output signals, so it can run alongside either
+    /// MameHooker or Hook of the Reaper. See HookSettings.DemulShooterEnabled.</summary>
+    [ObservableProperty] private bool _demulShooterEnabled;
+    [ObservableProperty] private string _demulShooterExecutablePath = string.Empty;
+
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     public ObservableCollection<HookSystemCheckItem> SystemOverrides { get; } = [];
@@ -62,6 +69,8 @@ public sealed partial class HookConfigViewModel : ObservableObject
         ToolType = settings.ToolType;
         ExecutablePath = settings.ExecutablePath;
         StartupDelayMs = settings.StartupDelayMs;
+        DemulShooterEnabled = settings.DemulShooterEnabled;
+        DemulShooterExecutablePath = settings.DemulShooterExecutablePath;
 
         var systems = await _config.GetSystemsAsync();
         var disabledIds = new HashSet<string>(settings.DisabledForSystemIds, StringComparer.OrdinalIgnoreCase);
@@ -74,9 +83,10 @@ public sealed partial class HookConfigViewModel : ObservableObject
 
     // ── Field highlight ───────────────────────────────────────────────────
     [ObservableProperty] private int _focusIndex;
-    private const int PositionCount = 6;
+    private const int PositionCount = 8;
     // 0 EnabledGlobally, 1 ToolType, 2 ExecutablePath (Browse), 3 StartupDelayMs,
-    // 4 SystemOverrides (enters sub-mode), 5 Save.
+    // 4 DemulShooterEnabled, 5 DemulShooterExecutablePath (Browse),
+    // 6 SystemOverrides (enters sub-mode), 7 Save.
 
     [ObservableProperty] private bool _isOverridesFocused;
     [ObservableProperty] private int _selectedOverrideIndex;
@@ -85,8 +95,10 @@ public sealed partial class HookConfigViewModel : ObservableObject
     public bool IsToolTypeFocused         => FocusIndex == 1;
     public bool IsExecutablePathFocused   => FocusIndex == 2;
     public bool IsStartupDelayFocused     => FocusIndex == 3;
-    public bool IsOverridesFieldFocused   => FocusIndex == 4;
-    public bool IsSaveFocused             => FocusIndex == 5;
+    public bool IsDemulShooterEnabledFocused => FocusIndex == 4;
+    public bool IsDemulShooterPathFocused    => FocusIndex == 5;
+    public bool IsOverridesFieldFocused   => FocusIndex == 6;
+    public bool IsSaveFocused             => FocusIndex == 7;
 
     partial void OnFocusIndexChanged(int value)
     {
@@ -94,6 +106,8 @@ public sealed partial class HookConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsToolTypeFocused));
         OnPropertyChanged(nameof(IsExecutablePathFocused));
         OnPropertyChanged(nameof(IsStartupDelayFocused));
+        OnPropertyChanged(nameof(IsDemulShooterEnabledFocused));
+        OnPropertyChanged(nameof(IsDemulShooterPathFocused));
         OnPropertyChanged(nameof(IsOverridesFieldFocused));
         OnPropertyChanged(nameof(IsSaveFocused));
     }
@@ -175,14 +189,16 @@ public sealed partial class HookConfigViewModel : ObservableObject
         {
             case 0: EnabledGlobally = !EnabledGlobally; break;
             case 2: await BrowseExecutableAsync(); break;
-            case 4:
+            case 4: DemulShooterEnabled = !DemulShooterEnabled; break;
+            case 5: await BrowseDemulShooterExecutableAsync(); break;
+            case 6:
                 if (SystemOverrides.Count > 0)
                 {
                     IsOverridesFocused = true;
                     SelectedOverrideIndex = Math.Clamp(SelectedOverrideIndex, 0, SystemOverrides.Count - 1);
                 }
                 break;
-            case 5: await SaveAsync(); break;
+            case 7: await SaveAsync(); break;
             // 1, 3 (ToolType/StartupDelay) are adjusted via Left/Right, not Confirm.
         }
     }
@@ -206,6 +222,14 @@ public sealed partial class HookConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task BrowseDemulShooterExecutableAsync()
+    {
+        if (BrowseFileRequested is null) return;
+        var path = await BrowseFileRequested.Invoke("Executable Files", ["*.exe"]);
+        if (path is not null) DemulShooterExecutablePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(path);
+    }
+
+    [RelayCommand]
     private async Task SaveAsync()
     {
         var settings = new HookSettings
@@ -214,6 +238,8 @@ public sealed partial class HookConfigViewModel : ObservableObject
             ToolType = ToolType,
             ExecutablePath = ExecutablePath.Trim(),
             StartupDelayMs = StartupDelayMs,
+            DemulShooterEnabled = DemulShooterEnabled,
+            DemulShooterExecutablePath = DemulShooterExecutablePath.Trim(),
             DisabledForSystemIds = SystemOverrides.Where(s => s.IsDisabledForSystem).Select(s => s.Id).ToList(),
         };
 

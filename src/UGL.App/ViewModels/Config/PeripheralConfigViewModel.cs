@@ -16,6 +16,7 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
 {
     private readonly IPeripheralRegistry _registry;
     private readonly IRawInputService _rawInput;
+    private readonly IConfigurationService _config;
     private readonly ILogger<PeripheralConfigViewModel> _logger;
 
     public ObservableCollection<RawInputDevice> Devices { get; } = [];
@@ -25,32 +26,72 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isLoading;
 
-    /// <summary>
-    /// Unified controller-navigation position: -1 = the Rescan button, 0..N-1 = an index
-    /// into Devices. Having Rescan share the same position sequence as the device list
-    /// (rather than being reachable only via a special-cased empty-list Confirm) means
-    /// it can be visually highlighted like any other focused row — see IsRescanFocused.
-    /// </summary>
-    [ObservableProperty] private int _focusIndex = -1;
+    // ── HidHide (real, OS-level version of Game.DisabledDeviceTypes — see
+    // ProcessEmulatorLauncher/IHidHideService) ──────────────────────────────────
+    [ObservableProperty] private bool _hidHideEnabled;
+    [ObservableProperty] private string _hidHideCliPath = string.Empty;
 
-    public bool IsRescanFocused => FocusIndex < 0;
+    public event Func<string, string[], Task<string?>>? BrowseFileRequested;
+
+    /// <summary>
+    /// Unified controller-navigation position: -3 = HidHide enabled toggle,
+    /// -2 = HidHide CLI path, -1 = the Rescan button, 0..N-1 = an index into Devices.
+    /// Having Rescan/HidHide fields share the same position sequence as the device
+    /// list (rather than being reachable only via mouse) keeps every field in this
+    /// tab controller-navigable — see IsRescanFocused etc.
+    /// </summary>
+    [ObservableProperty] private int _focusIndex = -3;
+
+    public bool IsHidHideEnabledFocused => FocusIndex == -3;
+    public bool IsHidHideCliPathFocused => FocusIndex == -2;
+    public bool IsRescanFocused => FocusIndex == -1;
 
     public List<int> PlayerIndexOptions { get; } = [0, 1, 2, 3, 4];
 
     public PeripheralConfigViewModel(
         IPeripheralRegistry registry,
         IRawInputService rawInput,
+        IConfigurationService config,
         ILogger<PeripheralConfigViewModel> logger)
     {
         _registry = registry;
         _rawInput = rawInput;
+        _config = config;
         _logger = logger;
     }
 
     public Task InitializeAsync()
     {
+        HidHideEnabled = _config.Settings.HidHideEnabled;
+        HidHideCliPath = _config.Settings.HidHideCliPath;
         RefreshDeviceList();
         return Task.CompletedTask;
+    }
+
+    private async Task SaveHidHideSettingsAsync()
+    {
+        // Full field list, not just the two this tab owns — see the SDS §13 note on
+        // AppSettings reconstructions silently dropping fields left out here.
+        var s = _config.Settings;
+        var updated = new AppSettings
+        {
+            MediaRootPath = s.MediaRootPath, RomsRootPath = s.RomsRootPath,
+            EmulatorsRootPath = s.EmulatorsRootPath, AddonsRootPath = s.AddonsRootPath,
+            LogsRootPath = s.LogsRootPath, ActiveThemeId = s.ActiveThemeId,
+            DefaultCategoryId = s.DefaultCategoryId, Language = s.Language,
+            TargetFrameRate = s.TargetFrameRate,
+            EnableBackgroundMusic = s.EnableBackgroundMusic, EnableNavigationSounds = s.EnableNavigationSounds,
+            MusicVolume = s.MusicVolume, SoundVolume = s.SoundVolume,
+            SoundNavigatePath = s.SoundNavigatePath, SoundConfirmPath = s.SoundConfirmPath,
+            SoundBackPath = s.SoundBackPath, SoundErrorPath = s.SoundErrorPath,
+            EnableVideoPreview = s.EnableVideoPreview, VideoPreviewDelayMs = s.VideoPreviewDelayMs,
+            VideoPreviewAudio = s.VideoPreviewAudio, VideoPreviewVolume = s.VideoPreviewVolume,
+            CardHighlightColor = s.CardHighlightColor, CardHighlightIntensity = s.CardHighlightIntensity,
+            CardHighlightStyle = s.CardHighlightStyle, CardHighlightThickness = s.CardHighlightThickness,
+            HidHideEnabled = HidHideEnabled,
+            HidHideCliPath = HidHideCliPath.Trim(),
+        };
+        await _config.UpdateSettingsAsync(updated);
     }
 
     partial void OnSelectedDeviceChanged(RawInputDevice? value)
@@ -61,6 +102,8 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
     partial void OnFocusIndexChanged(int value)
     {
         SyncSelectedDeviceFromFocus();
+        OnPropertyChanged(nameof(IsHidHideEnabledFocused));
+        OnPropertyChanged(nameof(IsHidHideCliPathFocused));
         OnPropertyChanged(nameof(IsRescanFocused));
     }
 
@@ -69,12 +112,13 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
 
     // ── Controller navigation (mirrors FilterOverlayViewModel/ConfigEditorViewModel) ──
     // Manipulates the same bound properties the XAML already reflects — no separate
-    // visual wiring needed, same trick as the Settings sidebar menu. Position 0 in the
-    // sequence is Rescan; positions 1..N are Devices[0..N-1] (see ToPosition/FromPosition).
+    // visual wiring needed, same trick as the Settings sidebar menu. Positions 0-2 are
+    // HidHideEnabled/HidHideCliPath/Rescan; positions 3..N+2 are Devices[0..N-1]
+    // (see ToPosition/FromPosition).
 
-    private int PositionCount => Devices.Count + 1;
-    private int ToPosition(int focusIndex) => focusIndex + 1;
-    private int FromPosition(int position) => position - 1;
+    private int PositionCount => Devices.Count + 3;
+    private int ToPosition(int focusIndex) => focusIndex + 3;
+    private int FromPosition(int position) => position - 3;
 
     public void NavigateUp()
     {
@@ -103,6 +147,25 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
     /// </summary>
     public async Task ConfirmAsync()
     {
+        if (IsHidHideEnabledFocused)
+        {
+            HidHideEnabled = !HidHideEnabled;
+            await SaveHidHideSettingsAsync();
+            return;
+        }
+
+        if (IsHidHideCliPathFocused)
+        {
+            if (BrowseFileRequested is null) return;
+            var path = await BrowseFileRequested.Invoke("HidHideCLI.exe", ["*.exe"]);
+            if (path is not null)
+            {
+                HidHideCliPath = path;
+                await SaveHidHideSettingsAsync();
+            }
+            return;
+        }
+
         if (IsRescanFocused)
         {
             await RescanDevicesAsync();

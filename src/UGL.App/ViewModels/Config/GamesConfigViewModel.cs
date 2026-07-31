@@ -19,21 +19,25 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     private readonly IGameRepository _gameRepo;
     private readonly IConfigurationService _config;
     private readonly IEmulatorRepository _emulatorRepo;
+    private readonly IPeripheralRegistry _peripheralRegistry;
+    private readonly IGameScraperService _scraperService;
+    private readonly IScraperSettingsRepository _scraperSettingsRepo;
+    private readonly IComfyUiClient _comfyUiClient;
     private readonly MediaAssetResolver _resolver;
     private readonly SkiaMediaCache _cache;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
     private readonly ILogger<GamesConfigViewModel> _logger;
 
     /// <summary>
-    /// Field position while the editor is open — 0=Title, 4=Genre, 7-12=media/ROM paths
-    /// (text, open the virtual keyboard), 13=Save, 14=Cancel. System(1)/Emulator(3) cycle
+    /// Field position while the editor is open — 0=Title, 4=Genre, 7-13=ROM/process-name/
+    /// media paths (text, open the virtual keyboard), 18=Save, 19=Cancel. System(1)/Emulator(3) cycle
     /// via Left/Right, Players(5) adjusts via Left/Right, Favorite(6) toggles via Confirm.
     /// Category(2) is a multi-select checkbox grid — Confirm enters a sub-mode (see
     /// IsCategoryOptionsFocused below), matching the same "enter list, Back exits it"
     /// convention as Audio's track sub-list.
     /// </summary>
     [ObservableProperty] private int _editorFocusIndex;
-    private const int EditorPositionCount = 19;
+    private const int EditorPositionCount = 30;
 
     // ── Category checkbox sub-mode — entered via Confirm at EditorFocusIndex==2 ───────
     [ObservableProperty] private bool _isCategoryOptionsFocused;
@@ -57,7 +61,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Editor.DisabledDeviceTypeOptions[i].IsHighlighted = IsBrowsingDisabledDeviceTypes && i == SelectedDeviceTypeCheckIndex;
     }
 
-    // ── BIOS override sub-mode — entered via Confirm at EditorFocusIndex==14 ──────────
+    // ── BIOS override sub-mode — entered via Confirm at EditorFocusIndex==18 ──────────
     // Nearly always empty; only needed for the rare game that requires a BIOS
     // different from its emulator's own default list (Emulator.BiosPaths). Plain
     // strings, not a wrapper VM — the ListBox's own SelectedIndex binding drives the
@@ -65,11 +69,40 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [ObservableProperty] private bool _isBrowsingBiosOverrides;
     [ObservableProperty] private int _selectedBiosOverrideIndex;
 
-    // ── Disabled peripherals sub-mode — entered via Confirm at EditorFocusIndex==16 ──
+    // ── Disabled peripherals sub-mode — entered via Confirm at EditorFocusIndex==20 ──
     // Nearly always all unchecked; only needed for the rare game where a lightgun,
     // wheel, etc. would interfere (e.g. disabling both for a fighting game).
     [ObservableProperty] private bool _isBrowsingDisabledDeviceTypes;
     [ObservableProperty] private int _selectedDeviceTypeCheckIndex;
+
+    // ── Player device assignments — richer, per-slot alternative to disabled
+    // peripherals above (Game.PlayerDeviceAssignments). Two flat "pending" fields
+    // (cycled via Left/Right, same convention as System/Emulator/Players) build up
+    // one entry at a time; AddAssignment commits it; the list sub-mode (entered via
+    // Confirm at EditorFocusIndex==25) removes existing ones. Nearly always empty.
+    [ObservableProperty] private int _pendingAssignmentPlayerIndex = 1;
+    [ObservableProperty] private int _pendingAssignmentDeviceIndex;
+    [ObservableProperty] private bool _isBrowsingPlayerAssignments;
+    [ObservableProperty] private int _selectedPlayerAssignmentIndex;
+
+    /// <summary>Devices available to pick from when building a pending assignment —
+    /// the full known-peripheral registry (connected or not; a device you're about to
+    /// plug in for a specific game is a reasonable thing to pre-configure).</summary>
+    public IReadOnlyList<RawInputDevice> AssignableKnownDevices => _peripheralRegistry.KnownDevices;
+
+    public string PendingAssignmentDeviceLabel =>
+        AssignableKnownDevices.Count == 0 ? "(no known devices — scan in the Controllers tab first)"
+        : AssignableKnownDevices[Math.Clamp(PendingAssignmentDeviceIndex, 0, AssignableKnownDevices.Count - 1)] is var d
+            ? $"{d.FriendlyName} ({d.DeviceType})" : string.Empty;
+
+    partial void OnIsBrowsingPlayerAssignmentsChanged(bool value) => RefreshPlayerAssignmentHighlight();
+    partial void OnSelectedPlayerAssignmentIndexChanged(int value) => RefreshPlayerAssignmentHighlight();
+
+    private void RefreshPlayerAssignmentHighlight()
+    {
+        for (int i = 0; i < Editor.PlayerDeviceAssignmentEntries.Count; i++)
+            Editor.PlayerDeviceAssignmentEntries[i].IsHighlighted = IsBrowsingPlayerAssignments && i == SelectedPlayerAssignmentIndex;
+    }
 
     // ── Editor field highlight (drives the same Classes-binding highlight trick used
     // everywhere else — sidebar menu, Peripheral Hooks, keyboard keys) ────────────────
@@ -81,17 +114,28 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     public bool IsPlayersFocused        => EditorFocusIndex == 5;
     public bool IsFavoriteFocused       => EditorFocusIndex == 6;
     public bool IsRomPathFocused        => EditorFocusIndex == 7;
-    public bool IsCoverPathFocused      => EditorFocusIndex == 8;
-    public bool IsBackgroundPathFocused => EditorFocusIndex == 9;
-    public bool IsLogoPathFocused       => EditorFocusIndex == 10;
-    public bool IsVideoPathFocused      => EditorFocusIndex == 11;
-    public bool IsMarqueePathFocused    => EditorFocusIndex == 12;
-    public bool IsBezelOverrideFocused    => EditorFocusIndex == 13;
-    public bool IsBiosOverrideListFocused => EditorFocusIndex == 14;
-    public bool IsAddBiosOverrideFocused  => EditorFocusIndex == 15;
-    public bool IsDisabledDeviceTypesFocused => EditorFocusIndex == 16;
-    public bool IsSaveFocused           => EditorFocusIndex == 17;
-    public bool IsCancelFocused         => EditorFocusIndex == 18;
+    public bool IsProcessNameOverrideFocused => EditorFocusIndex == 8;
+    public bool IsCoverPathFocused      => EditorFocusIndex == 9;
+    public bool IsBackgroundPathFocused => EditorFocusIndex == 10;
+    public bool IsLogoPathFocused       => EditorFocusIndex == 11;
+    public bool IsVideoPathFocused      => EditorFocusIndex == 12;
+    public bool IsMarqueePathFocused    => EditorFocusIndex == 13;
+    public bool IsBezelOverrideFocused    => EditorFocusIndex == 14;
+    public bool IsDisplayWidthOverrideFocused     => EditorFocusIndex == 15;
+    public bool IsDisplayHeightOverrideFocused    => EditorFocusIndex == 16;
+    public bool IsDisplayRefreshHzOverrideFocused => EditorFocusIndex == 17;
+    public bool IsBiosOverrideListFocused => EditorFocusIndex == 18;
+    public bool IsAddBiosOverrideFocused  => EditorFocusIndex == 19;
+    public bool IsDisabledDeviceTypesFocused => EditorFocusIndex == 20;
+    public bool IsDemulShooterTargetFocused => EditorFocusIndex == 21;
+    public bool IsPendingAssignmentPlayerIndexFocused => EditorFocusIndex == 22;
+    public bool IsPendingAssignmentDeviceFocused      => EditorFocusIndex == 23;
+    public bool IsAddAssignmentFocused                => EditorFocusIndex == 24;
+    public bool IsPlayerDeviceAssignmentsFocused => EditorFocusIndex == 25;
+    public bool IsSaveFocused           => EditorFocusIndex == 26;
+    public bool IsCancelFocused         => EditorFocusIndex == 27;
+    public bool IsScrapeFocused         => EditorFocusIndex == 28;
+    public bool IsGenerateCardFocused   => EditorFocusIndex == 29;
 
     partial void OnEditorFocusIndexChanged(int value)
     {
@@ -103,17 +147,28 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPlayersFocused));
         OnPropertyChanged(nameof(IsFavoriteFocused));
         OnPropertyChanged(nameof(IsRomPathFocused));
+        OnPropertyChanged(nameof(IsProcessNameOverrideFocused));
         OnPropertyChanged(nameof(IsCoverPathFocused));
         OnPropertyChanged(nameof(IsBackgroundPathFocused));
         OnPropertyChanged(nameof(IsLogoPathFocused));
         OnPropertyChanged(nameof(IsVideoPathFocused));
         OnPropertyChanged(nameof(IsMarqueePathFocused));
         OnPropertyChanged(nameof(IsBezelOverrideFocused));
+        OnPropertyChanged(nameof(IsDisplayWidthOverrideFocused));
+        OnPropertyChanged(nameof(IsDisplayHeightOverrideFocused));
+        OnPropertyChanged(nameof(IsDisplayRefreshHzOverrideFocused));
         OnPropertyChanged(nameof(IsBiosOverrideListFocused));
         OnPropertyChanged(nameof(IsAddBiosOverrideFocused));
         OnPropertyChanged(nameof(IsDisabledDeviceTypesFocused));
+        OnPropertyChanged(nameof(IsDemulShooterTargetFocused));
+        OnPropertyChanged(nameof(IsPendingAssignmentPlayerIndexFocused));
+        OnPropertyChanged(nameof(IsPendingAssignmentDeviceFocused));
+        OnPropertyChanged(nameof(IsAddAssignmentFocused));
+        OnPropertyChanged(nameof(IsPlayerDeviceAssignmentsFocused));
         OnPropertyChanged(nameof(IsSaveFocused));
         OnPropertyChanged(nameof(IsCancelFocused));
+        OnPropertyChanged(nameof(IsScrapeFocused));
+        OnPropertyChanged(nameof(IsGenerateCardFocused));
     }
 
     // ── Game list ──────────────────────────────────────────────────────────
@@ -149,6 +204,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         IGameRepository gameRepo,
         IConfigurationService config,
         IEmulatorRepository emulatorRepo,
+        IPeripheralRegistry peripheralRegistry,
+        IGameScraperService scraperService,
+        IScraperSettingsRepository scraperSettingsRepo,
+        IComfyUiClient comfyUiClient,
         MediaAssetResolver resolver,
         SkiaMediaCache cache,
         VirtualKeyboardViewModel virtualKeyboard,
@@ -157,6 +216,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         _gameRepo = gameRepo;
         _config = config;
         _emulatorRepo = emulatorRepo;
+        _peripheralRegistry = peripheralRegistry;
+        _scraperService = scraperService;
+        _scraperSettingsRepo = scraperSettingsRepo;
+        _comfyUiClient = comfyUiClient;
         _resolver = resolver;
         _cache = cache;
         _virtualKeyboard = virtualKeyboard;
@@ -292,6 +355,13 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        if (IsBrowsingPlayerAssignments)
+        {
+            if (Editor.PlayerDeviceAssignmentEntries.Count == 0) return;
+            SelectedPlayerAssignmentIndex = (SelectedPlayerAssignmentIndex - 1 + Editor.PlayerDeviceAssignmentEntries.Count) % Editor.PlayerDeviceAssignmentEntries.Count;
+            return;
+        }
+
         if (IsEditorOpen)
         {
             EditorFocusIndex = (EditorFocusIndex - 1 + EditorPositionCount) % EditorPositionCount;
@@ -327,6 +397,13 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        if (IsBrowsingPlayerAssignments)
+        {
+            if (Editor.PlayerDeviceAssignmentEntries.Count == 0) return;
+            SelectedPlayerAssignmentIndex = (SelectedPlayerAssignmentIndex + 1) % Editor.PlayerDeviceAssignmentEntries.Count;
+            return;
+        }
+
         if (IsEditorOpen)
         {
             EditorFocusIndex = (EditorFocusIndex + 1) % EditorPositionCount;
@@ -341,24 +418,36 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     public void NavigateLeft()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes) return;
+        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
         switch (EditorFocusIndex)
         {
             case 1: CycleSystem(-1); break;
             case 3: CycleEmulator(-1); break;
             case 5: Editor.Players = Math.Max(1, Editor.Players - 1); break;
+            case 22: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
+            case 23: CyclePendingAssignmentDevice(-1); break;
         }
     }
 
     public void NavigateRight()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes) return;
+        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
         switch (EditorFocusIndex)
         {
             case 1: CycleSystem(1); break;
             case 3: CycleEmulator(1); break;
             case 5: Editor.Players = Math.Min(8, Editor.Players + 1); break;
+            case 22: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
+            case 23: CyclePendingAssignmentDevice(1); break;
         }
+    }
+
+    private void CyclePendingAssignmentDevice(int delta)
+    {
+        if (AssignableKnownDevices.Count == 0) return;
+        int idx = (PendingAssignmentDeviceIndex + delta + AssignableKnownDevices.Count) % AssignableKnownDevices.Count;
+        PendingAssignmentDeviceIndex = idx;
+        OnPropertyChanged(nameof(PendingAssignmentDeviceLabel));
     }
 
     private void CycleSystem(int delta)
@@ -407,6 +496,16 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Back while browsing the player-device-assignments list exits just
+    /// that, back to the flat field list — same convention as every other nested
+    /// list/grid in this editor.</summary>
+    public bool TryExitPlayerAssignments()
+    {
+        if (!IsBrowsingPlayerAssignments) return false;
+        IsBrowsingPlayerAssignments = false;
+        return true;
+    }
+
     public async Task ConfirmAsync()
     {
         if (!IsEditorOpen)
@@ -446,6 +545,17 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        if (IsBrowsingPlayerAssignments)
+        {
+            if (SelectedPlayerAssignmentIndex >= 0 && SelectedPlayerAssignmentIndex < Editor.PlayerDeviceAssignmentEntries.Count)
+            {
+                Editor.PlayerDeviceAssignmentEntries.RemoveAt(SelectedPlayerAssignmentIndex);
+                if (Editor.PlayerDeviceAssignmentEntries.Count == 0) IsBrowsingPlayerAssignments = false;
+                else SelectedPlayerAssignmentIndex = Math.Clamp(SelectedPlayerAssignmentIndex, 0, Editor.PlayerDeviceAssignmentEntries.Count - 1);
+            }
+            return;
+        }
+
         switch (EditorFocusIndex)
         {
             case 0: _virtualKeyboard.Open("Title", Editor.Title, v => Editor.Title = v); break;
@@ -458,31 +568,181 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 break;
             case 4: _virtualKeyboard.Open("Genre", Editor.Genre, v => Editor.Genre = v); break;
             case 7: _virtualKeyboard.Open("ROM Path", Editor.RomPath, v => Editor.RomPath = v); break;
-            case 8: _virtualKeyboard.Open("Cover Path", Editor.CoverPath, v => Editor.CoverPath = v); break;
-            case 9: _virtualKeyboard.Open("Background Path", Editor.BackgroundPath, v => Editor.BackgroundPath = v); break;
-            case 10: _virtualKeyboard.Open("Logo Path", Editor.LogoPath, v => Editor.LogoPath = v); break;
-            case 11: _virtualKeyboard.Open("Video Path", Editor.VideoPath, v => Editor.VideoPath = v); break;
-            case 12: _virtualKeyboard.Open("Marquee Path", Editor.MarqueePath, v => Editor.MarqueePath = v); break;
-            case 13: await BrowseBezelOverrideAsync(); break;
-            case 14:
+            case 8: _virtualKeyboard.Open("Process Name Override", Editor.ProcessNameOverride, v => Editor.ProcessNameOverride = v); break;
+            case 9: _virtualKeyboard.Open("Cover Path", Editor.CoverPath, v => Editor.CoverPath = v); break;
+            case 10: _virtualKeyboard.Open("Background Path", Editor.BackgroundPath, v => Editor.BackgroundPath = v); break;
+            case 11: _virtualKeyboard.Open("Logo Path", Editor.LogoPath, v => Editor.LogoPath = v); break;
+            case 12: _virtualKeyboard.Open("Video Path", Editor.VideoPath, v => Editor.VideoPath = v); break;
+            case 13: _virtualKeyboard.Open("Marquee Path", Editor.MarqueePath, v => Editor.MarqueePath = v); break;
+            case 14: await BrowseBezelOverrideAsync(); break;
+            case 15: OpenNumericKeyboard("Display Width Override (0 = use system default)", Editor.DisplayModeOverrideWidth, v => Editor.DisplayModeOverrideWidth = v); break;
+            case 16: OpenNumericKeyboard("Display Height Override (0 = use system default)", Editor.DisplayModeOverrideHeight, v => Editor.DisplayModeOverrideHeight = v); break;
+            case 17: OpenNumericKeyboard("Display Refresh Hz Override (0 = use system default)", Editor.DisplayModeOverrideRefreshHz, v => Editor.DisplayModeOverrideRefreshHz = v); break;
+            case 18:
                 if (Editor.BiosOverridePaths.Count > 0)
                 {
                     IsBrowsingBiosOverrides = true;
                     SelectedBiosOverrideIndex = Math.Clamp(SelectedBiosOverrideIndex, 0, Editor.BiosOverridePaths.Count - 1);
                 }
                 break;
-            case 15: await BrowseAddBiosOverrideAsync(); break;
-            case 16:
+            case 19: await BrowseAddBiosOverrideAsync(); break;
+            case 20:
                 if (Editor.DisabledDeviceTypeOptions.Count > 0)
                 {
                     IsBrowsingDisabledDeviceTypes = true;
                     SelectedDeviceTypeCheckIndex = Math.Clamp(SelectedDeviceTypeCheckIndex, 0, Editor.DisabledDeviceTypeOptions.Count - 1);
                 }
                 break;
-            case 17: await SaveEditorAsync(); break;
-            case 18: CancelEditor(); break;
+            case 21: _virtualKeyboard.Open("DemulShooter Target", Editor.DemulShooterTarget, v => Editor.DemulShooterTarget = v); break;
+            case 24: AddPendingPlayerDeviceAssignment(); break;
+            case 25:
+                if (Editor.PlayerDeviceAssignmentEntries.Count > 0)
+                {
+                    IsBrowsingPlayerAssignments = true;
+                    SelectedPlayerAssignmentIndex = Math.Clamp(SelectedPlayerAssignmentIndex, 0, Editor.PlayerDeviceAssignmentEntries.Count - 1);
+                }
+                break;
+            case 26: await SaveEditorAsync(); break;
+            case 27: CancelEditor(); break;
             case 6: Editor.IsFavorite = !Editor.IsFavorite; break;
-            // 1, 3, 5 (System/Emulator/Players) are adjusted via Left/Right, not Confirm.
+            case 28: await ScrapeAsync(); break;
+            case 29: await GenerateCardAsync(); break;
+            // 1, 3, 5 (System/Emulator/Players), 22, 23 (pending assignment player
+            // index/device) are all adjusted via Left/Right, not Confirm.
+        }
+    }
+
+    [RelayCommand]
+    private void AddPendingPlayerDeviceAssignment()
+    {
+        if (AssignableKnownDevices.Count == 0) return;
+        var device = AssignableKnownDevices[Math.Clamp(PendingAssignmentDeviceIndex, 0, AssignableKnownDevices.Count - 1)];
+
+        // Adding the same device to the same player slot twice would just duplicate
+        // it in the ranked list for no benefit — quietly no-op instead.
+        if (Editor.PlayerDeviceAssignmentEntries.Any(e =>
+                e.PlayerIndex == PendingAssignmentPlayerIndex &&
+                string.Equals(e.HardwarePath, device.HardwarePath, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        Editor.PlayerDeviceAssignmentEntries.Add(new PlayerDeviceAssignmentEntry(
+            PendingAssignmentPlayerIndex, device.HardwarePath, device.FriendlyName));
+    }
+
+    // ── Scraper / ComfyUI ─────────────────────────────────────────────────────
+    // Used only for downloading a scraped/generated image to a local temp file —
+    // separate from the scraper sources' own typed HttpClients (UGL.Scraping),
+    // which handle the actual API calls.
+    private static readonly HttpClient _imageDownloadClient = new();
+
+    /// <summary>
+    /// Searches the preferred scraper source by the editor's current Title and
+    /// auto-applies the first result's metadata + cover art. There's no result-picker
+    /// UI yet — for an ambiguous title, this may pick the wrong game; StatusMessage
+    /// always reports exactly what was matched so it's obvious when to fix it
+    /// manually via Cancel and a more specific title.
+    /// </summary>
+    [RelayCommand]
+    private async Task ScrapeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Editor.Title))
+        {
+            StatusMessage = "Enter a Title before scraping.";
+            return;
+        }
+
+        var settings = await _scraperSettingsRepo.GetSettingsAsync();
+        var source = settings.PreferredSource;
+
+        StatusMessage = $"Searching {source}…";
+        var results = await _scraperService.SearchAsync(source, Editor.Title);
+        var first = results.FirstOrDefault();
+        if (first is null)
+        {
+            StatusMessage = $"No {source} results for '{Editor.Title}'.";
+            return;
+        }
+
+        var details = await _scraperService.GetDetailsAsync(source, first.SourceGameId);
+        if (details is null)
+        {
+            StatusMessage = $"Matched '{first.Title}' on {source} but couldn't fetch details.";
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(details.Genre)) Editor.Genre = details.Genre;
+        if (details.Players is { } p) Editor.Players = Math.Clamp(p, 1, 8);
+
+        var coverPath = await DownloadToTempFileAsync(details.CoverImageUrl, "cover");
+        if (coverPath is not null) Editor.CoverPath = coverPath;
+
+        var logoPath = await DownloadToTempFileAsync(details.LogoImageUrl, "logo");
+        if (logoPath is not null) Editor.LogoPath = logoPath;
+
+        var marqueePath = await DownloadToTempFileAsync(details.MarqueeImageUrl, "marquee");
+        if (marqueePath is not null) Editor.MarqueePath = marqueePath;
+
+        StatusMessage = $"Matched '{details.Title}' on {source}. Review fields, then Save.";
+        _logger.LogInformation("Scraped '{Title}' from {Source} (matched '{MatchedTitle}').", Editor.Title, source, details.Title);
+    }
+
+    /// <summary>
+    /// Generates card art via the configured ComfyUI workflow, using the game's
+    /// Title/Genre as the prompt, and applies it as the Cover Art field (like
+    /// ScrapeAsync, the actual file copy happens on Save — this just points
+    /// Editor.CoverPath at a downloaded temp file).
+    /// </summary>
+    [RelayCommand]
+    private async Task GenerateCardAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Editor.Title))
+        {
+            StatusMessage = "Enter a Title before generating card art.";
+            return;
+        }
+
+        var prompt = string.IsNullOrWhiteSpace(Editor.Genre)
+            ? $"video game box art for \"{Editor.Title}\""
+            : $"video game box art for \"{Editor.Title}\", a {Editor.Genre} game";
+
+        StatusMessage = "Generating card art via ComfyUI… this can take a while.";
+        var imageBytes = await _comfyUiClient.GenerateImageAsync(prompt);
+        if (imageBytes is null)
+        {
+            StatusMessage = "ComfyUI generation failed — check the Scraper tab's endpoint/workflow settings and that ComfyUI is running.";
+            return;
+        }
+
+        try
+        {
+            var tempPath = Path.Combine(Path.GetTempPath(), $"ugl_comfyui_{Guid.NewGuid():N}.png");
+            await File.WriteAllBytesAsync(tempPath, imageBytes);
+            Editor.CoverPath = tempPath;
+            StatusMessage = "Card art generated. Review it, then Save.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to save ComfyUI-generated image to a temp file.");
+            StatusMessage = "Generated the image but failed to save it locally — see logs.";
+        }
+    }
+
+    private async Task<string?> DownloadToTempFileAsync(string? url, string label)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return null;
+        try
+        {
+            var bytes = await _imageDownloadClient.GetByteArrayAsync(url);
+            var ext = Path.GetExtension(new Uri(url).AbsolutePath);
+            if (string.IsNullOrWhiteSpace(ext)) ext = ".jpg";
+            var tempPath = Path.Combine(Path.GetTempPath(), $"ugl_scrape_{label}_{Guid.NewGuid():N}{ext}");
+            await File.WriteAllBytesAsync(tempPath, bytes);
+            return tempPath;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to download scraped {Label} image from {Url}.", label, url);
+            return null;
         }
     }
 
@@ -507,6 +767,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Id = string.Empty, Title = string.Empty, SystemId = string.Empty,
             CategoryIds = [], RomPath = string.Empty, EmulatorId = string.Empty
         });
+        Editor.SyncPlayerDeviceAssignments([], _peripheralRegistry.KnownDevices);
         Editor.Id = string.Empty; // Force new-game Id generation on save
         IsEditorOpen = true;
         EditorFocusIndex = 0;
@@ -516,6 +777,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         SelectedBiosOverrideIndex = 0;
         IsBrowsingDisabledDeviceTypes = false;
         SelectedDeviceTypeCheckIndex = 0;
+        IsBrowsingPlayerAssignments = false;
+        SelectedPlayerAssignmentIndex = 0;
+        PendingAssignmentPlayerIndex = 1;
+        PendingAssignmentDeviceIndex = 0;
         SelectedGame = null;
     }
 
@@ -524,6 +789,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     {
         if (SelectedGame is null) return;
         Editor.PopulateFrom(SelectedGame);
+        Editor.SyncPlayerDeviceAssignments(SelectedGame.PlayerDeviceAssignments, _peripheralRegistry.KnownDevices);
         IsEditorOpen = true;
         EditorFocusIndex = 0;
         IsCategoryOptionsFocused = false;
@@ -532,6 +798,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         SelectedBiosOverrideIndex = 0;
         IsBrowsingDisabledDeviceTypes = false;
         SelectedDeviceTypeCheckIndex = 0;
+        IsBrowsingPlayerAssignments = false;
+        SelectedPlayerAssignmentIndex = 0;
+        PendingAssignmentPlayerIndex = 1;
+        PendingAssignmentDeviceIndex = 0;
     }
 
     [RelayCommand]
@@ -558,6 +828,13 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         }
 
         var game = Editor.ToGame();
+
+        // The editor form has no LastPlayed field (it's runtime-tracked, set only when
+        // a game is actually launched — see MainWindowViewModel.OnGameConfirmed), so
+        // ToGame() never populates it. Preserve whatever the existing stored entry had
+        // rather than silently resetting it to null on every metadata edit.
+        var existing = AllGames.FirstOrDefault(g => g.Id == game.Id);
+        if (existing is not null) game.LastPlayed = existing.LastPlayed;
 
         // Copy media files into media/ folder
         game = await CopyMediaFilesAsync(game);
@@ -609,6 +886,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [RelayCommand]
     private async Task BrowseBezelOverrideAsync()
         => Editor.BezelOverridePath = await BrowseImageAsync() ?? Editor.BezelOverridePath;
+
+    /// <summary>Opens the virtual keyboard for a numeric field, parsing the committed
+    /// text back to an int (0 on anything unparseable, matching "not set").</summary>
+    private void OpenNumericKeyboard(string label, int currentValue, Action<int> commit)
+    {
+        _virtualKeyboard.Open(label, currentValue == 0 ? string.Empty : currentValue.ToString(),
+            v => commit(int.TryParse(v, out var n) ? n : 0));
+    }
 
     [RelayCommand]
     private async Task BrowseAddBiosOverrideAsync()
@@ -684,9 +969,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         {
             Id = game.Id, Title = game.Title, SystemId = game.SystemId,
             CategoryIds = game.CategoryIds, RomPath = game.RomPath,
+            ProcessNameOverride = game.ProcessNameOverride,
             EmulatorId = game.EmulatorId, Genre = game.Genre,
             Players = game.Players, IsFavorite = game.IsFavorite,
+            LastPlayed = game.LastPlayed,
             BezelOverridePath = game.BezelOverridePath,
+            DisplayModeOverride = game.DisplayModeOverride,
+            DemulShooterTarget = game.DemulShooterTarget,
+            PlayerDeviceAssignments = game.PlayerDeviceAssignments,
             BiosOverridePaths = game.BiosOverridePaths,
             DisabledDeviceTypes = game.DisabledDeviceTypes,
             Media = new GameMedia

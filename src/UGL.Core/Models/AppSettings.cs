@@ -58,4 +58,11 @@ public sealed class AppSettings
     public double CardHighlightIntensity { get; set; } = 1.0; // 0.0-1.0, applied as border opacity
     public string CardHighlightStyle     { get; set; } = "Solid"; // "Solid" | "Pulsing"
     public int    CardHighlightThickness { get; set; } = 4; // pixels, 2-5
+
+    // ── Peripheral firewall (HidHide) ────────────────────────────────────────
+    // Backs the real (OS-level) version of Game.DisabledDeviceTypes — without this,
+    // "disabling" a peripheral only affects UGL's own RawInput event pipeline, not
+    // what the actual emulator/game process can see (see ProcessEmulatorLauncher).
+    public bool   HidHideEnabled  { get; set; } = false;
+    public string HidHideCliPath  { get; set; } = string.Empty;
 }

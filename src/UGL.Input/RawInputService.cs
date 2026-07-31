@@ -87,6 +87,9 @@ public sealed class RawInputService : IRawInputService
             disabledTypes.Count == 0 ? "(none)" : string.Join(", ", disabledTypes));
     }
 
+    public string? ResolveDeviceInstanceId(string hardwarePath) =>
+        TryGetInterfaceProperty(hardwarePath, DEVPKEY_Device_InstanceId);
+
     public IReadOnlyList<RawInputDevice> EnumerateDevices()
     {
         var result = new List<RawInputDevice>();
@@ -100,14 +103,55 @@ public sealed class RawInputService : IRawInputService
                 (uint)Marshal.SizeOf<RAWINPUTDEVICELIST>()) == uint.MaxValue)
             return result;
 
+        // First pass over the FULL, unfiltered list: find every sibling Physical
+        // Interface Device (force-feedback) collection and remember its parent
+        // devnode identity — a PID collection never itself classifies as an
+        // assignable peripheral type, so it would otherwise be discarded below
+        // without ever being looked at.
+        var ffbParentIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in deviceList)
+        {
+            var path = GetHardwarePath(entry.hDevice);
+            if (string.IsNullOrEmpty(path)) continue;
+            if (TryGetHidCapabilities(path, out var caps) && caps.UsagePage == HID_USAGE_PAGE_PID)
+            {
+                var parentId = GetParentInstanceId(path);
+                if (parentId is not null) ffbParentIds.Add(parentId);
+            }
+        }
+
         foreach (var entry in deviceList)
         {
             var device = BuildDeviceInfo(entry);
             if (device is not null && IsAssignablePeripheral(device.DeviceType))
+            {
+                if (ffbParentIds.Count > 0)
+                {
+                    var parentId = GetParentInstanceId(device.HardwarePath);
+                    device.IsForceFeedbackCapable = parentId is not null && ffbParentIds.Contains(parentId);
+                }
                 result.Add(device);
+            }
         }
 
         return result;
+    }
+
+    /// <summary>Resolves a RawInput interface path to its owning devnode's *parent*
+    /// instance ID string — used to tell whether two different interfaces (e.g. a
+    /// joystick collection and a sibling PID/force-feedback collection) belong to the
+    /// same physical device.</summary>
+    private static string? GetParentInstanceId(string hardwarePath)
+    {
+        var instanceId = TryGetInterfaceProperty(hardwarePath, DEVPKEY_Device_InstanceId);
+        if (string.IsNullOrEmpty(instanceId)) return null;
+        if (CM_Locate_DevNodeW(out var devInst, instanceId, CM_LOCATE_DEVNODE_NORMAL) != CR_SUCCESS) return null;
+        if (CM_Get_Parent(out var parent, devInst, 0) != CR_SUCCESS) return null;
+
+        var buffer = new System.Text.StringBuilder(MAX_DEVICE_ID_LEN);
+        return CM_Get_Device_IDW(parent, buffer, (uint)MAX_DEVICE_ID_LEN, 0) == CR_SUCCESS
+            ? buffer.ToString()
+            : null;
     }
 
     /// <summary>

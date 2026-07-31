@@ -39,6 +39,25 @@ public sealed partial class DeviceTypeCheckItem : ObservableObject
     }
 }
 
+/// <summary>One (PlayerIndex, device) entry in the game editor's player-device
+/// assignment list. Entries sharing the same PlayerIndex are ranked by their order
+/// in the flat list (first = most preferred) — see GameEditViewModel.
+/// BuildPlayerDeviceAssignments().</summary>
+public sealed partial class PlayerDeviceAssignmentEntry : ObservableObject
+{
+    public int PlayerIndex { get; }
+    public string HardwarePath { get; }
+    public string FriendlyName { get; }
+    [ObservableProperty] private bool _isHighlighted;
+
+    public PlayerDeviceAssignmentEntry(int playerIndex, string hardwarePath, string friendlyName)
+    {
+        PlayerIndex = playerIndex;
+        HardwarePath = hardwarePath;
+        FriendlyName = friendlyName;
+    }
+}
+
 /// <summary>
 /// Editable form backing model for a single game.
 /// Populated from an existing Game on edit, or blank on add.
@@ -51,6 +70,11 @@ public sealed partial class GameEditViewModel : ObservableObject
     [ObservableProperty] private string _selectedSystemId = string.Empty;
     [ObservableProperty] private string _selectedEmulatorId = string.Empty;
     [ObservableProperty] private string _romPath = string.Empty;
+
+    /// <summary>Only meaningful for a direct-launch Emulator (Steam/Epic/GOG Galaxy) —
+    /// see Game.ProcessNameOverride. Nearly always empty.</summary>
+    [ObservableProperty] private string _processNameOverride = string.Empty;
+
     [ObservableProperty] private string _genre = string.Empty;
     [ObservableProperty] private int _players = 1;
     [ObservableProperty] private bool _isFavorite;
@@ -76,6 +100,27 @@ public sealed partial class GameEditViewModel : ObservableObject
     /// the overwhelming majority of cases.</summary>
     [ObservableProperty] private string _bezelOverridePath = string.Empty;
 
+    /// <summary>Rare per-game override of the system's default display mode. Each
+    /// field independently optional — 0 means "not set" in the editor's numeric
+    /// fields, translated to null when building the Game (see ToGame()).</summary>
+    [ObservableProperty] private int _displayModeOverrideWidth;
+    [ObservableProperty] private int _displayModeOverrideHeight;
+    [ObservableProperty] private int _displayModeOverrideRefreshHz;
+
+    /// <summary>DemulShooter's per-title "-target=" argument. Nearly always empty —
+    /// only lightgun games behind DemulShooter need it.</summary>
+    [ObservableProperty] private string _demulShooterTarget = string.Empty;
+
+    // Read-only display text for the fields above (set via the virtual keyboard) —
+    // see SystemsConfigViewModel's equivalent for why these aren't bound directly.
+    public string DisplayModeOverrideWidthText     => DisplayModeOverrideWidth     == 0 ? "Not set" : DisplayModeOverrideWidth.ToString();
+    public string DisplayModeOverrideHeightText    => DisplayModeOverrideHeight    == 0 ? "Not set" : DisplayModeOverrideHeight.ToString();
+    public string DisplayModeOverrideRefreshHzText => DisplayModeOverrideRefreshHz == 0 ? "Not set" : DisplayModeOverrideRefreshHz.ToString();
+
+    partial void OnDisplayModeOverrideWidthChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideWidthText));
+    partial void OnDisplayModeOverrideHeightChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideHeightText));
+    partial void OnDisplayModeOverrideRefreshHzChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideRefreshHzText));
+
     /// <summary>Rare per-game override of the emulator's default BIOS file list. Empty
     /// in the overwhelming majority of cases.</summary>
     public ObservableCollection<string> BiosOverridePaths { get; } = [];
@@ -91,6 +136,44 @@ public sealed partial class GameEditViewModel : ObservableObject
     /// than synced from elsewhere.
     /// </summary>
     public ObservableCollection<DeviceTypeCheckItem> DisabledDeviceTypeOptions { get; } = [];
+
+    /// <summary>
+    /// Richer, per-player-slot alternative to DisabledDeviceTypeOptions above — see
+    /// Game.PlayerDeviceAssignments. Nearly always empty; DisabledDeviceTypeOptions
+    /// alone covers most games. Flat list rather than a nested Player→Devices
+    /// structure so it can reuse the same enter-list/Up-Down/Confirm-remove/Back-exit
+    /// convention as every other list in this editor — entries are grouped by
+    /// PlayerIndex only at display/save time (see BuildPlayerDeviceAssignments()).
+    /// </summary>
+    public ObservableCollection<PlayerDeviceAssignmentEntry> PlayerDeviceAssignmentEntries { get; } = [];
+
+    /// <summary>Rebuilds PlayerDeviceAssignmentEntries from the game's stored
+    /// assignments, resolving each hardware path to a friendly name via the current
+    /// peripheral registry (falls back to the raw path if the device is unknown/
+    /// disconnected). Call on load, same convention as SyncCategoryOptions.</summary>
+    public void SyncPlayerDeviceAssignments(IEnumerable<PlayerDeviceAssignment> assignments, IReadOnlyList<RawInputDevice> knownDevices)
+    {
+        PlayerDeviceAssignmentEntries.Clear();
+        foreach (var slot in assignments.OrderBy(a => a.PlayerIndex))
+        {
+            foreach (var path in slot.PreferredHardwarePaths)
+            {
+                var name = knownDevices.FirstOrDefault(d =>
+                    string.Equals(d.HardwarePath, path, StringComparison.OrdinalIgnoreCase))?.FriendlyName ?? path;
+                PlayerDeviceAssignmentEntries.Add(new PlayerDeviceAssignmentEntry(slot.PlayerIndex, path, name));
+            }
+        }
+    }
+
+    /// <summary>Groups the flat entry list back into ranked per-player-slot
+    /// assignments for persistence — entries sharing a PlayerIndex keep their
+    /// existing relative order (first = most preferred).</summary>
+    public List<PlayerDeviceAssignment> BuildPlayerDeviceAssignments() =>
+        PlayerDeviceAssignmentEntries
+            .GroupBy(e => e.PlayerIndex)
+            .OrderBy(g => g.Key)
+            .Select(g => new PlayerDeviceAssignment { PlayerIndex = g.Key, PreferredHardwarePaths = g.Select(e => e.HardwarePath).ToList() })
+            .ToList();
 
     public GameEditViewModel()
     {
@@ -143,6 +226,7 @@ public sealed partial class GameEditViewModel : ObservableObject
         SelectedSystemId = game.SystemId;
         SelectedEmulatorId = game.EmulatorId;
         RomPath = game.RomPath;
+        ProcessNameOverride = game.ProcessNameOverride;
         Genre = game.Genre;
         Players = game.Players;
         IsFavorite = game.IsFavorite;
@@ -152,6 +236,10 @@ public sealed partial class GameEditViewModel : ObservableObject
         VideoPath = game.Media.VideoPath;
         MarqueePath = game.Media.MarqueePath;
         BezelOverridePath = game.BezelOverridePath;
+        DisplayModeOverrideWidth     = game.DisplayModeOverride?.Width     ?? 0;
+        DisplayModeOverrideHeight    = game.DisplayModeOverride?.Height    ?? 0;
+        DisplayModeOverrideRefreshHz = game.DisplayModeOverride?.RefreshHz ?? 0;
+        DemulShooterTarget = game.DemulShooterTarget;
         BiosOverridePaths.Clear();
         foreach (var bios in game.BiosOverridePaths) BiosOverridePaths.Add(bios);
 
@@ -187,6 +275,7 @@ public sealed partial class GameEditViewModel : ObservableObject
             // and MediaAssetResolver.ResolvePath (for the Media.* paths below) both
             // already resolve either form back to an absolute path when loading.
             RomPath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(RomPath.Trim()),
+            ProcessNameOverride = ProcessNameOverride.Trim(),
             Genre = Genre.Trim(),
             Players = Players,
             IsFavorite = IsFavorite,
@@ -199,6 +288,15 @@ public sealed partial class GameEditViewModel : ObservableObject
                 MarqueePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(MarqueePath.Trim()),
             },
             BezelOverridePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(BezelOverridePath.Trim()),
+            DisplayModeOverride = (DisplayModeOverrideWidth, DisplayModeOverrideHeight, DisplayModeOverrideRefreshHz) == (0, 0, 0)
+                ? null
+                : new DisplayMode
+                {
+                    Width     = DisplayModeOverrideWidth     == 0 ? null : DisplayModeOverrideWidth,
+                    Height    = DisplayModeOverrideHeight    == 0 ? null : DisplayModeOverrideHeight,
+                    RefreshHz = DisplayModeOverrideRefreshHz == 0 ? null : DisplayModeOverrideRefreshHz,
+                },
+            DemulShooterTarget = DemulShooterTarget.Trim(),
             BiosOverridePaths = BiosOverridePaths
                 .Select(p => UGL.Core.Utilities.PortablePathHelper.ToPortablePath(p))
                 .ToList(),
@@ -206,6 +304,7 @@ public sealed partial class GameEditViewModel : ObservableObject
                 .Where(o => o.IsChecked)
                 .Select(o => o.Type)
                 .ToList(),
+            PlayerDeviceAssignments = BuildPlayerDeviceAssignments(),
         };
     }
 

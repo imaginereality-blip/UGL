@@ -38,4 +38,17 @@ public sealed class HookSettings
     /// itself starts, so it's already listening on the output port in time. Some tools
     /// need a moment to initialize before the emulator's first output signal fires.</summary>
     public int StartupDelayMs { get; set; } = 500;
+
+    /// <summary>
+    /// DemulShooter is a separate concern from ToolType above — it translates
+    /// lightgun/mouse aiming into the format a specific game/emulator combo expects,
+    /// rather than listening for MAME-standard output signals, so it isn't mutually
+    /// exclusive with MameHooker/HookOfTheReaper and can run alongside either. Its
+    /// per-title "-target=" argument is inherently per-game (see
+    /// Game.DemulShooterTarget), not per-system, unlike everything else here.
+    /// </summary>
+    public bool DemulShooterEnabled { get; set; } = false;
+
+    /// <summary>Full path to DemulShooter.exe.</summary>
+    public string DemulShooterExecutablePath { get; set; } = string.Empty;
 }

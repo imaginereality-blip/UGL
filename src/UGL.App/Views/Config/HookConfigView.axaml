@@ -46,6 +46,30 @@
         </StackPanel>
       </Border>
 
+      <!-- DemulShooter (separate from the output-hook tool above — lightgun aiming
+           translation, can run alongside either MameHooker or Hook of the Reaper) -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterEnabledFocused}" Padding="4">
+        <Border Background="#22FFFFFF" CornerRadius="6" Padding="12">
+          <StackPanel Spacing="4">
+            <CheckBox IsChecked="{Binding DemulShooterEnabled}"
+                      Content="Enable DemulShooter"
+                      FontWeight="SemiBold"/>
+            <TextBlock Text="Translates lightgun/mouse aiming for a specific game — set per-game in the Games tab (DemulShooter Target). Independent of the output-hook tool above; both can run together."
+                       Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </Border>
+      <Border IsVisible="{Binding DemulShooterEnabled}"
+              Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterPathFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="DemulShooter Executable" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding DemulShooterExecutablePath}" IsReadOnly="True" Watermark="None"/>
+            <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseDemulShooterExecutableCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+
       <!-- Per-system overrides -->
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsOverridesFieldFocused}" Padding="8">
         <StackPanel Spacing="4">

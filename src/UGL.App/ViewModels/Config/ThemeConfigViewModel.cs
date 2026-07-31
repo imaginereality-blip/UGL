@@ -72,10 +72,17 @@ public sealed partial class ThemeConfigViewModel : ObservableObject
 
         // Persist the selection to settings.json
         var s = _config.Settings;
+        // Full field list, not just the ones this tab cares about — a reconstruction
+        // like this silently resets anything left out (this one previously dropped
+        // EmulatorsRootPath/AddonsRootPath/LogsRootPath and all four CardHighlight*
+        // fields, meaning applying a theme silently reset them to defaults).
         var updated = new AppSettings
         {
             MediaRootPath          = s.MediaRootPath,
             RomsRootPath           = s.RomsRootPath,
+            EmulatorsRootPath      = s.EmulatorsRootPath,
+            AddonsRootPath         = s.AddonsRootPath,
+            LogsRootPath           = s.LogsRootPath,
             ActiveThemeId          = SelectedTheme.Id,
             DefaultCategoryId      = s.DefaultCategoryId,
             EnableBackgroundMusic  = s.EnableBackgroundMusic,
@@ -90,8 +97,14 @@ public sealed partial class ThemeConfigViewModel : ObservableObject
             VideoPreviewDelayMs    = s.VideoPreviewDelayMs,
             VideoPreviewAudio      = s.VideoPreviewAudio,
             VideoPreviewVolume     = s.VideoPreviewVolume,
+            CardHighlightColor     = s.CardHighlightColor,
+            CardHighlightIntensity = s.CardHighlightIntensity,
+            CardHighlightStyle     = s.CardHighlightStyle,
+            CardHighlightThickness = s.CardHighlightThickness,
             TargetFrameRate        = s.TargetFrameRate,
             Language               = s.Language,
+            HidHideEnabled         = s.HidHideEnabled,
+            HidHideCliPath         = s.HidHideCliPath,
         };
 
         await _config.UpdateSettingsAsync(updated);

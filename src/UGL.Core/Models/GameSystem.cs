@@ -35,4 +35,13 @@ public sealed class GameSystem
     /// Game.BezelOverridePath for the rare exception. Empty means no bezel.
     /// </summary>
     public string BezelPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Default display resolution/refresh rate for games on this system — many
+    /// emulators and lightgun games only behave correctly at one specific mode.
+    /// Applies system-wide, same "system default, game overrides" convention as
+    /// BezelPath. A specific game can override this via Game.DisplayModeOverride.
+    /// Null means "don't change the display mode for this system's games."
+    /// </summary>
+    public DisplayMode? DisplayMode { get; set; }
 }

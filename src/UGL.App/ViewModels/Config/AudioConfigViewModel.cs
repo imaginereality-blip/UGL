@@ -680,6 +680,8 @@ public sealed partial class AudioConfigViewModel : ObservableObject
             CardHighlightIntensity = s.CardHighlightIntensity,
             CardHighlightStyle     = s.CardHighlightStyle,
             CardHighlightThickness = s.CardHighlightThickness,
+            HidHideEnabled         = s.HidHideEnabled,
+            HidHideCliPath         = s.HidHideCliPath,
         };
 
         await _config.UpdateSettingsAsync(updated);

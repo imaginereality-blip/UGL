@@ -19,9 +19,10 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     public PeripheralConfigViewModel    Peripherals   { get; }
     public HookConfigViewModel          Hooks         { get; }
     public UpdateConfigViewModel        Updates       { get; }
+    public ScraperConfigViewModel       Scraper       { get; }
     public VirtualKeyboardViewModel     VirtualKeyboard { get; }
 
-    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, Paths, Peripherals, Hooks, Updates }
+    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, Paths, Peripherals, Hooks, Updates, Scraper }
 
     [ObservableProperty] private Tab  _activeTab = Tab.Categories;
     [ObservableProperty] private bool _isCategoriesTabActive = true;
@@ -34,6 +35,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isPeripheralsTabActive;
     [ObservableProperty] private bool _isHooksTabActive;
     [ObservableProperty] private bool _isUpdatesTabActive;
+    [ObservableProperty] private bool _isScraperTabActive;
 
     /// <summary>
     /// Rows for the unified settings menu (sidebar list). Selecting a tab row switches
@@ -54,6 +56,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         new("🕹 Controllers",        Tab.Peripherals),
         new("🔌 Output Hooks",       Tab.Hooks),
         new("🔄 Updates",            Tab.Updates),
+        new("🖼 Scraper",            Tab.Scraper),
         new("⏻ Quit UGL",           null, IsQuit: true),
     ];
 
@@ -117,6 +120,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         PeripheralConfigViewModel peripherals,
         HookConfigViewModel hooks,
         UpdateConfigViewModel updates,
+        ScraperConfigViewModel scraper,
         VirtualKeyboardViewModel virtualKeyboard)
     {
         Categories    = categories;
@@ -129,6 +133,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Peripherals   = peripherals;
         Hooks         = hooks;
         Updates       = updates;
+        Scraper       = scraper;
         VirtualKeyboard = virtualKeyboard;
 
         SelectedMenuItem = MenuItems[0];
@@ -214,7 +219,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     public bool TryHandleContentBack() => ActiveTab switch
     {
-        Tab.Games => Games.TryExitCategoryOptions() || Games.TryExitBiosOverrides() || Games.TryExitDisabledDeviceTypes(),
+        Tab.Games => Games.TryExitCategoryOptions() || Games.TryExitBiosOverrides() || Games.TryExitDisabledDeviceTypes() || Games.TryExitPlayerAssignments(),
         Tab.Audio => Audio.TryExitSubMode(),
         Tab.Hooks => Hooks.TryExitOverrides(),
         Tab.Systems => Systems.TryExitBiosList(),
@@ -276,6 +281,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Peripherals:   Peripherals.NavigateUp();   break;
             case Tab.Hooks:         Hooks.NavigateUp();         break;
             case Tab.Updates:       Updates.NavigateUp();       break;
+            case Tab.Scraper:       Scraper.NavigateUp();       break;
         }
     }
 
@@ -293,6 +299,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Peripherals:   Peripherals.NavigateDown();   break;
             case Tab.Hooks:         Hooks.NavigateDown();         break;
             case Tab.Updates:       Updates.NavigateDown();       break;
+            case Tab.Scraper:       Scraper.NavigateDown();       break;
         }
     }
 
@@ -309,6 +316,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Paths:         Paths.NavigateLeft();         break;
             case Tab.Peripherals:   Peripherals.NavigateLeft();   break;
             case Tab.Hooks:         Hooks.NavigateLeft();         break;
+            case Tab.Scraper:       Scraper.NavigateLeft();       break;
         }
     }
 
@@ -325,6 +333,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Paths:         Paths.NavigateRight();         break;
             case Tab.Peripherals:   Peripherals.NavigateRight();   break;
             case Tab.Hooks:         Hooks.NavigateRight();         break;
+            case Tab.Scraper:       Scraper.NavigateRight();       break;
         }
     }
 
@@ -342,6 +351,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Peripherals:   await Peripherals.ConfirmAsync();   break;
             case Tab.Hooks:         await Hooks.ConfirmAsync();         break;
             case Tab.Updates:       await Updates.ConfirmAsync();       break;
+            case Tab.Scraper:       await Scraper.ConfirmAsync();       break;
         }
     }
 
@@ -371,6 +381,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         await Paths.InitializeAsync();
         await Peripherals.InitializeAsync();
         await Hooks.InitializeAsync();
+        await Scraper.InitializeAsync();
     }
 
     public void SelectTab(Tab tab)
@@ -386,6 +397,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         IsPeripheralsTabActive    = tab == Tab.Peripherals;
         IsHooksTabActive          = tab == Tab.Hooks;
         IsUpdatesTabActive        = tab == Tab.Updates;
+        IsScraperTabActive        = tab == Tab.Scraper;
         IsContentFocused          = false;
 
         // Keep the menu list's highlight in sync when the tab changes via a route

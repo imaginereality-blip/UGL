@@ -34,4 +34,14 @@ public interface IRawInputService : IDisposable
     void SetDisabledDeviceTypes(IReadOnlySet<RawInputDeviceType> disabledTypes);
 
     bool IsRunning { get; }
+
+    /// <summary>
+    /// Resolves a device's stable RawInput hardware (interface) path to the PnP
+    /// device instance ID that Windows device-management APIs (and HidHide's
+    /// --dev-hide) expect instead — a different, shorter identifier
+    /// (e.g. "HID\VID_20A0&amp;PID_41B6&amp;MI_02&amp;Col01\7&amp;f5175f4&amp;0&amp;0000") than the
+    /// interface path. Returns null if it can't be resolved (device disconnected,
+    /// or the underlying CM_* call failed).
+    /// </summary>
+    string? ResolveDeviceInstanceId(string hardwarePath);
 }

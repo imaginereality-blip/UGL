@@ -321,6 +321,26 @@ public sealed partial class MainWindowViewModel : ObservableObject
     {
         _logger.LogDebug("Controller [{Index}] action: {Action}", e.ControllerIndex, e.Action);
 
+        // Quit-to-launcher (LB+RB+Start+Back) takes priority over everything, including
+        // the virtual keyboard/Settings checks below — it's meaningful only while a game
+        // is actually running, at which point none of that other UI state matters anyway.
+        if (e.Action == ControllerAction.QuitToLauncher)
+        {
+            if (_launcher.IsEmulatorRunning)
+            {
+                _logger.LogInformation("Quit-to-launcher combo detected — killing emulator.");
+                await _launcher.KillCurrentEmulatorAsync();
+            }
+            return;
+        }
+
+        // While a game/emulator is running, UGL is minimized (see OnGameConfirmed/
+        // MainWindow.axaml.cs) and shouldn't act on any other input — polling continues
+        // in the background purely so the quit combo above can be detected regardless of
+        // which window has focus. Without this guard, held navigation/Settings/etc. input
+        // would still be processed against a hidden UI.
+        if (_launcher.IsEmulatorRunning) return;
+
         // The virtual keyboard, when open, takes top priority over everything else —
         // including Settings itself — until Done or Cancel closes it.
         var keyboard = _configEditor.VirtualKeyboard;

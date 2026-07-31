@@ -30,12 +30,32 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
     [ObservableProperty] private string _editSystemId   = string.Empty;
     [ObservableProperty] private string _editSystemName = string.Empty;
     [ObservableProperty] private string _editSystemBezelPath = string.Empty;
+
+    /// <summary>Default display mode for this system's games (0 = not set, translated
+    /// to null when building the GameSystem — see SaveSystemAsync).</summary>
+    [ObservableProperty] private int _editSystemDisplayWidth;
+    [ObservableProperty] private int _editSystemDisplayHeight;
+    [ObservableProperty] private int _editSystemDisplayRefreshHz;
+
+    // Display TextBoxes for these are read-only (set via the virtual keyboard, like
+    // EditSystemBezelPath's Browse-only field) — bind to these string properties
+    // rather than the raw ints directly, since a plain int→TextBox.Text binding isn't
+    // reliable on repeated changes in this Avalonia version (SDS §13).
+    public string EditSystemDisplayWidthText     => EditSystemDisplayWidth     == 0 ? "Not set" : EditSystemDisplayWidth.ToString();
+    public string EditSystemDisplayHeightText    => EditSystemDisplayHeight    == 0 ? "Not set" : EditSystemDisplayHeight.ToString();
+    public string EditSystemDisplayRefreshHzText => EditSystemDisplayRefreshHz == 0 ? "Not set" : EditSystemDisplayRefreshHz.ToString();
+
+    partial void OnEditSystemDisplayWidthChanged(int value) => OnPropertyChanged(nameof(EditSystemDisplayWidthText));
+    partial void OnEditSystemDisplayHeightChanged(int value) => OnPropertyChanged(nameof(EditSystemDisplayHeightText));
+    partial void OnEditSystemDisplayRefreshHzChanged(int value) => OnPropertyChanged(nameof(EditSystemDisplayRefreshHzText));
+
     [ObservableProperty] private bool _isSystemEditorOpen;
 
     // Emulator editor fields
     [ObservableProperty] private string _editEmulatorId         = string.Empty;
     [ObservableProperty] private string _editEmulatorName       = string.Empty;
     [ObservableProperty] private bool   _editEmulatorIsRetroArch;
+    [ObservableProperty] private bool   _editEmulatorIsDirectLaunch;
     [ObservableProperty] private string _editEmulatorPath       = string.Empty;
     [ObservableProperty] private string _editEmulatorArgs       = string.Empty;
     [ObservableProperty] private string _editEmulatorSystems    = string.Empty;
@@ -59,19 +79,26 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
 
     // ── System editor field highlight ────────────────────────────────────
     [ObservableProperty] private int _systemEditorFocusIndex;
-    private const int SystemEditorPositionCount = 5; // Id, Name, BezelPath, Save, Cancel
+    // Id, Name, BezelPath, DisplayWidth, DisplayHeight, DisplayRefreshHz, Save, Cancel
+    private const int SystemEditorPositionCount = 8;
 
     public bool IsSystemIdFocused     => SystemEditorFocusIndex == 0;
     public bool IsSystemNameFocused   => SystemEditorFocusIndex == 1;
     public bool IsSystemBezelPathFocused => SystemEditorFocusIndex == 2;
-    public bool IsSaveSystemFocused   => SystemEditorFocusIndex == 3;
-    public bool IsCancelSystemFocused => SystemEditorFocusIndex == 4;
+    public bool IsSystemDisplayWidthFocused  => SystemEditorFocusIndex == 3;
+    public bool IsSystemDisplayHeightFocused => SystemEditorFocusIndex == 4;
+    public bool IsSystemDisplayRefreshHzFocused => SystemEditorFocusIndex == 5;
+    public bool IsSaveSystemFocused   => SystemEditorFocusIndex == 6;
+    public bool IsCancelSystemFocused => SystemEditorFocusIndex == 7;
 
     partial void OnSystemEditorFocusIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsSystemIdFocused));
         OnPropertyChanged(nameof(IsSystemNameFocused));
         OnPropertyChanged(nameof(IsSystemBezelPathFocused));
+        OnPropertyChanged(nameof(IsSystemDisplayWidthFocused));
+        OnPropertyChanged(nameof(IsSystemDisplayHeightFocused));
+        OnPropertyChanged(nameof(IsSystemDisplayRefreshHzFocused));
         OnPropertyChanged(nameof(IsSaveSystemFocused));
         OnPropertyChanged(nameof(IsCancelSystemFocused));
     }
@@ -87,7 +114,10 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         ? ["Id", "Name", "RetroArchToggle", "Path", "RetroArchExePath", "RunAheadFrames",
            "RunAheadSecondInstance", "ShaderPresetPath", "AdditionalConfig",
            "BiosList", "AddBios", "SupportedSystems", "Notes", "Save", "Cancel"]
-        : ["Id", "Name", "RetroArchToggle", "Path", "Args",
+        : EditEmulatorIsDirectLaunch
+        ? ["Id", "Name", "RetroArchToggle", "DirectLaunchToggle", "Args",
+           "SupportedSystems", "Notes", "Save", "Cancel"]
+        : ["Id", "Name", "RetroArchToggle", "DirectLaunchToggle", "Path", "Args",
            "BiosList", "AddBios", "SupportedSystems", "Notes", "Save", "Cancel"];
 
     private string CurrentEmulatorField
@@ -103,6 +133,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
     public bool IsEmuIdFocused                 => CurrentEmulatorField == "Id";
     public bool IsEmuNameFocused               => CurrentEmulatorField == "Name";
     public bool IsEmuRetroArchToggleFocused    => CurrentEmulatorField == "RetroArchToggle";
+    public bool IsEmuDirectLaunchToggleFocused => CurrentEmulatorField == "DirectLaunchToggle";
     public bool IsEmuPathFocused                => CurrentEmulatorField == "Path";
     public bool IsEmuArgsFocused                => CurrentEmulatorField == "Args";
     public bool IsEmuRetroArchExePathFocused    => CurrentEmulatorField == "RetroArchExePath";
@@ -121,7 +152,17 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
 
     partial void OnEditEmulatorIsRetroArchChanged(bool value)
     {
+        // Mutually exclusive with direct-launch mode — enabling one clears the other,
+        // same convention as AudioPlaylist.IsGlobal's exclusivity (SDS §9.6).
+        if (value) EditEmulatorIsDirectLaunch = false;
         EmulatorEditorFocusIndex = 0; // field order changed — reset to a valid position
+        RaiseAllEmuFieldFocusChanged();
+    }
+
+    partial void OnEditEmulatorIsDirectLaunchChanged(bool value)
+    {
+        if (value) EditEmulatorIsRetroArch = false;
+        EmulatorEditorFocusIndex = 0;
         RaiseAllEmuFieldFocusChanged();
     }
 
@@ -130,6 +171,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEmuIdFocused));
         OnPropertyChanged(nameof(IsEmuNameFocused));
         OnPropertyChanged(nameof(IsEmuRetroArchToggleFocused));
+        OnPropertyChanged(nameof(IsEmuDirectLaunchToggleFocused));
         OnPropertyChanged(nameof(IsEmuPathFocused));
         OnPropertyChanged(nameof(IsEmuArgsFocused));
         OnPropertyChanged(nameof(IsEmuRetroArchExePathFocused));
@@ -229,8 +271,11 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
                 case 0: _virtualKeyboard.Open("System Id", EditSystemId, v => EditSystemId = v); break;
                 case 1: _virtualKeyboard.Open("Display Name", EditSystemName, v => EditSystemName = v); break;
                 case 2: await BrowseSystemBezelAsync(); break;
-                case 3: await SaveSystemAsync(); break;
-                case 4: CancelSystemEditor(); break;
+                case 3: OpenNumericKeyboard("Display Width (0 = don't change)", EditSystemDisplayWidth, v => EditSystemDisplayWidth = v); break;
+                case 4: OpenNumericKeyboard("Display Height (0 = don't change)", EditSystemDisplayHeight, v => EditSystemDisplayHeight = v); break;
+                case 5: OpenNumericKeyboard("Display Refresh Hz (0 = don't change)", EditSystemDisplayRefreshHz, v => EditSystemDisplayRefreshHz = v); break;
+                case 6: await SaveSystemAsync(); break;
+                case 7: CancelSystemEditor(); break;
             }
             return;
         }
@@ -253,6 +298,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
                 case "Id": _virtualKeyboard.Open("Emulator Id", EditEmulatorId, v => EditEmulatorId = v); break;
                 case "Name": _virtualKeyboard.Open("Display Name", EditEmulatorName, v => EditEmulatorName = v); break;
                 case "RetroArchToggle": EditEmulatorIsRetroArch = !EditEmulatorIsRetroArch; break;
+                case "DirectLaunchToggle": EditEmulatorIsDirectLaunch = !EditEmulatorIsDirectLaunch; break;
                 case "Path": _virtualKeyboard.Open(
                     EditEmulatorIsRetroArch ? "Core Library Path" : "Executable Path",
                     EditEmulatorPath, v => EditEmulatorPath = v); break;
@@ -290,6 +336,14 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         if (!IsBiosListFocused) return false;
         IsBiosListFocused = false;
         return true;
+    }
+
+    /// <summary>Opens the virtual keyboard for a numeric field, parsing the committed
+    /// text back to an int (0 on anything unparseable, matching "not set").</summary>
+    private void OpenNumericKeyboard(string label, int currentValue, Action<int> commit)
+    {
+        _virtualKeyboard.Open(label, currentValue == 0 ? string.Empty : currentValue.ToString(),
+            v => commit(int.TryParse(v, out var n) ? n : 0));
     }
 
     private void MoveSystemSelection(int delta)
@@ -373,6 +427,9 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         EditSystemId = string.Empty;
         EditSystemName = string.Empty;
         EditSystemBezelPath = string.Empty;
+        EditSystemDisplayWidth = 0;
+        EditSystemDisplayHeight = 0;
+        EditSystemDisplayRefreshHz = 0;
         IsSystemEditorOpen = true;
     }
 
@@ -383,6 +440,9 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         EditSystemId   = SelectedSystem.Id;
         EditSystemName = SelectedSystem.Name;
         EditSystemBezelPath = SelectedSystem.BezelPath;
+        EditSystemDisplayWidth     = SelectedSystem.DisplayMode?.Width     ?? 0;
+        EditSystemDisplayHeight    = SelectedSystem.DisplayMode?.Height    ?? 0;
+        EditSystemDisplayRefreshHz = SelectedSystem.DisplayMode?.RefreshHz ?? 0;
         IsSystemEditorOpen = true;
     }
 
@@ -408,6 +468,14 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
             Id = EditSystemId.Trim().ToLowerInvariant(),
             Name = EditSystemName.Trim(),
             BezelPath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(EditSystemBezelPath.Trim()),
+            DisplayMode = (EditSystemDisplayWidth, EditSystemDisplayHeight, EditSystemDisplayRefreshHz) == (0, 0, 0)
+                ? null
+                : new DisplayMode
+                {
+                    Width     = EditSystemDisplayWidth     == 0 ? null : EditSystemDisplayWidth,
+                    Height    = EditSystemDisplayHeight    == 0 ? null : EditSystemDisplayHeight,
+                    RefreshHz = EditSystemDisplayRefreshHz == 0 ? null : EditSystemDisplayRefreshHz,
+                },
         };
         await _config.AddOrUpdateSystemAsync(system);
 
@@ -439,6 +507,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         EditEmulatorId = string.Empty;
         EditEmulatorName = string.Empty;
         EditEmulatorIsRetroArch = false;
+        EditEmulatorIsDirectLaunch = false;
         EditEmulatorPath = string.Empty;
         EditEmulatorArgs = string.Empty;
         EditEmulatorSystems = string.Empty;
@@ -461,6 +530,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         EditEmulatorId          = SelectedEmulator.Id;
         EditEmulatorName        = SelectedEmulator.Name;
         EditEmulatorIsRetroArch = SelectedEmulator.IsRetroArchCore;
+        EditEmulatorIsDirectLaunch = SelectedEmulator.IsDirectLaunch;
         EditEmulatorPath        = SelectedEmulator.ExecutablePath;
         EditEmulatorArgs        = SelectedEmulator.Arguments;
         EditEmulatorSystems     = SelectedEmulator.SupportedSystems;
@@ -541,6 +611,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
             Id               = EditEmulatorId.Trim().ToLowerInvariant(),
             Name             = EditEmulatorName.Trim(),
             IsRetroArchCore  = EditEmulatorIsRetroArch,
+            IsDirectLaunch   = EditEmulatorIsDirectLaunch,
             // Stored relative to the app's own folder when possible, so this keeps
             // working if the whole portable install moves to a different drive
             // letter or machine — ProcessEmulatorLauncher.ResolveExecutablePath

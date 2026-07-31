@@ -234,6 +234,8 @@ public sealed partial class CardHighlightConfigViewModel : ObservableObject
             CardHighlightIntensity = Intensity,
             CardHighlightStyle     = IsPulsing ? "Pulsing" : "Solid",
             CardHighlightThickness = Thickness,
+            HidHideEnabled         = s.HidHideEnabled,
+            HidHideCliPath         = s.HidHideCliPath,
         };
 
         await _config.UpdateSettingsAsync(updated);

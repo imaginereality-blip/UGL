@@ -45,6 +45,13 @@ public enum ControllerAction
     // System
     FilterOverlay,  // HOME button
     Start,
+
+    // Quit-to-launcher: LB+RB+Start+Back held simultaneously while a game/emulator
+    // is running — kills the running process and returns focus to UGL. Fires as its
+    // own action rather than overloading the individual button actions, since those
+    // four buttons already have unrelated meanings (CategoryLeft/Right, Start,
+    // FilterOverlay) that must not also fire when the combo completes.
+    QuitToLauncher,
 }
 
 /// <summary>
