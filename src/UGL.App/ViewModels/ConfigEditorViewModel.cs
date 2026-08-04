@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
 using UGL.App.ViewModels.Config;
 
 namespace UGL.App.ViewModels;
@@ -32,6 +33,9 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     public UpdateConfigViewModel        Updates       { get; }
     public ScraperConfigViewModel       Scraper       { get; }
     public VirtualKeyboardViewModel     VirtualKeyboard { get; }
+    public ConfirmDialogViewModel       ConfirmDialog { get; }
+
+    private readonly ILogger<ConfigEditorViewModel> _logger;
 
     public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, Paths, Peripherals, Hooks, Updates, Scraper }
 
@@ -81,9 +85,11 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     /// <summary>
     /// Whether controller input is currently focused on a tab's content (true) or the
-    /// sidebar menu (false). Right/Select on a tab row enters content; Back exits it one
-    /// level at a time back to the sidebar before closing Settings entirely — standard
-    /// nested-menu behavior.
+    /// sidebar menu (false). Only an explicit Select on a tab row enters content
+    /// (mouse click or gamepad Confirm — see EnterContent) — NOT the stick's Right
+    /// direction, which used to also enter and caused reported "stick drift". Back
+    /// exits it one level at a time back to the sidebar before closing Settings
+    /// entirely — standard nested-menu behavior.
     /// </summary>
     [ObservableProperty] private bool _isContentFocused;
 
@@ -114,6 +120,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         {
             case Tab.Audio:   Audio.SwitchSubTabLeft();   break;
             case Tab.Systems: Systems.SwitchSubTabLeft(); break;
+            case Tab.Games:   Games.SwitchSubTabLeft();   break;
         }
     }
 
@@ -123,6 +130,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         {
             case Tab.Audio:   Audio.SwitchSubTabRight();   break;
             case Tab.Systems: Systems.SwitchSubTabRight(); break;
+            case Tab.Games:   Games.SwitchSubTabRight();   break;
         }
     }
 
@@ -138,7 +146,9 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         HookConfigViewModel hooks,
         UpdateConfigViewModel updates,
         ScraperConfigViewModel scraper,
-        VirtualKeyboardViewModel virtualKeyboard)
+        VirtualKeyboardViewModel virtualKeyboard,
+        ConfirmDialogViewModel confirmDialog,
+        ILogger<ConfigEditorViewModel> logger)
     {
         Categories    = categories;
         Games         = games;
@@ -152,17 +162,16 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Updates       = updates;
         Scraper       = scraper;
         VirtualKeyboard = virtualKeyboard;
+        ConfirmDialog = confirmDialog;
+        _logger       = logger;
 
         SelectedMenuItem = MenuItems.FirstOrDefault(m => !m.IsHeader);
     }
 
-    partial void OnSelectedMenuItemChanged(SettingsMenuItem? value)
-    {
-        // Only tab rows auto-switch content on selection. Quit requires an explicit
-        // confirm (ConfirmQuit) — see the class-level remarks on MenuItems above.
-        if (value is { IsQuit: false, Tab: { } tab })
-            SelectTab(tab);
-    }
+    // Highlighting a row (via NavigateMenuUp/Down while browsing the sidebar with a
+    // stick/D-pad) intentionally does NOT switch the visible content panel — only an
+    // explicit confirm does, via EnterContent(). Without this, scrolling the sidebar
+    // flickers through every tab's content on the way to the one you actually want.
 
     /// <summary>
     /// Called when Quit is explicitly activated (controller Select, or a click) while
@@ -198,7 +207,8 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     /// <summary>
     /// A/Select while the menu has the highlight. Quit requires this explicit confirm.
-    /// For a tab row, this enters that tab's content — same as pressing Right.
+    /// For a tab row, this enters that tab's content — the only way in; Right no
+    /// longer does this (see IsContentFocused remarks).
     /// </summary>
     public void ConfirmMenuSelection()
     {
@@ -211,11 +221,20 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         EnterContent();
     }
 
-    /// <summary>Moves controller focus from the sidebar into the current tab's content.</summary>
+    /// <summary>
+    /// Moves controller focus from the sidebar into the current tab's content. This is
+    /// the only place a highlighted row actually switches the visible content panel —
+    /// see the remarks on OnSelectedMenuItemChanged above.
+    /// </summary>
     public void EnterContent()
     {
-        if (SelectedMenuItem is { IsQuit: false })
+        if (SelectedMenuItem is { IsQuit: false, Tab: { } tab })
+        {
+            _logger.LogDebug("EnterContent: entering {Tab} (was ActiveTab={ActiveTab}, IsContentFocused={WasFocused})",
+                tab, ActiveTab, IsContentFocused);
+            SelectTab(tab);
             IsContentFocused = true;
+        }
     }
 
     /// <summary>
@@ -378,7 +397,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     public string GetContentDebugState() => ActiveTab switch
     {
         Tab.Categories    => $"IsCategoryListFocused={Categories.IsCategoryListFocused} SelectedCategory={Categories.SelectedCategory?.Label ?? "null"} CategoryFocusIndex={Categories.CategoryFocusIndex} KeyboardIsOpen={VirtualKeyboard.IsOpen}",
-        Tab.Games         => $"FilteredGames.Count={Games.FilteredGames.Count} SelectedGame={Games.SelectedGame?.Title ?? "null"} IsEditorOpen={Games.IsEditorOpen} EditorFocusIndex={Games.EditorFocusIndex} KeyboardIsOpen={VirtualKeyboard.IsOpen}",
+        Tab.Games         => $"FilteredGames.Count={Games.FilteredGames.Count} SelectedGame={Games.SelectedGame?.Title ?? "null"} IsEditorOpen={Games.IsEditorOpen} IsArtTabActive={Games.IsArtTabActive} SettingsFocusIndex={Games.SettingsFocusIndex} ArtFocusIndex={Games.ArtFocusIndex} KeyboardIsOpen={VirtualKeyboard.IsOpen}",
         Tab.Systems       => $"IsSystemsTabActive={Systems.IsSystemsTabActive} SelectedSystem={Systems.SelectedSystem?.Name ?? "null"} SelectedEmulator={Systems.SelectedEmulator?.Name ?? "null"} IsSystemEditorOpen={Systems.IsSystemEditorOpen} SystemEditorFocusIndex={Systems.SystemEditorFocusIndex} IsEmulatorEditorOpen={Systems.IsEmulatorEditorOpen} EmulatorEditorFocusIndex={Systems.EmulatorEditorFocusIndex} KeyboardIsOpen={VirtualKeyboard.IsOpen}",
         Tab.Audio         => $"IsMusicTabActive={Audio.IsMusicTabActive} SelectedPlaylist={Audio.SelectedPlaylist?.Name ?? "null"} SoundsFocusIndex={Audio.SoundsFocusIndex}",
         Tab.Theme         => $"SelectedTheme={Theme.SelectedTheme?.Name ?? "null"}",
@@ -405,6 +424,13 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     public void SelectTab(Tab tab)
     {
+        // Diagnostic for the reported "stick drift switches tabs" issue — code
+        // inspection found no remaining path that should call this outside
+        // EnterContent(), so if it recurs, this pinpoints the real caller instead of
+        // further guessing. Safe to remove once that's confirmed fixed.
+        _logger.LogDebug("SelectTab: {Tab}. Caller stack: {Stack}", tab,
+            new System.Diagnostics.StackTrace(1, false).ToString().Replace(Environment.NewLine, " | "));
+
         ActiveTab                 = tab;
         IsCategoriesTabActive     = tab == Tab.Categories;
         IsGamesTabActive          = tab == Tab.Games;

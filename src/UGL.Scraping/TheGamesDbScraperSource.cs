@@ -116,7 +116,8 @@ public sealed class TheGamesDbScraperSource : IGameScraperSource
                 }
             }
 
-            string? cover = null;
+            string? cover = null, logo = null;
+            List<string> screenshots = [], altCovers = [];
             using (var response = await _http.GetAsync(imagesUrl, ct))
             {
                 if (response.IsSuccessStatusCode)
@@ -134,10 +135,29 @@ public sealed class TheGamesDbScraperSource : IGameScraperSource
                         {
                             var type = img.TryGetProperty("type", out var t2) ? t2.GetString() : null;
                             var filename = img.TryGetProperty("filename", out var f) ? f.GetString() : null;
-                            if (type == "boxart" && filename is not null && baseUrl is not null)
+                            if (filename is null || baseUrl is null) continue;
+                            var url = baseUrl + filename;
+                            switch (type)
                             {
-                                cover = baseUrl + filename;
-                                break;
+                                case "boxart":
+                                    // "boxart" entries carry a "side" of "front" or "back" —
+                                    // without checking it, a back-cover entry that happens to
+                                    // appear first in the array would become the Cover and the
+                                    // actual front cover would be discarded into alt covers.
+                                    var side = img.TryGetProperty("side", out var sideEl) ? sideEl.GetString() : null;
+                                    if (side == "front" || cover is null)
+                                    {
+                                        if (cover is not null) altCovers.Add(cover);
+                                        cover = url;
+                                    }
+                                    else
+                                    {
+                                        altCovers.Add(url);
+                                    }
+                                    break;
+                                case "screenshot": screenshots.Add(url); break;
+                                case "fanart": case "banner": altCovers.Add(url); break;
+                                case "clearlogo": logo ??= url; break;
                             }
                         }
                     }
@@ -150,6 +170,9 @@ public sealed class TheGamesDbScraperSource : IGameScraperSource
                 Players = players,
                 Description = description,
                 CoverImageUrl = cover,
+                LogoImageUrl = logo,
+                ScreenshotImageUrls = screenshots,
+                ArtworkImageUrls = altCovers,
             };
         }
         catch (Exception ex)

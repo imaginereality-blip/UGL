@@ -13,6 +13,7 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
     private readonly IConfigurationService _config;
     private readonly IEmulatorRepository _emulatorRepo;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
+    private readonly ConfirmDialogViewModel _confirmDialog;
     private readonly ILogger<SystemsConfigViewModel> _logger;
 
     public ObservableCollection<GameSystem> Systems   { get; } = [];
@@ -378,11 +379,13 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
         IConfigurationService config,
         IEmulatorRepository emulatorRepo,
         VirtualKeyboardViewModel virtualKeyboard,
+        ConfirmDialogViewModel confirmDialog,
         ILogger<SystemsConfigViewModel> logger)
     {
         _config = config;
         _emulatorRepo = emulatorRepo;
         _virtualKeyboard = virtualKeyboard;
+        _confirmDialog = confirmDialog;
         _logger = logger;
     }
 
@@ -487,7 +490,13 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteSelectedSystemAsync()
+    private void DeleteSelectedSystem()
+    {
+        if (SelectedSystem is null) return;
+        _confirmDialog.Open($"Delete system '{SelectedSystem.Name}'? This cannot be undone.", () => _ = PerformDeleteSelectedSystemAsync());
+    }
+
+    private async Task PerformDeleteSelectedSystemAsync()
     {
         if (SelectedSystem is null) return;
         await _config.DeleteSystemAsync(SelectedSystem.Id);
@@ -646,7 +655,13 @@ public sealed partial class SystemsConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteSelectedEmulatorAsync()
+    private void DeleteSelectedEmulator()
+    {
+        if (SelectedEmulator is null) return;
+        _confirmDialog.Open($"Delete emulator '{SelectedEmulator.Name}'? This cannot be undone.", () => _ = PerformDeleteSelectedEmulatorAsync());
+    }
+
+    private async Task PerformDeleteSelectedEmulatorAsync()
     {
         if (SelectedEmulator is null) return;
         await _emulatorRepo.DeleteAsync(SelectedEmulator.Id);

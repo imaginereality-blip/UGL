@@ -28,7 +28,7 @@
         <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Classes="sectionDivider" Margin="0,4,0,4"/>
 
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Media" Foreground="White" FontSize="13" VerticalAlignment="Center"
-                   ToolTip.Tip="Card art, video previews, sounds, music. Sub-folders: categories\, games\covers\, games\video\, sounds\, music\"/>
+                   ToolTip.Tip="Card art, video previews, sounds, music. Sub-folders (flat, no games\ prefix): categories\, covers\, backgrounds\, logos\, marquees\, cardart\, screenshots\, video\, sounds\, music\"/>
         <Border Grid.Row="2" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsMediaRootFocused}" Padding="6,4" Margin="8,2,8,2">
           <TextBox Text="{Binding MediaRootPath}" Watermark="media  (relative to exe, or full path like D:\UGL\media)"/>
         </Border>

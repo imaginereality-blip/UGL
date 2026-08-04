@@ -1,141 +1,163 @@
 {
+  "1": {
+    "inputs": {
+      "ckpt_name": "jedpointil_v7VAE.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint (SDXL or SD1.5)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "image": "{{IMAGE_1}}",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference Image 1 (cover)"
+    }
+  },
+  "3": {
+    "inputs": {
+      "image": "{{IMAGE_2}}",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference Image 2 (screenshot)"
+    }
+  },
+  "4": {
+    "inputs": {
+      "image": "{{IMAGE_3}}",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference Image 3 (screenshot)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "image1": ["3", 0],
+      "image2": ["4", 0],
+      "direction": "right",
+      "match_image_size": true,
+      "spacing_width": 0,
+      "spacing_color": "white"
+    },
+    "class_type": "ImageStitch",
+    "_meta": {
+      "title": "Stitch bottom row: screenshots side-by-side"
+    }
+  },
+  "6": {
+    "inputs": {
+      "image1": ["2", 0],
+      "image2": ["5", 0],
+      "direction": "down",
+      "match_image_size": true,
+      "spacing_width": 0,
+      "spacing_color": "white"
+    },
+    "class_type": "ImageStitch",
+    "_meta": {
+      "title": "Stitch cover on top of screenshot row"
+    }
+  },
+  "7": {
+    "inputs": {
+      "upscale_method": "bicubic",
+      "width": 752,
+      "height": 1968,
+      "crop": "center",
+      "image": ["6", 0]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Cover-fit collage into working canvas (752x1968)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "pixels": ["7", 0],
+      "vae": ["1", 2]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "Encode collage as img2img starting latent"
+    }
+  },
   "9": {
     "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "65",
-        0
-      ]
+      "text": "{{PROMPT}}, poster composition, cohesive collage, unified lighting",
+      "clip": ["1", 1]
     },
-    "class_type": "SaveImage",
+    "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "Save Image"
+      "title": "CLIP Text Encode (Positive Prompt)"
     }
   },
-  "62": {
+  "10": {
     "inputs": {
-      "clip_name": "qwen_3_4b_fp8_mixed.safetensors",
-      "type": "chroma",
-      "device": "default"
+      "text": "low quality, blurry, watermark, text, words, letters, signature, logo, new characters, invented scene, bad anatomy, extra limbs, extra digits, missing digits, deformed, ugly, jpeg artifacts",
+      "clip": ["1", 1]
     },
-    "class_type": "CLIPLoader",
+    "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "Load CLIP"
+      "title": "CLIP Text Encode (Negative Prompt)"
     }
   },
-  "63": {
+  "12": {
     "inputs": {
-      "vae_name": "ae.safetensors"
+      "seed": 42,
+      "steps": 20,
+      "cfg": 5.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": "{{DENOISE}}",
+      "model": ["1", 0],
+      "positive": ["9", 0],
+      "negative": ["10", 0],
+      "latent_image": ["8", 0]
     },
-    "class_type": "VAELoader",
+    "class_type": "KSampler",
     "_meta": {
-      "title": "Load VAE"
+      "title": "KSampler (low denoise img2img — harmonize, don't reinvent)"
     }
   },
-  "65": {
+  "13": {
     "inputs": {
-      "samples": [
-        "70",
-        0
-      ],
-      "vae": [
-        "63",
-        0
-      ]
+      "samples": ["12", 0],
+      "vae": ["1", 2]
     },
     "class_type": "VAEDecode",
     "_meta": {
       "title": "VAE Decode"
     }
   },
-  "66": {
+  "14": {
     "inputs": {
-      "unet_name": "z_image_turbo_bf16.safetensors",
-      "weight_dtype": "default"
-    },
-    "class_type": "UNETLoader",
-    "_meta": {
-      "title": "Load Diffusion Model"
-    }
-  },
-  "67": {
-    "inputs": {
-      "text": "{{PROMPT}}",
-      "clip": [
-        "62",
-        0
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
-    }
-  },
-  "68": {
-    "inputs": {
-      "width": 752,
+      "upscale_method": "bicubic",
+      "width": 756,
       "height": 1968,
-      "batch_size": 1
+      "crop": "disabled",
+      "image": ["13", 0]
     },
-    "class_type": "EmptySD3LatentImage",
+    "class_type": "ImageScale",
     "_meta": {
-      "title": "EmptySD3LatentImage"
+      "title": "Force Exact Card Resolution (756x1968)"
     }
   },
-  "69": {
+  "15": {
     "inputs": {
-      "shift": 3,
-      "model": [
-        "66",
-        0
-      ]
+      "filename_prefix": "GameCard",
+      "images": ["14", 0]
     },
-    "class_type": "ModelSamplingAuraFlow",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "ModelSamplingAuraFlow"
-    }
-  },
-  "70": {
-    "inputs": {
-      "seed": 42,
-      "steps": 8,
-      "cfg": 1,
-      "sampler_name": "res_multistep",
-      "scheduler": "simple",
-      "denoise": 1,
-      "model": [
-        "69",
-        0
-      ],
-      "positive": [
-        "67",
-        0
-      ],
-      "negative": [
-        "71",
-        0
-      ],
-      "latent_image": [
-        "68",
-        0
-      ]
-    },
-    "class_type": "KSampler",
-    "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "71": {
-    "inputs": {
-      "text": "low quality, bad anatomy, extra digits, missing digits, extra limbs, missing limbs",
-      "clip": [
-        "62",
-        0
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
+      "title": "Save Image"
     }
   }
 }

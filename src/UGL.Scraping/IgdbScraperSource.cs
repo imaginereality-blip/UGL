@@ -53,10 +53,16 @@ public sealed class IgdbScraperSource : IGameScraperSource
         if (!string.IsNullOrWhiteSpace(platformHint))
         {
             var filtered = await SearchInternalAsync(settings, title, platformHint, ct);
+            _logger.LogDebug("IGDB platform-filtered search for '{Title}' [{Platform}]: {Count} result(s): {Results}.",
+                title, platformHint, filtered.Count, string.Join(", ", filtered.Select(r => $"{r.Title} [{r.Platform}]")));
             if (filtered.Count > 0) return filtered;
+            _logger.LogDebug("IGDB platform-filtered search came back empty — falling back to unfiltered search for '{Title}'.", title);
         }
 
-        return await SearchInternalAsync(settings, title, null, ct);
+        var unfiltered = await SearchInternalAsync(settings, title, null, ct);
+        _logger.LogDebug("IGDB unfiltered search for '{Title}': {Count} result(s), top match: {TopMatch}.",
+            title, unfiltered.Count, unfiltered.Count > 0 ? $"{unfiltered[0].Title} [{unfiltered[0].Platform}]" : "none");
+        return unfiltered;
     }
 
     private async Task<IReadOnlyList<ScraperSearchResult>> SearchInternalAsync(
@@ -67,6 +73,7 @@ public sealed class IgdbScraperSource : IGameScraperSource
             ? string.Empty
             : $" where platforms.name ~ *\"{platformHint.Replace("\"", "\\\"")}\"*;";
         var body = $"fields name, platforms.name, first_release_date; search \"{escapedTitle}\";{where} limit 15;";
+        _logger.LogDebug("IGDB search query body: {Body}", body);
 
         try
         {
@@ -123,10 +130,16 @@ public sealed class IgdbScraperSource : IGameScraperSource
                 Genre = string.Join(", ", g.Genres?.Select(x => x.Name) ?? []),
                 Description = g.Summary ?? string.Empty,
                 CoverImageUrl = g.Cover?.ImageId is { } coverId ? BuildImageUrl(coverId, "t_cover_big") : null,
-                ScreenshotImageUrl = g.Screenshots?.FirstOrDefault()?.ImageId is { } shotId
-                    ? BuildImageUrl(shotId, "t_screenshot_big") : null,
+                ScreenshotImageUrls = g.Screenshots?
+                    .Where(s => s.ImageId is not null)
+                    .Select(s => BuildImageUrl(s.ImageId!, "t_screenshot_big"))
+                    .ToList() ?? [],
                 MarqueeImageUrl = g.Artworks?.FirstOrDefault()?.ImageId is { } artId
                     ? BuildImageUrl(artId, "t_screenshot_huge") : null,
+                ArtworkImageUrls = g.Artworks?
+                    .Where(a => a.ImageId is not null)
+                    .Select(a => BuildImageUrl(a.ImageId!, "t_screenshot_huge"))
+                    .ToList() ?? [],
             };
         }
         catch (Exception ex)

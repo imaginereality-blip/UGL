@@ -26,13 +26,13 @@
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsIgdbClientIdFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Client ID" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding IgdbClientId}" IsReadOnly="True"/>
+          <TextBox Text="{Binding IgdbClientId}" />
         </StackPanel>
       </Border>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsIgdbClientSecretFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Client Secret" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding IgdbClientSecret}" PasswordChar="*" IsReadOnly="True"/>
+          <TextBox Text="{Binding IgdbClientSecret}" PasswordChar="*" />
         </StackPanel>
       </Border>
 
@@ -43,25 +43,25 @@
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperUsernameFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Username" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding ScreenScraperUsername}" IsReadOnly="True"/>
+          <TextBox Text="{Binding ScreenScraperUsername}" />
         </StackPanel>
       </Border>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperPasswordFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Password" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding ScreenScraperPassword}" PasswordChar="*" IsReadOnly="True"/>
+          <TextBox Text="{Binding ScreenScraperPassword}" PasswordChar="*" />
         </StackPanel>
       </Border>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperDevIdFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Dev Id" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding ScreenScraperDevId}" IsReadOnly="True"/>
+          <TextBox Text="{Binding ScreenScraperDevId}" />
         </StackPanel>
       </Border>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperDevPasswordFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Dev Password" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding ScreenScraperDevPassword}" PasswordChar="*" IsReadOnly="True"/>
+          <TextBox Text="{Binding ScreenScraperDevPassword}" PasswordChar="*" />
         </StackPanel>
       </Border>
 
@@ -72,7 +72,7 @@
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTheGamesDbApiKeyFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="API Key" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding TheGamesDbApiKey}" PasswordChar="*" IsReadOnly="True"/>
+          <TextBox Text="{Binding TheGamesDbApiKey}" PasswordChar="*" />
         </StackPanel>
       </Border>
 
@@ -83,15 +83,35 @@
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsComfyUiEndpointFocused}" Padding="8">
         <StackPanel Spacing="4">
           <TextBlock Text="Server Endpoint" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBox Text="{Binding ComfyUiEndpoint}" Watermark="http://127.0.0.1:8188" IsReadOnly="True"/>
+          <TextBox Text="{Binding ComfyUiEndpoint}" Watermark="http://127.0.0.1:8188" />
         </StackPanel>
       </Border>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsComfyUiWorkflowPathFocused}" Padding="8">
         <StackPanel Spacing="4">
-          <TextBlock Text="Workflow JSON (API format)" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Text="Poster Collage Workflow JSON (API format)" Foreground="#88FFFFFF" FontSize="12"/>
           <Grid ColumnDefinitions="*,8,Auto">
             <TextBox Grid.Column="0" Text="{Binding ComfyUiWorkflowPath}" IsReadOnly="True" Watermark="None"/>
             <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseWorkflowFileCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsComfyUiCleanupWorkflowPathFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Cleanup Workflow JSON (API format) — used by 'Clean Cover for Card'" Foreground="#88FFFFFF" FontSize="12"/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding ComfyUiCleanupWorkflowPath}" IsReadOnly="True" Watermark="Optional — falls back to a plain local resize if left blank"/>
+            <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseCleanupWorkflowFileCommand}"/>
+          </Grid>
+        </StackPanel>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTextDetectionModelPathFocused}" Padding="8">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Text Detection Model (.onnx) — finds stray logo/text badges for 'Clean Cover for Card'" Foreground="#88FFFFFF" FontSize="12"/>
+          <TextBlock Foreground="#44FFFFFF" FontSize="11" TextWrapping="Wrap"
+                     Text="A PP-OCRv3 'DB' text-detection model, e.g. text_detection_en_ppocrv3_2023may.onnx from github.com/opencv/opencv_zoo. Fully local — runs through OpenCV, no cloud call. Optional: without it, only the game's own logo (matched by shape) gets removed, not other badges."/>
+          <Grid ColumnDefinitions="*,8,Auto">
+            <TextBox Grid.Column="0" Text="{Binding TextDetectionModelPath}" IsReadOnly="True" Watermark="Optional — skips the stray-badge detection pass if left blank"/>
+            <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseTextDetectionModelFileCommand}"/>
           </Grid>
         </StackPanel>
       </Border>

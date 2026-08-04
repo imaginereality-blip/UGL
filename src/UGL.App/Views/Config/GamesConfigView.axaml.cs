@@ -40,6 +40,7 @@ public sealed partial class GamesConfigView : UserControl
         WireDropZone("LogoDropZone",    "logo",       vm);
         WireDropZone("VideoDropZone",   "video",      vm);
         WireDropZone("MarqueeDropZone", "marquee",    vm);
+        WireDropZone("CardArtDropZone", "cardart",    vm);
     }
 
     private void WireDropZone(string controlName, string fieldName, GamesConfigViewModel vm)

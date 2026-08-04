@@ -190,10 +190,16 @@ public sealed class XInputPollingService : IInputService, IDisposable
 
         // ── Left stick: full menu navigation — everything D-Pad used to drive,
         // now that D-Pad is repurposed for music control above. ───────────────
-        bool stickLeft  = pad.sThumbLX < -XInput.ThumbDeadZone;
-        bool stickRight = pad.sThumbLX >  XInput.ThumbDeadZone;
-        bool stickUp    = pad.sThumbLY >  XInput.ThumbDeadZone;
-        bool stickDown  = pad.sThumbLY < -XInput.ThumbDeadZone;
+        // Dominant-axis gating: a diagonal push (very easy to do unintentionally
+        // while aiming for a pure Left/Right or Up/Down direction) would otherwise
+        // fire BOTH axes in the same poll — e.g. cycling scraped images with
+        // Left/Right could also nudge Up/Down enough to jump focus to an adjacent
+        // field. Only the axis with the larger deflection is considered per poll.
+        bool xIsDominant = Math.Abs((int)pad.sThumbLX) >= Math.Abs((int)pad.sThumbLY);
+        bool stickLeft  = xIsDominant  && pad.sThumbLX < -XInput.ThumbDeadZone;
+        bool stickRight = xIsDominant  && pad.sThumbLX >  XInput.ThumbDeadZone;
+        bool stickUp    = !xIsDominant && pad.sThumbLY >  XInput.ThumbDeadZone;
+        bool stickDown  = !xIsDominant && pad.sThumbLY < -XInput.ThumbDeadZone;
 
         UpdateHeldState(controllerIndex, stickLeft,  ControllerAction.NavigateLeft);
         UpdateHeldState(controllerIndex, stickRight, ControllerAction.NavigateRight);

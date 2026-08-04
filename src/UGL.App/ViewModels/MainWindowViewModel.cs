@@ -341,6 +341,24 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // would still be processed against a hidden UI.
         if (_launcher.IsEmulatorRunning) return;
 
+        // The delete-confirmation dialog, when open, takes top priority over
+        // everything else — same reasoning as the virtual keyboard below, and
+        // checked first since a destructive-action confirm should never be
+        // interruptible by anything else demanding input.
+        var confirmDialog = _configEditor.ConfirmDialog;
+        if (confirmDialog.IsOpen)
+        {
+            switch (e.Action)
+            {
+                case ControllerAction.NavigateLeft:  confirmDialog.NavigateLeft();  break;
+                case ControllerAction.NavigateRight: confirmDialog.NavigateRight(); break;
+                case ControllerAction.Select:        confirmDialog.Confirm();      break;
+                case ControllerAction.Back:          confirmDialog.Cancel();       break;
+            }
+
+            return;
+        }
+
         // The virtual keyboard, when open, takes top priority over everything else —
         // including Settings itself — until Done or Cancel closes it.
         var keyboard = _configEditor.VirtualKeyboard;
@@ -402,8 +420,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     break;
 
                 case ControllerAction.NavigateRight:
+                    // Deliberately no else-branch: entering a sidebar tab's content
+                    // requires an explicit Select, same as NavigateLeft above. This
+                    // used to call EnterContent() here, which meant any rightward
+                    // stick deflection (trivially easy to trigger while actually
+                    // trying to move Up/Down) immediately opened whatever tab was
+                    // highlighted — the real cause of reported "stick drift".
                     if (_configEditor.IsContentFocused) _configEditor.NavigateContentRight();
-                    else _configEditor.EnterContent();
                     break;
 
                 case ControllerAction.Select:

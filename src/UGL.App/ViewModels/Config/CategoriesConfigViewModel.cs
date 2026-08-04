@@ -14,6 +14,7 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
     private readonly IConfigurationService _config;
     private readonly UGL.Media.SkiaMediaCache _mediaCache;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
+    private readonly ConfirmDialogViewModel _confirmDialog;
     private readonly ILogger<CategoriesConfigViewModel> _logger;
 
     public ObservableCollection<Category> Categories { get; } = [];
@@ -38,11 +39,13 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
         IConfigurationService config,
         UGL.Media.SkiaMediaCache mediaCache,
         VirtualKeyboardViewModel virtualKeyboard,
+        ConfirmDialogViewModel confirmDialog,
         ILogger<CategoriesConfigViewModel> logger)
     {
         _config = config;
         _mediaCache = mediaCache;
         _virtualKeyboard = virtualKeyboard;
+        _confirmDialog = confirmDialog;
         _logger = logger;
 
         Categories.CollectionChanged += (_, _) => OnPropertyChanged(nameof(UsedOrdersHint));
@@ -234,7 +237,7 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
             case 7: _virtualKeyboard.Open("Description", CategoryDescription, v => CategoryDescription = v); break;
             case 8: AddCategory(); break;
             case 9: await SaveCategoryAsync(); break;
-            case 10: await DeleteCategoryAsync(); break;
+            case 10: DeleteCategory(); break;
         }
     }
 
@@ -452,7 +455,7 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteCategoryAsync()
+    private void DeleteCategory()
     {
         if (SelectedCategory is null) return;
 
@@ -465,6 +468,12 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
             return;
         }
 
+        _confirmDialog.Open($"Delete category '{SelectedCategory.Label}'? This cannot be undone.", () => _ = PerformDeleteCategoryAsync());
+    }
+
+    private async Task PerformDeleteCategoryAsync()
+    {
+        if (SelectedCategory is null) return;
         Categories.Remove(SelectedCategory);
         await _config.UpdateCategoriesAsync(Categories);
         SelectedCategory = Categories.FirstOrDefault();
