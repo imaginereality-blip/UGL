@@ -40,7 +40,7 @@
       <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
         <Button Content="＋ Add"    Command="{Binding AddNewCommand}"      />
         <Button Content="✎ Edit"   Command="{Binding EditSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-        <Button Content="✕ Delete" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <Button Content="✕ Delete" Classes="deleteBtn" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
       </StackPanel>
 
     </Grid>
@@ -58,6 +58,18 @@
                    FontWeight="Bold"
                    Foreground="White"/>
 
+        <!-- Control-scheme strip — the text pulled out of every field label below.
+             Static per widget-type, so it's shown once here (driven by whichever
+             field currently has focus) instead of re-typed into each label. -->
+        <Border Background="{DynamicResource UGL.Divider}" CornerRadius="4" Padding="10,6"
+                MinHeight="30"
+                IsVisible="{Binding CurrentFieldHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Text="{Binding CurrentFieldHint}" FontSize="12" Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+        </Border>
+
+        <!-- ─── Identity ─── -->
+        <TextBlock Text="IDENTITY" Classes="sectionCaption"/>
+
         <!-- Title -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTitleFocused}" Padding="8">
           <StackPanel Spacing="4">
@@ -69,7 +81,7 @@
         <!-- System -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemFocused}" Padding="8">
           <StackPanel Spacing="4">
-            <TextBlock Text="System * (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+            <TextBlock Text="System *" Foreground="#88FFFFFF" FontSize="12"/>
             <ComboBox ItemsSource="{Binding Systems}"
                       SelectedValueBinding="{Binding Id}"
                       SelectedValue="{Binding Editor.SelectedSystemId}"
@@ -82,7 +94,7 @@
              Multiplayer, and will show up when browsing either from the main menu. -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryFocused}" Padding="8">
           <StackPanel Spacing="4">
-            <TextBlock Text="Categories * (select one or more — controller: A to enter, Up/Down to move, A to toggle, B to exit)"
+            <TextBlock Text="Categories * (select one or more)"
                        Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
             <ItemsControl ItemsSource="{Binding Editor.CategoryOptions}">
               <ItemsControl.ItemsPanel>
@@ -101,11 +113,15 @@
           </StackPanel>
         </Border>
 
+        <!-- ─── Launch overrides ─── -->
+        <Border Classes="sectionDivider"/>
+        <TextBlock Text="LAUNCH OVERRIDES" Classes="sectionCaption"/>
+
         <!-- Emulator + Genre row -->
         <Grid ColumnDefinitions="*,16,*">
           <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorFocused}" Padding="8">
             <StackPanel Spacing="4">
-              <TextBlock Text="Emulator * (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+              <TextBlock Text="Emulator *" Foreground="#88FFFFFF" FontSize="12"/>
               <ComboBox ItemsSource="{Binding Emulators}"
                         SelectedValueBinding="{Binding Id}"
                         SelectedValue="{Binding Editor.SelectedEmulatorId}"
@@ -127,7 +143,7 @@
         <Grid ColumnDefinitions="*,16,*">
           <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsPlayersFocused}" Padding="8">
             <StackPanel Spacing="4">
-              <TextBlock Text="Players (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+              <TextBlock Text="Players" Foreground="#88FFFFFF" FontSize="12"/>
               <ComboBox ItemsSource="{Binding PlayerCounts}"
                         SelectedItem="{Binding Editor.Players}"
                         HorizontalAlignment="Stretch"/>
@@ -135,7 +151,6 @@
           </Border>
           <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsFavoriteFocused}" Padding="8">
             <StackPanel Spacing="4" VerticalAlignment="Bottom">
-              <TextBlock Text="controller: A to toggle" Foreground="#88FFFFFF" FontSize="12"/>
               <CheckBox IsChecked="{Binding Editor.IsFavorite}" Content="Favourite"/>
             </StackPanel>
           </Border>
@@ -166,6 +181,7 @@
         </Border>
 
         <!-- ─── Media ─── -->
+        <Border Classes="sectionDivider"/>
         <TextBlock Text="Media" FontSize="16" FontWeight="SemiBold"
                    Foreground="White" Margin="0,8,0,0"/>
 
@@ -225,6 +241,10 @@
           </StackPanel>
         </Border>
 
+        <!-- ─── Display & Input ─── -->
+        <Border Classes="sectionDivider"/>
+        <TextBlock Text="DISPLAY &amp; INPUT" Classes="sectionCaption"/>
+
         <!-- Bezel override -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBezelOverrideFocused}" Padding="8">
           <StackPanel Spacing="4">
@@ -264,7 +284,7 @@
         <!-- BIOS override -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBiosOverrideListFocused}" Padding="8">
           <StackPanel Spacing="4">
-            <TextBlock Text="BIOS Override (optional — only if this game needs different BIOS file(s) than its emulator's default; A to enter, Up/Down to move, A to remove, B to exit)"
+            <TextBlock Text="BIOS Override (optional — only if this game needs different BIOS file(s) than its emulator's default)"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
             <ListBox ItemsSource="{Binding Editor.BiosOverridePaths}"
                      SelectedIndex="{Binding SelectedBiosOverrideIndex}"
@@ -274,7 +294,7 @@
                   <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0" Text="{Binding}" Foreground="White" FontSize="12" Margin="4,2"
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                    <Button Grid.Column="1" Content="✕" Padding="6,2" Foreground="#FFFF4444"
+                    <Button Grid.Column="1" Content="✕" Padding="6,2" Foreground="{DynamicResource UGL.DangerColor}"
                             Command="{Binding $parent[UserControl].((vm:GamesConfigViewModel)DataContext).RemoveBiosOverrideCommand}"
                             CommandParameter="{Binding}"/>
                   </Grid>
@@ -290,7 +310,7 @@
         <!-- Disabled peripherals -->
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDisabledDeviceTypesFocused}" Padding="8">
           <StackPanel Spacing="4">
-            <TextBlock Text="Disabled Peripherals (optional — e.g. Lightgun/Wheel for a fighting game, so they can't interfere; A to enter, Up/Down to move, A to toggle, B to exit)"
+            <TextBlock Text="Disabled Peripherals (optional — e.g. Lightgun/Wheel for a fighting game, so they can't interfere)"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
             <ItemsControl ItemsSource="{Binding Editor.DisabledDeviceTypeOptions}">
               <ItemsControl.ItemsPanel>
@@ -323,13 +343,13 @@
         <Grid ColumnDefinitions="*,16,2*,16,Auto">
           <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsPendingAssignmentPlayerIndexFocused}" Padding="6">
             <StackPanel Spacing="4">
-              <TextBlock Text="Player (Left/Right)" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBlock Text="Player" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBlock Text="{Binding PendingAssignmentPlayerIndex}" Foreground="White" FontSize="14"/>
             </StackPanel>
           </Border>
           <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsPendingAssignmentDeviceFocused}" Padding="6">
             <StackPanel Spacing="4">
-              <TextBlock Text="Device (Left/Right)" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBlock Text="Device" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBlock Text="{Binding PendingAssignmentDeviceLabel}" Foreground="White" FontSize="14" TextTrimming="CharacterEllipsis"/>
             </StackPanel>
           </Border>
@@ -339,7 +359,7 @@
         </Grid>
         <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlayerDeviceAssignmentsFocused}" Padding="8">
           <StackPanel Spacing="4">
-            <TextBlock Text="Assigned (A to enter, Up/Down to move, A to remove, B to exit)"
+            <TextBlock Text="Assigned"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
             <ListBox ItemsSource="{Binding Editor.PlayerDeviceAssignmentEntries}"
                      SelectedIndex="{Binding SelectedPlayerAssignmentIndex}"
@@ -360,7 +380,7 @@
 
         <!-- Validation error -->
         <TextBlock Text="{Binding Editor.ValidationError}"
-                   Foreground="#FFFF4444"
+                   Foreground="{DynamicResource UGL.DangerColor}"
                    IsVisible="{Binding Editor.ValidationError,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
@@ -388,7 +408,7 @@
 
         <!-- Status -->
         <TextBlock Text="{Binding StatusMessage}"
-                   Foreground="#FF44FF88"
+                   Foreground="{DynamicResource UGL.SuccessColor}"
                    IsVisible="{Binding StatusMessage,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 

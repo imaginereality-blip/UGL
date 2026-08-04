@@ -96,6 +96,7 @@ public sealed partial class GameCard : UserControl
         {
             b.BorderBrush = new SolidColorBrush(Color.Parse("#33FFFFFF"));
             b.BorderThickness = new Thickness(0);
+            b.Effect = null;
             return;
         }
 
@@ -105,8 +106,24 @@ public sealed partial class GameCard : UserControl
         if (string.Equals(CardHighlightSettings.Style, "Pulsing", StringComparison.OrdinalIgnoreCase))
             StartPulse(b, baseColor);
         else
+        {
             b.BorderBrush = new SolidColorBrush(baseColor) { Opacity = CardHighlightSettings.Intensity };
+            b.Effect = MakeGlow(baseColor, CardHighlightSettings.Intensity);
+        }
     }
+
+    /// <summary>
+    /// Soft glow kept alongside (not replacing) the existing selection border — reads
+    /// as the card being lit from behind rather than a rectangle drawn on top of it.
+    /// </summary>
+    private static DropShadowEffect MakeGlow(Color baseColor, double intensity) => new()
+    {
+        Color = baseColor,
+        BlurRadius = 24,
+        OffsetX = 0,
+        OffsetY = 0,
+        Opacity = Math.Clamp(intensity * 0.65, 0, 1),
+    };
 
     private void StartPulse(Border b, Color baseColor)
     {
@@ -119,6 +136,7 @@ public sealed partial class GameCard : UserControl
             double wave = (Math.Sin(elapsedSeconds * Math.PI * 1.3) + 1) / 2; // 0..1
             double opacity = Math.Clamp((0.3 + wave * 0.7) * CardHighlightSettings.Intensity, 0, 1);
             b.BorderBrush = new SolidColorBrush(baseColor) { Opacity = opacity };
+            b.Effect = MakeGlow(baseColor, opacity);
         };
         _pulseTimer.Start();
     }

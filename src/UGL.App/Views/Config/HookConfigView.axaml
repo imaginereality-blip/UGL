@@ -96,7 +96,7 @@
           <Button Content="💾 Save" Command="{Binding SaveCommand}"
                   Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
         </Border>
-        <TextBlock Text="{Binding StatusMessage}" Foreground="#FF44FF88" VerticalAlignment="Center"
+        <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource UGL.SuccessColor}" VerticalAlignment="Center"
                    IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
       </StackPanel>
 

@@ -49,7 +49,7 @@
                 Classes.controllerFocused="{Binding IsRescanFocused}"
                 Padding="12,6"/>
         <TextBlock Text="{Binding StatusMessage}"
-                   Foreground="#FF44FF88"
+                   Foreground="{DynamicResource UGL.SuccessColor}"
                    VerticalAlignment="Center"
                    IsVisible="{Binding StatusMessage,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
@@ -72,7 +72,7 @@
                          Text="{Binding IsConnected, StringFormat={}{0}}"
                          VerticalAlignment="Center"
                          FontSize="16"
-                         Foreground="#FF44FF88"/>
+                         Foreground="{DynamicResource UGL.SuccessColor}"/>
 
               <StackPanel Grid.Column="2" Spacing="2">
                 <TextBlock Text="{Binding FriendlyName}"
@@ -123,7 +123,7 @@
 
           <StackPanel Spacing="2">
             <TextBlock Text="Status" Foreground="#88FFFFFF" FontSize="11"/>
-            <TextBlock Foreground="#FF44FF88" FontSize="13"
+            <TextBlock Foreground="{DynamicResource UGL.SuccessColor}" FontSize="13"
                        Text="{Binding SelectedDevice.IsConnected,
                               StringFormat={}{0}}"/>
           </StackPanel>

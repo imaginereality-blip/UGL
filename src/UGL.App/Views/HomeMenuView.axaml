@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UGL.App.ViewModels"
              xmlns:views="clr-namespace:UGL.App.Views"
+             xmlns:controls="clr-namespace:UGL.App.Views.Controls"
              x:Class="UGL.App.Views.HomeMenuView"
              x:DataType="vm:HomeMenuViewModel"
              Background="{DynamicResource UGL.BackgroundColor}">
@@ -44,11 +45,12 @@
                      FontWeight="Bold"
                      Foreground="{DynamicResource UGL.TextPrimaryColor}"
                      VerticalAlignment="Center" />
-          <TextBlock Grid.Column="1"
-                     Text="A  Enter      ← →  Browse      D-Pad ↑↓ Playlist  ←→ Track"
-                     FontSize="14"
-                     Foreground="{DynamicResource UGL.TextSecondaryColor}"
-                     VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="18" VerticalAlignment="Center">
+            <controls:ButtonHint Glyph="A" Label="Enter" IsPrimary="True"/>
+            <controls:ButtonHint Glyph="↔" Label="Browse"/>
+            <controls:ButtonHint Glyph="↑↓" Label="Playlist"/>
+            <controls:ButtonHint Glyph="←→" Label="Track"/>
+          </StackPanel>
         </Grid>
 
         <!-- Brief "now playing" indicator, shown for a few seconds after D-Pad Up/Down

@@ -35,17 +35,24 @@
         <StackPanel Grid.Column="0" Spacing="8" Width="220">
           <controls:ColorWheelPicker Hue="{Binding Hue}" Saturation="{Binding Saturation}"/>
 
-          <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" Height="48"
+          <!-- Real card placeholder (reuses CategoryCard's own big-letter placeholder
+               look) instead of a plain labeled swatch box — the border/glow renders
+               here exactly as it will on Home Menu / Game Browser. -->
+          <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" Height="140"
                   BorderBrush="{Binding PreviewBrush}" BorderThickness="{Binding PreviewThickness}">
-            <TextBlock Text="Preview" HorizontalAlignment="Center" VerticalAlignment="Center"
-                       Foreground="#66FFFFFF" FontSize="12"/>
+            <Border.Effect>
+              <DropShadowEffect Color="{Binding PreviewColor}" BlurRadius="24" OffsetX="0" OffsetY="0" Opacity="{Binding Intensity}"/>
+            </Border.Effect>
+            <TextBlock Text="C" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="72" FontWeight="Black" Opacity="0.15"
+                       Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
           </Border>
 
           <Button Content="💾 Save" Command="{Binding SaveCommand}"
                    Classes="hlField" Classes.fieldFocused="{Binding IsSaveFocused}"
                    Background="{DynamicResource UGL.AccentColor}" Foreground="White"
                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8"/>
-          <TextBlock Text="{Binding StatusMessage}" Foreground="#FF44FF88" FontSize="11"
+          <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource UGL.SuccessColor}" FontSize="11"
                      HorizontalAlignment="Center"
                      IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         </StackPanel>

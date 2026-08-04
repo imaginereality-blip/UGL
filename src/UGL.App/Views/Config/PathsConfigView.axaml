@@ -16,73 +16,55 @@
                    Text="These are defaults. Individual games, systems and emulators can override any path to point anywhere on any drive."/>
       </StackPanel>
 
-      <!-- Media Root -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMediaRootFocused}" Padding="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Media Root" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBlock Foreground="#44FFFFFF" FontSize="11"
-                     Text="Card art, video previews, sounds, music. Sub-folders: categories\, games\covers\, games\video\, sounds\, music\"/>
-          <Grid ColumnDefinitions="*,8,Auto">
-            <TextBox Grid.Column="0" Text="{Binding MediaRootPath}"
-                     Watermark="media  (relative to exe, or full path like D:\UGL\media)"/>
-            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseMediaRootCommand}"/>
-          </Grid>
-        </StackPanel>
-      </Border>
+      <!-- Compact storage-locations table — one row per root instead of five tall
+           repeated blocks. Description text moves to a hover/focus tooltip instead
+           of always-on body text, so all five fit in the space the first two used to. -->
+      <Grid ColumnDefinitions="120,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,4,0,0">
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="ROOT" FontSize="10" FontWeight="Bold"
+                   LetterSpacing="1" Foreground="{DynamicResource UGL.TextSecondaryColor}"/>
+        <TextBlock Grid.Row="0" Grid.Column="1" Text="PATH" FontSize="10" FontWeight="Bold"
+                   LetterSpacing="1" Foreground="{DynamicResource UGL.TextSecondaryColor}" Margin="8,0,0,0"/>
 
-      <!-- ROMs Root -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRomsRootFocused}" Padding="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="ROMs Root" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBlock Foreground="#44FFFFFF" FontSize="11"
-                     Text="Default ROM location. Sub-folders created per system ID (e.g. roms\arcade\, roms\nes\). Override per-system below."/>
-          <Grid ColumnDefinitions="*,8,Auto">
-            <TextBox Grid.Column="0" Text="{Binding RomsRootPath}"
-                     Watermark="roms  (or D:\ROMs, \\NAS\Games, etc.)"/>
-            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseRomsRootCommand}"/>
-          </Grid>
-        </StackPanel>
-      </Border>
+        <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Classes="sectionDivider" Margin="0,4,0,4"/>
 
-      <!-- Emulators Root -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorsRootFocused}" Padding="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Emulators Root" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBlock Foreground="#44FFFFFF" FontSize="11"
-                     Text="Default location for emulator installations. Individual emulator paths in the Systems tab override this."/>
-          <Grid ColumnDefinitions="*,8,Auto">
-            <TextBox Grid.Column="0" Text="{Binding EmulatorsRootPath}"
-                     Watermark="emulators  (or C:\Emulators)"/>
-            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseEmulatorsRootCommand}"/>
-          </Grid>
-        </StackPanel>
-      </Border>
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Media" Foreground="White" FontSize="13" VerticalAlignment="Center"
+                   ToolTip.Tip="Card art, video previews, sounds, music. Sub-folders: categories\, games\covers\, games\video\, sounds\, music\"/>
+        <Border Grid.Row="2" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsMediaRootFocused}" Padding="6,4" Margin="8,2,8,2">
+          <TextBox Text="{Binding MediaRootPath}" Watermark="media  (relative to exe, or full path like D:\UGL\media)"/>
+        </Border>
+        <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Command="{Binding BrowseMediaRootCommand}"/>
 
-      <!-- Addons Root -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAddonsRootFocused}" Padding="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Addons Root" Foreground="#88FFFFFF" FontSize="12"/>
-          <TextBlock Foreground="#44FFFFFF" FontSize="11"
-                     Text="MameHooker, Hook of the Reaper, and other peripheral integration tools."/>
-          <Grid ColumnDefinitions="*,8,Auto">
-            <TextBox Grid.Column="0" Text="{Binding AddonsRootPath}"
-                     Watermark="addons"/>
-            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseAddonsRootCommand}"/>
-          </Grid>
-        </StackPanel>
-      </Border>
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="ROMs" Foreground="White" FontSize="13" VerticalAlignment="Center"
+                   ToolTip.Tip="Default ROM location. Sub-folders created per system ID (e.g. roms\arcade\, roms\nes\). Override per-system below."/>
+        <Border Grid.Row="3" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsRomsRootFocused}" Padding="6,4" Margin="8,2,8,2">
+          <TextBox Text="{Binding RomsRootPath}" Watermark="roms  (or D:\ROMs, \\NAS\Games, etc.)"/>
+        </Border>
+        <Button Grid.Row="3" Grid.Column="2" Content="Browse…" Command="{Binding BrowseRomsRootCommand}"/>
 
-      <!-- Logs Root -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLogsRootFocused}" Padding="8">
-        <StackPanel Spacing="4">
-          <TextBlock Text="Logs Root" Foreground="#88FFFFFF" FontSize="12"/>
-          <Grid ColumnDefinitions="*,8,Auto">
-            <TextBox Grid.Column="0" Text="{Binding LogsRootPath}"
-                     Watermark="logs"/>
-            <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseLogsRootCommand}"/>
-          </Grid>
-        </StackPanel>
-      </Border>
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Emulators" Foreground="White" FontSize="13" VerticalAlignment="Center"
+                   ToolTip.Tip="Default location for emulator installations. Individual emulator paths in the Systems tab override this."/>
+        <Border Grid.Row="4" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorsRootFocused}" Padding="6,4" Margin="8,2,8,2">
+          <TextBox Text="{Binding EmulatorsRootPath}" Watermark="emulators  (or C:\Emulators)"/>
+        </Border>
+        <Button Grid.Row="4" Grid.Column="2" Content="Browse…" Command="{Binding BrowseEmulatorsRootCommand}"/>
+
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="Addons" Foreground="White" FontSize="13" VerticalAlignment="Center"
+                   ToolTip.Tip="MameHooker, Hook of the Reaper, and other peripheral integration tools."/>
+        <Border Grid.Row="5" Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsAddonsRootFocused}" Padding="6,4" Margin="8,2,8,2">
+          <TextBox Text="{Binding AddonsRootPath}" Watermark="addons"/>
+        </Border>
+        <Button Grid.Row="5" Grid.Column="2" Content="Browse…" Command="{Binding BrowseAddonsRootCommand}"/>
+      </Grid>
+
+      <!-- Logs Root — kept as its own row below the grid since RowDefinitions above
+           are fixed at five data rows; same table styling. -->
+      <Grid ColumnDefinitions="120,*,Auto">
+        <TextBlock Grid.Column="0" Text="Logs" Foreground="White" FontSize="13" VerticalAlignment="Center"/>
+        <Border Grid.Column="1" Classes="cfgField" Classes.fieldFocused="{Binding IsLogsRootFocused}" Padding="6,4" Margin="8,2,8,2">
+          <TextBox Text="{Binding LogsRootPath}" Watermark="logs"/>
+        </Border>
+        <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseLogsRootCommand}"/>
+      </Grid>
 
       <!-- Save root paths -->
       <StackPanel Orientation="Horizontal" Spacing="12">
@@ -92,12 +74,12 @@
                 Background="{DynamicResource UGL.AccentColor}"
                 Foreground="White" Padding="16,8"/>
         <TextBlock Text="{Binding StatusMessage}"
-                   Foreground="#FF44FF88" VerticalAlignment="Center"
+                   Foreground="{DynamicResource UGL.SuccessColor}" VerticalAlignment="Center"
                    IsVisible="{Binding StatusMessage,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
       </StackPanel>
 
-      <Border BorderBrush="#22FFFFFF" BorderThickness="0,1,0,0" Margin="0,8,0,0"/>
+      <Border Classes="sectionDivider" Margin="0,8,0,0"/>
 
       <!-- ── Per-System ROM Path Overrides ── -->
       <StackPanel Spacing="4">

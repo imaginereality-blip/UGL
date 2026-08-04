@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ButtonHint"
+             x:Name="Root"
+             VerticalAlignment="Center">
+
+  <UserControl.Styles>
+    <Style Selector="Border.hintBadge">
+      <Setter Property="Background" Value="#3A3A4A"/>
+    </Style>
+    <Style Selector="Border.hintBadge.primary">
+      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+  </UserControl.Styles>
+
+  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+    <Border Classes="hintBadge"
+            Classes.primary="{Binding #Root.IsPrimary}"
+            MinWidth="24" Height="24"
+            CornerRadius="12"
+            Padding="6,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+      <TextBlock Text="{Binding #Root.Glyph}"
+                 FontSize="12"
+                 FontWeight="Bold"
+                 Foreground="White"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center"/>
+    </Border>
+    <TextBlock Text="{Binding #Root.Label}"
+               FontSize="14"
+               Foreground="{DynamicResource UGL.TextPrimaryColor}"
+               VerticalAlignment="Center"/>
+  </StackPanel>
+</UserControl>

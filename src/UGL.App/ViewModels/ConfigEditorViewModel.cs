@@ -4,8 +4,19 @@ using UGL.App.ViewModels.Config;
 
 namespace UGL.App.ViewModels;
 
-/// <summary>A single row in the unified Settings menu — either a tab, or the Quit action.</summary>
-public sealed record SettingsMenuItem(string Label, ConfigEditorViewModel.Tab? Tab, bool IsQuit = false);
+/// <summary>
+/// A single row in the unified Settings menu — a tab, the Quit action, or a
+/// non-selectable group header (Content / Appearance / System) used purely to
+/// visually cluster the rows beneath it. Header rows are skipped by
+/// NavigateMenuUp/Down and disabled in the ListBox so they can't be highlighted
+/// or clicked.
+/// </summary>
+public sealed record SettingsMenuItem(
+    string Label,
+    ConfigEditorViewModel.Tab? Tab,
+    bool IsQuit = false,
+    bool IsHeader = false,
+    string Icon = "");
 
 public sealed partial class ConfigEditorViewModel : ObservableObject
 {
@@ -46,18 +57,24 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     /// </summary>
     public ObservableCollection<SettingsMenuItem> MenuItems { get; } =
     [
-        new("🗂 Categories",         Tab.Categories),
-        new("🎮 Games",             Tab.Games),
-        new("🖥 Systems",            Tab.Systems),
-        new("🎵 Audio",              Tab.Audio),
-        new("🎨 Theme",              Tab.Theme),
-        new("🌟 Card Highlight",    Tab.CardHighlight),
-        new("📁 Paths",              Tab.Paths),
-        new("🕹 Controllers",        Tab.Peripherals),
-        new("🔌 Output Hooks",       Tab.Hooks),
-        new("🔄 Updates",            Tab.Updates),
-        new("🖼 Scraper",            Tab.Scraper),
-        new("⏻ Quit UGL",           null, IsQuit: true),
+        new("Content",              null, IsHeader: true),
+        new("Categories",           Tab.Categories,     Icon: ""),
+        new("Games",                Tab.Games,          Icon: "🎮"),
+        new("Systems",              Tab.Systems,        Icon: "🖥"),
+
+        new("Appearance",           null, IsHeader: true),
+        new("Theme",                Tab.Theme,          Icon: "🎨"),
+        new("Card Highlight",       Tab.CardHighlight,  Icon: ""),
+
+        new("System",               null, IsHeader: true),
+        new("Audio",                Tab.Audio,          Icon: "🎵"),
+        new("Paths",                Tab.Paths,          Icon: ""),
+        new("Controllers",          Tab.Peripherals,    Icon: "🕹"),
+        new("Output Hooks",         Tab.Hooks,          Icon: "🔌"),
+        new("Updates",              Tab.Updates,        Icon: ""),
+        new("Scraper",              Tab.Scraper,        Icon: "🖼"),
+
+        new("Quit UGL",             null, IsQuit: true, Icon: ""),
     ];
 
     [ObservableProperty] private SettingsMenuItem? _selectedMenuItem;
@@ -136,7 +153,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Scraper       = scraper;
         VirtualKeyboard = virtualKeyboard;
 
-        SelectedMenuItem = MenuItems[0];
+        SelectedMenuItem = MenuItems.FirstOrDefault(m => !m.IsHeader);
     }
 
     partial void OnSelectedMenuItemChanged(SettingsMenuItem? value)
@@ -165,7 +182,8 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     {
         if (MenuItems.Count == 0) return;
         int idx = SelectedMenuItem is null ? 0 : MenuItems.IndexOf(SelectedMenuItem);
-        idx = (idx - 1 + MenuItems.Count) % MenuItems.Count;
+        do { idx = (idx - 1 + MenuItems.Count) % MenuItems.Count; }
+        while (MenuItems[idx].IsHeader);
         SelectedMenuItem = MenuItems[idx];
     }
 
@@ -173,7 +191,8 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     {
         if (MenuItems.Count == 0) return;
         int idx = SelectedMenuItem is null ? 0 : MenuItems.IndexOf(SelectedMenuItem);
-        idx = (idx + 1) % MenuItems.Count;
+        do { idx = (idx + 1) % MenuItems.Count; }
+        while (MenuItems[idx].IsHeader);
         SelectedMenuItem = MenuItems[idx];
     }
 

@@ -99,6 +99,17 @@ public sealed class AvaloniaThemeService : IThemeService
         var cardGradTop = selection;
         var cardGradBot = bg;
 
+        // Shared chrome tokens (recommendation 1) — one named gray/scrim/panel instead
+        // of the ~8 near-identical hardcoded literals previously hand-rolled per view.
+        var divider        = Color.FromArgb(0x24, 0xFF, 0xFF, 0xFF);
+        var scrimHeavy      = Color.FromArgb(0xF0, (byte)(bg.R / 2), (byte)(bg.G / 2), (byte)(bg.B / 2));
+        var panelBackground = Color.FromArgb(0x11, (byte)(bg.R / 2), (byte)(bg.G / 2), (byte)(bg.B / 2));
+        var sidebarSelectionTint = Color.FromArgb(0x29, accent.R, accent.G, accent.B);
+
+        // Status / destructive colours — Danger matches the quitRow red already in use.
+        var success = Color.Parse("#FF44FF88");
+        var danger  = Color.Parse("#FFFF5C5C");
+
         return new Avalonia.Controls.ResourceDictionary
         {
             // Sentinel key so we can find and replace this dictionary later
@@ -117,6 +128,12 @@ public sealed class AvaloniaThemeService : IThemeService
             [ThemeKeys.CardBorderSelected]  = new SolidColorBrush(borderSel),
             [ThemeKeys.CardGradientTop]     = new SolidColorBrush(cardGradTop),
             [ThemeKeys.CardGradientBot]     = new SolidColorBrush(cardGradBot),
+            [ThemeKeys.Divider]             = new SolidColorBrush(divider),
+            [ThemeKeys.ScrimHeavy]          = new SolidColorBrush(scrimHeavy),
+            [ThemeKeys.PanelBackground]     = new SolidColorBrush(panelBackground),
+            [ThemeKeys.SidebarSelectionTint] = new SolidColorBrush(sidebarSelectionTint),
+            [ThemeKeys.Success]             = new SolidColorBrush(success),
+            [ThemeKeys.Danger]              = new SolidColorBrush(danger),
 
             // ── Typography ──────────────────────────────────────────────────
             [ThemeKeys.FontFamily]          = theme.FontFamily,
@@ -125,7 +142,7 @@ public sealed class AvaloniaThemeService : IThemeService
 
             // ── Layout ──────────────────────────────────────────────────────
             [ThemeKeys.CardCornerRadius]    = new CornerRadius(theme.CardCornerRadius),
-            [ThemeKeys.CardSpacing]         = theme.CardSpacing,
+            [ThemeKeys.CardSpacing]         = new Thickness(theme.CardSpacing / 2),
             [ThemeKeys.SelectionScaleFactor] = theme.SelectionScaleFactor,
             [ThemeKeys.AnimationDurationMs] = theme.AnimationDurationMs,
         };

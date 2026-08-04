@@ -9,7 +9,7 @@
     <Border Name="CardBorder"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Margin="2"
+            Margin="{DynamicResource UGL.CardSpacing}"
             ClipToBounds="True"
             Background="{DynamicResource UGL.SurfaceColor}">
 

@@ -3,6 +3,8 @@
              xmlns:vm="clr-namespace:UGL.App.ViewModels"
              xmlns:cfg="clr-namespace:UGL.App.ViewModels.Config"
              xmlns:views="clr-namespace:UGL.App.Views.Config"
+             xmlns:controls="clr-namespace:UGL.App.Views.Controls"
+             xmlns:views2="clr-namespace:UGL.App.Views"
              x:Class="UGL.App.Views.ConfigEditorView"
              x:DataType="vm:ConfigEditorViewModel">
 
@@ -12,16 +14,37 @@
          Classes.quitRow is actually applied below (was previously mismatched against
          ListBoxItem, which meant this style never actually applied). -->
     <Style Selector="TextBlock.quitRow">
-      <Setter Property="Foreground" Value="#FFFF5C5C"/>
+      <Setter Property="Foreground" Value="{DynamicResource UGL.DangerColor}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- Non-selectable group header row (Content / Appearance / System) — small
+         uppercase caption, disabled so it can't be highlighted or clicked. -->
+    <Style Selector="TextBlock.menuHeader">
+      <Setter Property="Foreground" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="LetterSpacing" Value="1"/>
     </Style>
 
     <!-- Strong, guaranteed-visible selection highlight for every list in Settings —
          sidebar menu, Peripheral devices, Games, Systems, Audio, Theme — since the
          default theme's selected-item highlight was too subtle against this dark UI
-         to reliably tell what's currently selected while navigating with a controller. -->
+         to reliably tell what's currently selected while navigating with a controller.
+         A tinted background + 3px left accent bar (rather than a full solid fill)
+         keeps the same instant legibility with a lighter touch. -->
     <Style Selector="ListBoxItem:selected">
-      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="Background" Value="{DynamicResource UGL.SidebarSelectionTint}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="BorderThickness" Value="3,0,0,0"/>
+    </Style>
+
+    <!-- Header rows are visually distinct and structurally not part of the
+         selectable set — disabling them keeps ListBox from ever highlighting
+         or selecting one, whether via keyboard (NavigateMenuUp/Down already
+         skips them) or a stray mouse click. -->
+    <Style Selector="ListBox#SettingsMenuList ListBoxItem" x:DataType="vm:SettingsMenuItem">
+      <Setter Property="IsEnabled" Value="{Binding !IsHeader}"/>
     </Style>
 
     <!-- Virtual keyboard keys: default state and highlighted state are BOTH styles
@@ -31,7 +54,7 @@
          bug before (the key Borders had Background set locally, silently blocking
          the highlight style from ever taking visible effect). -->
     <Style Selector="Border.vkKey">
-      <Setter Property="Background" Value="#22FFFFFF"/>
+      <Setter Property="Background" Value="{DynamicResource UGL.Divider}"/>
     </Style>
     <Style Selector="Border.vkKey.keyHighlighted">
       <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
@@ -55,44 +78,74 @@
     <Style Selector="Button.cfgField.fieldFocused">
       <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
     </Style>
+
+    <!-- Shared Delete-button styling (recommendation 10) — reuses the same red as
+         the Quit row instead of every tab's Delete button using plain default styling. -->
+    <Style Selector="Button.deleteBtn">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.DangerColor}"/>
+      <Setter Property="Foreground" Value="{DynamicResource UGL.DangerColor}"/>
+    </Style>
+
+    <!-- Shared section captions/dividers, reused across tab content (Games, Paths,
+         etc.) to break long flat forms into labeled groups. -->
+    <Style Selector="TextBlock.sectionCaption">
+      <Setter Property="Foreground" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="Bold"/>
+      <Setter Property="LetterSpacing" Value="1"/>
+    </Style>
+    <Style Selector="Border.sectionDivider">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.Divider}"/>
+      <Setter Property="BorderThickness" Value="0,1,0,0"/>
+      <Setter Property="Margin" Value="0,6,0,0"/>
+    </Style>
   </UserControl.Styles>
 
   <!-- Full-screen semi-transparent backdrop -->
   <Grid>
-    <Border Background="#F00D0D1A"/>
+    <Border Background="{DynamicResource UGL.ScrimHeavy}"/>
 
     <Grid RowDefinitions="60,*,60" Margin="40,32">
 
       <!-- Header -->
       <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
 
-        <TextBlock Grid.Column="0"
-                   Text="⚙ Settings"
-                   FontSize="26"
-                   FontWeight="Bold"
-                   Foreground="White"
-                   VerticalAlignment="Center"/>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons" FontSize="22" Foreground="White"/>
+          <TextBlock Text="Settings" FontSize="26" FontWeight="Bold" Foreground="White"/>
+        </StackPanel>
 
         <Button Grid.Column="2"
                 x:Name="CloseBtn"
-                Content="✕ Close"
                 Padding="16,8"
                 Click="OnCloseClick"
-                VerticalAlignment="Center"/>
+                VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="14"/>
+            <TextBlock Text="Close"/>
+          </StackPanel>
+        </Button>
 
       </Grid>
 
       <!-- Sidebar menu + tab content -->
-      <Grid Grid.Row="1" ColumnDefinitions="240,*" Margin="0,16,0,0">
+      <Grid Grid.Row="1" Margin="0,16,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="{Binding IsContentFocused, Converter={x:Static views2:BoolToSidebarWidthConverter.Instance}}"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
         <!-- Unified settings menu. D-pad Up/Down moves the highlight natively (ListBox
              handles this itself once focused); selecting a tab row switches content
-             immediately; Quit requires an explicit confirm, not just a highlight. -->
+             immediately; Quit requires an explicit confirm, not just a highlight.
+             Collapses to width 0 once content is entered (A-enter) — see
+             ConfigEditorViewModel.IsContentFocused / EnterContent / ExitContent. -->
         <ListBox x:Name="SettingsMenuList"
                  Grid.Column="0"
                  Margin="0,0,16,0"
-                 Background="#110D0D1A"
-                 BorderBrush="#22FFFFFF"
+                 IsVisible="{Binding !IsContentFocused}"
+                 Background="{DynamicResource UGL.PanelBackground}"
+                 BorderBrush="{DynamicResource UGL.Divider}"
                  BorderThickness="1"
                  CornerRadius="6"
                  Padding="6"
@@ -101,17 +154,30 @@
                  SelectedItem="{Binding SelectedMenuItem, Mode=TwoWay}">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:SettingsMenuItem">
-              <TextBlock Text="{Binding Label}"
-                         FontSize="16"
-                         Padding="12,10"
-                         Classes.quitRow="{Binding IsQuit}"/>
+              <Panel>
+                <TextBlock Text="{Binding Label}"
+                           Classes="menuHeader"
+                           Padding="12,10,12,2"
+                           IsVisible="{Binding IsHeader}"/>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="12,10"
+                            IsVisible="{Binding !IsHeader}">
+                  <TextBlock Text="{Binding Icon}"
+                             FontFamily="Segoe Fluent Icons"
+                             FontSize="16"
+                             Width="18"
+                             Classes.quitRow="{Binding IsQuit}"/>
+                  <TextBlock Text="{Binding Label}"
+                             FontSize="16"
+                             Classes.quitRow="{Binding IsQuit}"/>
+                </StackPanel>
+              </Panel>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
 
         <Border Grid.Column="1"
-                Background="#110D0D1A"
-                BorderBrush="#22FFFFFF"
+                Background="{DynamicResource UGL.PanelBackground}"
+                BorderBrush="{DynamicResource UGL.Divider}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Padding="24,16">
@@ -155,13 +221,15 @@
 
       <!-- Hint bar / legend -->
       <Border Grid.Row="2"
-              BorderBrush="#22FFFFFF"
+              BorderBrush="{DynamicResource UGL.Divider}"
               BorderThickness="0,1,0,0"
               Padding="0,12,0,0">
-        <TextBlock Text="↑ ↓  Navigate      LB / RB  Switch tab (e.g. Music/Sounds)      A  Select      B / Start  Close settings      Mouse also works"
-                   FontSize="13"
-                   Foreground="#66FFFFFF"
-                   HorizontalAlignment="Center"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="22">
+          <controls:ButtonHint Glyph="↑↓" Label="Navigate"/>
+          <controls:ButtonHint Glyph="LB/RB" Label="Switch tab"/>
+          <controls:ButtonHint Glyph="A" Label="Select"/>
+          <controls:ButtonHint Glyph="B" Label="Close"/>
+        </StackPanel>
       </Border>
 
     </Grid>
@@ -170,13 +238,13 @@
          Same pattern as every other controller-navigable list here: bound properties
          (Label, IsHighlighted) driven directly in C#, no Avalonia focus system involved. -->
     <Border IsVisible="{Binding VirtualKeyboard.IsOpen}"
-            Background="#F00D0D1A">
+            Background="{DynamicResource UGL.ScrimHeavy}">
       <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Width="720">
 
         <TextBlock Text="{Binding VirtualKeyboard.FieldLabel}"
-                   FontSize="16" Foreground="#88FFFFFF" HorizontalAlignment="Center"/>
+                   FontSize="16" Foreground="{DynamicResource UGL.TextSecondaryColor}" HorizontalAlignment="Center"/>
 
-        <Border Background="#22FFFFFF" CornerRadius="6" Padding="16,10" MinHeight="48">
+        <Border Background="{DynamicResource UGL.Divider}" CornerRadius="6" Padding="16,10" MinHeight="48">
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="{Binding VirtualKeyboard.TextBeforeCursor}"
                        FontSize="22" Foreground="White"/>
@@ -262,7 +330,7 @@
         </ItemsControl>
 
         <TextBlock Text="↑↓←→ Move      A Type key / Move cursor      B Cancel"
-                   FontSize="12" Foreground="#66FFFFFF" HorizontalAlignment="Center"/>
+                   FontSize="12" Foreground="{DynamicResource UGL.TextSecondaryColor}" HorizontalAlignment="Center"/>
 
       </StackPanel>
     </Border>

@@ -52,8 +52,8 @@ public sealed class MediaAssetResolver
 
     public string? ResolveScreenshot(Game game)
     {
-        if (!string.IsNullOrWhiteSpace(game.Media.CoverPath))
-            return ResolvePath(game.Media.BackgroundPath);
+        if (!string.IsNullOrWhiteSpace(game.Media.ScreenshotPath))
+            return ResolvePath(game.Media.ScreenshotPath);
         return FindImage("screenshots", Slug(game));
     }
 

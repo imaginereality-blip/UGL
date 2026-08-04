@@ -103,7 +103,7 @@
               HorizontalAlignment="Left" Margin="0,8,0,0"/>
 
       <TextBlock Text="{Binding StatusMessage}"
-                 Foreground="#FF44FF88"
+                 Foreground="{DynamicResource UGL.SuccessColor}"
                  IsVisible="{Binding StatusMessage,
                              Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>

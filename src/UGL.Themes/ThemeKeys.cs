@@ -23,6 +23,21 @@ public static class ThemeKeys
     public const string CardGradientTop  = "UGL.CardGradientTop";
     public const string CardGradientBot  = "UGL.CardGradientBottom";
 
+    // Shared chrome tokens — replace the hand-rolled translucent-gray literals
+    // (#22FFFFFF/#33FFFFFF/#44FFFFFF/#66FFFFFF/#CC000000/#EE0D0D1A/#F00D0D1A/#110D0D1A)
+    // that used to be scattered across ConfigEditorView/FilterOverlayView/MainWindow.
+    public const string Divider         = "UGL.Divider";
+    public const string ScrimHeavy      = "UGL.ScrimHeavy";
+    public const string PanelBackground = "UGL.PanelBackground";
+
+    // Low-opacity accent tint behind a selected sidebar row (paired with a solid
+    // left-accent bar) — replaces the old full solid-accent-fill selection.
+    public const string SidebarSelectionTint = "UGL.SidebarSelectionTint";
+
+    // Status / destructive colours
+    public const string Success = "UGL.SuccessColor";
+    public const string Danger  = "UGL.DangerColor";
+
     // ── Typography ─────────────────────────────────────────────────────────
     public const string FontFamily      = "UGL.FontFamily";
     public const string TitleFontSize   = "UGL.TitleFontSize";

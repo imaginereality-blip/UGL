@@ -42,6 +42,10 @@ public sealed partial class CardHighlightConfigViewModel : ObservableObject
     /// </summary>
     public IBrush PreviewBrush => new SolidColorBrush(HsvToRgb(Hue, Saturation, Value));
 
+    /// <summary>Raw Color (not a brush) for the preview card's DropShadowEffect glow —
+    /// Effect.Color is typed as Avalonia.Media.Color, not IBrush.</summary>
+    public Color PreviewColor => HsvToRgb(Hue, Saturation, Value);
+
     /// <summary>
     /// A real Avalonia.Thickness, not a raw int — same reasoning as PreviewBrush above.
     /// Binding a plain number to a Thickness-typed property has the same "only reliably
@@ -113,6 +117,7 @@ public sealed partial class CardHighlightConfigViewModel : ObservableObject
         if (_syncingFromHex) return;
         OnPropertyChanged(nameof(CustomHex));
         OnPropertyChanged(nameof(PreviewBrush));
+        OnPropertyChanged(nameof(PreviewColor));
         OnPropertyChanged(nameof(HexDisplay));
         OnPropertyChanged(nameof(HslDisplay));
         OnPropertyChanged(nameof(RgbDisplay));

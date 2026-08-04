@@ -120,7 +120,7 @@
 
             <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDeletePlaylistFocused}" Padding="6">
               <Button Content="✕ Delete Playlist" Command="{Binding DeleteSelectedPlaylistCommand}"
-                      Foreground="#FFFF4444" HorizontalAlignment="Stretch"/>
+                      Foreground="{DynamicResource UGL.DangerColor}" HorizontalAlignment="Stretch"/>
             </Border>
 
           </StackPanel>
@@ -259,7 +259,7 @@
         </Border>
       </StackPanel>
 
-      <TextBlock Text="{Binding StatusMessage}" Foreground="#FF44FF88"
+      <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource UGL.SuccessColor}"
                  IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
     </StackPanel>

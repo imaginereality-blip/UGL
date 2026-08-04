@@ -122,7 +122,7 @@
           </Grid>
 
           <TextBlock Text="{Binding CategoryStatusMessage}"
-                     Foreground="#FF44FF88"
+                     Foreground="{DynamicResource UGL.SuccessColor}"
                      IsVisible="{Binding CategoryStatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         </StackPanel>
       </Border>

@@ -137,8 +137,29 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     public bool IsScrapeFocused         => EditorFocusIndex == 28;
     public bool IsGenerateCardFocused   => EditorFocusIndex == 29;
 
+    /// <summary>
+    /// Control-scheme text for whichever field currently has focus — pulled out of the
+    /// field labels themselves (recommendation 8) and shown once, in a shared strip,
+    /// instead of re-typed into every label ("System * (controller: Left/Right)",
+    /// "BIOS Override (...; A to enter, Up/Down to move, A to remove, B to exit)").
+    /// The scheme is static per widget-type: every ComboBox/cycle field is always
+    /// Left/Right, every reorderable list is always A/Up-Down/A/B, etc.
+    /// </summary>
+    public string CurrentFieldHint => EditorFocusIndex switch
+    {
+        1 or 3 or 5 => "Left / Right to change",
+        2 => "A to enter, Up/Down to move, A to toggle, B to exit",
+        6 => "A to toggle",
+        18 => "A to enter, Up/Down to move, A to remove, B to exit",
+        20 => "A to enter, Up/Down to move, A to toggle, B to exit",
+        22 or 23 => "Left / Right to change",
+        25 => "A to enter, Up/Down to move, A to remove, B to exit",
+        _ => string.Empty,
+    };
+
     partial void OnEditorFocusIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(CurrentFieldHint));
         OnPropertyChanged(nameof(IsTitleFocused));
         OnPropertyChanged(nameof(IsSystemFocused));
         OnPropertyChanged(nameof(IsCategoryFocused));

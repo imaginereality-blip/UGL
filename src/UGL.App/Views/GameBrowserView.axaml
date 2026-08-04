@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UGL.App.ViewModels"
              xmlns:views="clr-namespace:UGL.App.Views"
+             xmlns:controls="clr-namespace:UGL.App.Views.Controls"
              x:Class="UGL.App.Views.GameBrowserView"
              x:DataType="vm:GameBrowserViewModel"
              Background="{DynamicResource UGL.BackgroundColor}">
@@ -63,11 +64,14 @@
                        Foreground="{DynamicResource UGL.TextSecondaryColor}"
                        VerticalAlignment="Center" />
           </StackPanel>
-          <TextBlock Grid.Column="1"
-                     Text="A  Launch      B  Back      ← →  Browse      X  Favorite      D-Pad ↑↓  Playlist   ←→  Track"
-                     FontSize="14"
-                     Foreground="{DynamicResource UGL.TextSecondaryColor}"
-                     VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+            <controls:ButtonHint Glyph="A" Label="Launch" IsPrimary="True"/>
+            <controls:ButtonHint Glyph="B" Label="Back"/>
+            <controls:ButtonHint Glyph="↔" Label="Browse"/>
+            <controls:ButtonHint Glyph="X" Label="Favorite"/>
+            <controls:ButtonHint Glyph="↑↓" Label="Playlist"/>
+            <controls:ButtonHint Glyph="←→" Label="Track"/>
+          </StackPanel>
         </Grid>
 
         <!-- Same brief "now playing" indicator as the Home Menu — see the note

@@ -47,36 +47,53 @@
                                 DataContext="{Binding ConfigEditor}"
                                 IsVisible="False" />
 
-        <!-- Launch error toast — shown briefly when emulator fails to start -->
+        <!-- Launch error toast — shown briefly when emulator fails to start. Dark
+             surface with a colored left stripe + status glyph, matching every other
+             surface in the app, instead of a bright solid-color pill. -->
         <Border VerticalAlignment="Bottom"
                 HorizontalAlignment="Center"
                 Margin="0,0,0,80"
-                Padding="20,10"
-                CornerRadius="6"
-                Background="#CCFF2222"
+                Padding="18,12,22,12"
+                CornerRadius="4"
+                Background="{DynamicResource UGL.SurfaceColor}"
+                BorderBrush="{DynamicResource UGL.DangerColor}"
+                BorderThickness="3,0,0,0"
                 IsVisible="{Binding LaunchError,
                             Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Text="{Binding LaunchError}"
-                       Foreground="White"
-                       FontSize="16"
-                       FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="&#xE783;" FontFamily="Segoe Fluent Icons"
+                           Foreground="{DynamicResource UGL.DangerColor}" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding LaunchError}"
+                           Foreground="White"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
 
         <!-- Update notification — shown after a background check finds a new
              version. Stays visible (not auto-hidden) until Settings is opened,
              since it's more actionable than the playlist/launch-error toasts and
-             easy to miss if it vanished on its own after a few seconds. -->
+             easy to miss if it vanished on its own after a few seconds. Same dark
+             surface + accent-stripe language as the error toast above. -->
         <Border VerticalAlignment="Top"
                 HorizontalAlignment="Center"
                 Margin="0,24,0,0"
-                Padding="20,10"
-                CornerRadius="6"
-                Background="#CC2266CC"
+                Padding="18,12,22,12"
+                CornerRadius="4"
+                Background="{DynamicResource UGL.SurfaceColor}"
+                BorderBrush="{DynamicResource UGL.AccentColor}"
+                BorderThickness="3,0,0,0"
                 IsVisible="{Binding IsUpdateNotificationVisible}">
-            <TextBlock Text="{Binding UpdateNotificationText}"
-                       Foreground="White"
-                       FontSize="16"
-                       FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="&#xE946;" FontFamily="Segoe Fluent Icons"
+                           Foreground="{DynamicResource UGL.AccentColor}" FontSize="16" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding UpdateNotificationText}"
+                           Foreground="White"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
         </Border>
 
     </Panel>

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UGL.App.ViewModels"
              xmlns:views="clr-namespace:UGL.App.Views"
+             xmlns:controls="clr-namespace:UGL.App.Views.Controls"
              x:Class="UGL.App.Views.FilterOverlayView"
              x:DataType="vm:FilterOverlayViewModel">
 
@@ -13,14 +14,14 @@
 
     <!-- Full-screen semi-transparent backdrop -->
     <Grid>
-        <Border Background="#CC000000" />
+        <Border Background="{DynamicResource UGL.ScrimHeavy}" />
 
         <!-- Centred filter panel -->
         <Border HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 MinWidth="900"
-                Background="#EE0D0D1A"
-                BorderBrush="#44FFFFFF"
+                Background="{DynamicResource UGL.ScrimHeavy}"
+                BorderBrush="{DynamicResource UGL.Divider}"
                 BorderThickness="1"
                 CornerRadius="8"
                 Padding="40,32">
@@ -93,13 +94,16 @@
                 </ItemsControl>
 
                 <!-- Hint bar -->
-                <Border BorderBrush="#22FFFFFF"
+                <Border BorderBrush="{DynamicResource UGL.Divider}"
                         BorderThickness="0,1,0,0"
                         Padding="0,16,0,0">
-                    <TextBlock Text="A  Select      B  Close      X  Reset All      ↑↓  Switch Row      ←→  Browse Options"
-                               FontSize="13"
-                               Foreground="#66FFFFFF"
-                               HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="22">
+                        <controls:ButtonHint Glyph="A" Label="Select" IsPrimary="True"/>
+                        <controls:ButtonHint Glyph="B" Label="Close"/>
+                        <controls:ButtonHint Glyph="X" Label="Reset All"/>
+                        <controls:ButtonHint Glyph="↑↓" Label="Switch Row"/>
+                        <controls:ButtonHint Glyph="↔" Label="Browse"/>
+                    </StackPanel>
                 </Border>
 
             </StackPanel>

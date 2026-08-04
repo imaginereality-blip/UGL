@@ -4,18 +4,31 @@
              x:Class="UGL.App.Views.Config.SystemsConfigView"
              x:DataType="vm:SystemsConfigViewModel">
 
+  <UserControl.Styles>
+    <Style Selector="Button.tabActive">
+      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+  </UserControl.Styles>
+
   <Grid RowDefinitions="Auto,*">
 
     <!-- ── Inner tab bar ── -->
-    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4" Margin="0,0,0,16">
-      <Button x:Name="SystemsTabBtn"
-              Content="🖥 Systems"
-              Command="{Binding SelectSystemsTabCommand}"
-              Padding="16,6"/>
-      <Button x:Name="EmulatorsTabBtn"
-              Content="🎮 Emulators"
-              Command="{Binding SelectEmulatorsTabCommand}"
-              Padding="16,6"/>
+    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" Margin="0,0,0,16">
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemsTabActive}">
+        <Button x:Name="SystemsTabBtn"
+                Content="🖥 Systems"
+                Command="{Binding SelectSystemsTabCommand}"
+                Classes.tabActive="{Binding IsSystemsTabActive}"
+                Padding="16,6"/>
+      </Border>
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorsTabActive}">
+        <Button x:Name="EmulatorsTabBtn"
+                Content="🎮 Emulators"
+                Command="{Binding SelectEmulatorsTabCommand}"
+                Classes.tabActive="{Binding IsEmulatorsTabActive}"
+                Padding="16,6"/>
+      </Border>
     </StackPanel>
 
     <!-- ══════════════════════════════════════════════
@@ -117,7 +130,7 @@
           </StackPanel>
 
           <TextBlock Text="{Binding StatusMessage}"
-                     Foreground="#FF44FF88"
+                     Foreground="{DynamicResource UGL.SuccessColor}"
                      IsVisible="{Binding StatusMessage,
                                  Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
         </StackPanel>
@@ -326,7 +339,7 @@
                     <Grid ColumnDefinitions="*,Auto">
                       <TextBlock Grid.Column="0" Text="{Binding}" Foreground="White" FontSize="12" Margin="4,2"
                                  VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                      <Button Grid.Column="1" Content="✕" Padding="6,2" Foreground="#FFFF4444"
+                      <Button Grid.Column="1" Content="✕" Padding="6,2" Foreground="{DynamicResource UGL.DangerColor}"
                               Command="{Binding $parent[UserControl].((vm:SystemsConfigViewModel)DataContext).RemoveBiosCommand}"
                               CommandParameter="{Binding}"/>
                     </Grid>
@@ -377,7 +390,7 @@
           </StackPanel>
 
           <TextBlock Text="{Binding StatusMessage}"
-                     Foreground="#FF44FF88"
+                     Foreground="{DynamicResource UGL.SuccessColor}"
                      IsVisible="{Binding StatusMessage,
                                  Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
