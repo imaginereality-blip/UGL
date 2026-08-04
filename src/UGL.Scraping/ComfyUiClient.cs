@@ -19,12 +19,22 @@ namespace UGL.Scraping;
 ///                        {"filename":..,"subfolder":..,"type":"output"}]}}}}}
 ///                        — empty/missing until the render actually finishes.
 ///   GET  /view?filename=..&amp;subfolder=..&amp;type=..  -> raw image bytes.
+///   POST /upload/image  multipart body field "image" -> {"name":..,"subfolder":..,
+///                        "type":"input"} — makes an image available to LoadImage nodes
+///                        by filename.
 /// </summary>
 public sealed class ComfyUiClient : IComfyUiClient
 {
     private const string PromptToken = "{{PROMPT}}";
+    private const string DenoiseToken = "{{DENOISE}}";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(1);
-    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(3);
+    // 3 minutes was plenty for the small SD1.5 collage checkpoint, but a ~12B
+    // parameter model like Flux.1 Fill Dev can easily take longer than that just to
+    // load ~23GB of weights from disk on a cold start, before sampling even begins —
+    // confirmed by an actual "Timed out waiting for ComfyUI render" in testing at
+    // exactly the old 3-minute mark. 15 minutes gives real headroom for a slow cold
+    // load without leaving a genuinely stuck/unreachable server hanging forever.
+    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(15);
 
     private readonly HttpClient _http;
     private readonly IScraperSettingsRepository _settingsRepo;
@@ -37,7 +47,7 @@ public sealed class ComfyUiClient : IComfyUiClient
         _logger = logger;
     }
 
-    public async Task<byte[]?> GenerateImageAsync(string prompt, CancellationToken ct = default)
+    public async Task<byte[]?> GenerateImageAsync(string prompt, IReadOnlyList<byte[]> referenceImages, double denoise = 0.35, string? workflowPathOverride = null, IReadOnlyDictionary<string, double>? extraNumericTokens = null, CancellationToken ct = default)
     {
         var settings = await _settingsRepo.GetSettingsAsync(ct);
         if (string.IsNullOrWhiteSpace(settings.ComfyUiEndpoint))
@@ -45,9 +55,10 @@ public sealed class ComfyUiClient : IComfyUiClient
             _logger.LogWarning("ComfyUI endpoint not configured.");
             return null;
         }
-        if (string.IsNullOrWhiteSpace(settings.ComfyUiWorkflowPath) || !File.Exists(settings.ComfyUiWorkflowPath))
+        var workflowPath = workflowPathOverride ?? settings.ComfyUiWorkflowPath;
+        if (string.IsNullOrWhiteSpace(workflowPath) || !File.Exists(workflowPath))
         {
-            _logger.LogWarning("ComfyUI workflow file not found: {Path}", settings.ComfyUiWorkflowPath);
+            _logger.LogWarning("ComfyUI workflow file not found: {Path}", workflowPath);
             return null;
         }
 
@@ -56,20 +67,69 @@ public sealed class ComfyUiClient : IComfyUiClient
         JsonNode? workflow;
         try
         {
-            var text = await File.ReadAllTextAsync(settings.ComfyUiWorkflowPath, ct);
+            var text = await File.ReadAllTextAsync(workflowPath, ct);
             workflow = JsonNode.Parse(text);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to parse ComfyUI workflow JSON at {Path}.", settings.ComfyUiWorkflowPath);
+            _logger.LogWarning(ex, "Failed to parse ComfyUI workflow JSON at {Path}.", workflowPath);
             return null;
         }
         if (workflow is null) return null;
 
-        if (!SubstitutePromptToken(workflow, prompt))
+        if (!SubstituteToken(workflow, PromptToken, prompt))
         {
             _logger.LogWarning("ComfyUI workflow has no {{PROMPT}} token in any node's inputs — nothing to fill in.");
             return null;
+        }
+
+        // Best-effort: only workflows that opt in have a "{{DENOISE}}" token in place
+        // of a hardcoded KSampler denoise value; older workflows without it are
+        // unaffected.
+        SubstituteNumericToken(workflow, DenoiseToken, denoise);
+
+        if (extraNumericTokens is not null)
+        {
+            foreach (var (token, value) in extraNumericTokens)
+            {
+                SubstituteNumericToken(workflow, token, value);
+            }
+        }
+
+        if (referenceImages.Count > 0)
+        {
+            string? lastUploadedName = null;
+            for (int i = 1; i <= referenceImages.Count; i++)
+            {
+                var token = $"{{{{IMAGE_{i}}}}}";
+                if (!ContainsToken(workflow, token)) continue;
+
+                string uploadedName;
+                try
+                {
+                    uploadedName = await UploadImageAsync(baseUrl, referenceImages[i - 1], ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to upload reference image {Index} to ComfyUI.", i);
+                    continue;
+                }
+                lastUploadedName = uploadedName;
+                SubstituteToken(workflow, token, uploadedName);
+            }
+
+            // Fewer reference images than {{IMAGE_n}} tokens in the workflow: reuse the
+            // last successfully uploaded image for the remaining tokens instead of
+            // leaving the graph with an unresolved LoadImage filename.
+            if (lastUploadedName is not null)
+            {
+                for (int i = referenceImages.Count + 1; ; i++)
+                {
+                    var token = $"{{{{IMAGE_{i}}}}}";
+                    if (!ContainsToken(workflow, token)) break;
+                    SubstituteToken(workflow, token, lastUploadedName);
+                }
+            }
         }
 
         string clientId = Guid.NewGuid().ToString("N");
@@ -167,10 +227,57 @@ public sealed class ComfyUiClient : IComfyUiClient
         return null;
     }
 
-    /// <summary>Recursively walks the workflow graph replacing the {{PROMPT}} literal
-    /// wherever it appears as a string value. Returns true if at least one occurrence
-    /// was found and replaced.</summary>
-    private static bool SubstitutePromptToken(JsonNode node, string prompt)
+    /// <summary>Uploads a reference image to ComfyUI's /upload/image route and returns
+    /// the filename it was stored under (for use as a LoadImage node's "image"
+    /// input).</summary>
+    private async Task<string> UploadImageAsync(string baseUrl, byte[] imageBytes, CancellationToken ct)
+    {
+        using var content = new MultipartFormDataContent();
+        using var imageContent = new ByteArrayContent(imageBytes);
+        imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        content.Add(imageContent, "image", $"{Guid.NewGuid():N}.png");
+
+        using var response = await _http.PostAsync($"{baseUrl}/upload/image", content, ct);
+        response.EnsureSuccessStatusCode();
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStreamAsync(ct));
+        var name = doc.RootElement.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null;
+        if (name is null) throw new InvalidOperationException("ComfyUI /upload/image response had no 'name'.");
+        return name;
+    }
+
+    /// <summary>Recursively checks whether <paramref name="token"/> appears as a
+    /// substring of any string value anywhere in the workflow graph (a token commonly
+    /// sits alongside other literal text in the same field, e.g. a CLIPTextEncode
+    /// "text" input authored as "{{PROMPT}}, poster composition, ..." — this must NOT
+    /// require the whole field to equal the token).</summary>
+    private static bool ContainsToken(JsonNode node, string token)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var kv in obj)
+                {
+                    if (kv.Value is JsonValue val && val.TryGetValue<string>(out var s) && s.Contains(token)) return true;
+                    if (kv.Value is JsonObject or JsonArray && ContainsToken(kv.Value!, token)) return true;
+                }
+                return false;
+            case JsonArray arr:
+                foreach (var item in arr)
+                {
+                    if (item is JsonValue val && val.TryGetValue<string>(out var s) && s.Contains(token)) return true;
+                    if (item is JsonObject or JsonArray && ContainsToken(item!, token)) return true;
+                }
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>Like <see cref="SubstituteToken(JsonNode,string,string)"/> but replaces
+    /// matching string tokens with a JSON number instead of a string (e.g. a KSampler
+    /// "denoise" input authored as the placeholder string "{{DENOISE}}").</summary>
+    private static bool SubstituteNumericToken(JsonNode node, string token, double value)
     {
         bool found = false;
         switch (node)
@@ -178,15 +285,15 @@ public sealed class ComfyUiClient : IComfyUiClient
             case JsonObject obj:
                 foreach (var key in obj.Select(kv => kv.Key).ToList())
                 {
-                    var value = obj[key];
-                    if (value is JsonValue val && val.TryGetValue<string>(out var s) && s == PromptToken)
+                    var val = obj[key];
+                    if (val is JsonValue jv && jv.TryGetValue<string>(out var s) && s == token)
                     {
-                        obj[key] = prompt;
+                        obj[key] = JsonValue.Create(value);
                         found = true;
                     }
-                    else if (value is JsonObject or JsonArray)
+                    else if (val is JsonObject or JsonArray)
                     {
-                        found |= SubstitutePromptToken(value!, prompt);
+                        found |= SubstituteNumericToken(val!, token, value);
                     }
                 }
                 break;
@@ -194,14 +301,58 @@ public sealed class ComfyUiClient : IComfyUiClient
                 for (int i = 0; i < arr.Count; i++)
                 {
                     var item = arr[i];
-                    if (item is JsonValue val && val.TryGetValue<string>(out var s) && s == PromptToken)
+                    if (item is JsonValue jv && jv.TryGetValue<string>(out var s) && s == token)
                     {
-                        arr[i] = prompt;
+                        arr[i] = JsonValue.Create(value);
                         found = true;
                     }
                     else if (item is JsonObject or JsonArray)
                     {
-                        found |= SubstitutePromptToken(item!, prompt);
+                        found |= SubstituteNumericToken(item!, token, value);
+                    }
+                }
+                break;
+        }
+        return found;
+    }
+
+    /// <summary>Recursively walks the workflow graph replacing every occurrence of
+    /// <paramref name="token"/> within a string value with <paramref name="value"/> —
+    /// a substring replace, not a whole-field match, so a field like
+    /// "{{PROMPT}}, poster composition, ..." keeps its surrounding literal text.
+    /// Returns true if at least one occurrence was found and replaced.</summary>
+    private static bool SubstituteToken(JsonNode node, string token, string value)
+    {
+        bool found = false;
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var key in obj.Select(kv => kv.Key).ToList())
+                {
+                    var val = obj[key];
+                    if (val is JsonValue jv && jv.TryGetValue<string>(out var s) && s.Contains(token))
+                    {
+                        obj[key] = s.Replace(token, value);
+                        found = true;
+                    }
+                    else if (val is JsonObject or JsonArray)
+                    {
+                        found |= SubstituteToken(val!, token, value);
+                    }
+                }
+                break;
+            case JsonArray arr:
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var item = arr[i];
+                    if (item is JsonValue jv && jv.TryGetValue<string>(out var s) && s.Contains(token))
+                    {
+                        arr[i] = s.Replace(token, value);
+                        found = true;
+                    }
+                    else if (item is JsonObject or JsonArray)
+                    {
+                        found |= SubstituteToken(item!, token, value);
                     }
                 }
                 break;

@@ -55,6 +55,14 @@ internal static class Program
             var configuration = host.Services.GetRequiredService<UGL.Core.Interfaces.IConfigurationService>();
             await configuration.InitializeAsync();
 
+            // PeripheralRegistry.SaveAsync() has always persisted scanned controllers
+            // to config/controllers.json correctly — but nothing ever called the
+            // matching LoadAsync() at startup, so KnownDevices started empty every
+            // run regardless of what was already saved on disk, requiring a rescan
+            // every session.
+            var peripheralRegistry = host.Services.GetRequiredService<UGL.Core.Interfaces.IPeripheralRegistry>();
+            await peripheralRegistry.LoadAsync();
+
             App.Services = host.Services;
 
             await host.StartAsync();
@@ -107,6 +115,7 @@ internal static class Program
         services.AddSingleton<UGL.App.ViewModels.Config.PathsConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.PeripheralConfigViewModel>();
         services.AddSingleton<VirtualKeyboardViewModel>();
+        services.AddSingleton<ConfirmDialogViewModel>();
         services.AddSingleton<ConfigEditorViewModel>();
 
         // Hook integration (MameHooker / Hook of the Reaper) — registered directly here

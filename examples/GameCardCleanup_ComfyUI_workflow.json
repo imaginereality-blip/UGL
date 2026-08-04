@@ -1,0 +1,193 @@
+{
+  "1": {
+    "inputs": {
+      "image": "{{IMAGE_1}}",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Reference Image (scraped cover)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "image": "{{IMAGE_2}}",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Mask Image (UGL-generated: white = regenerate, black = leave untouched)"
+    }
+  },
+  "3": {
+    "inputs": {
+      "upscale_method": "bicubic",
+      "width": "{{WORK_WIDTH}}",
+      "height": "{{WORK_HEIGHT}}",
+      "crop": "disabled",
+      "image": ["1", 0]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Snap the cover to the nearest valid latent size AT ITS OWN ASPECT RATIO (UGL computes {{WORK_WIDTH}}/{{WORK_HEIGHT}} from the cover's real dimensions) — deliberately NOT the card's tall aspect ratio, or this stretch would distort the art. Card-shape reflow happens afterward in C#, not here."
+    }
+  },
+  "4": {
+    "inputs": {
+      "upscale_method": "bicubic",
+      "width": "{{WORK_WIDTH}}",
+      "height": "{{WORK_HEIGHT}}",
+      "crop": "disabled",
+      "image": ["2", 0]
+    },
+    "class_type": "ImageScale",
+    "_meta": {
+      "title": "Match mask to the working canvas size exactly"
+    }
+  },
+  "5": {
+    "inputs": {
+      "image": ["4", 0],
+      "channel": "red"
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "Convert mask image to a MASK"
+    }
+  },
+  "6": {
+    "inputs": {
+      "unet_name": "flux1-fill-dev.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Flux.1 Fill Dev — switch weight_dtype to fp8_e4m3fn if you're short on VRAM"
+    }
+  },
+  "7": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp16.safetensors",
+      "type": "flux"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "Load Flux Text Encoders"
+    }
+  },
+  "8": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Flux VAE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "model": ["6", 0]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "Differential Diffusion — Flux Fill's recommended technique for smoother blending at the mask edge"
+    }
+  },
+  "10": {
+    "inputs": {
+      "text": "{{PROMPT}}, plain uncluttered box art background, matching colors and style, sharp detail, high resolution",
+      "clip": ["7", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt) — deliberately no negation (\"no text\"/\"no logo\"/etc.): diffusion models routinely render the very thing a prompt names even when told not to, and this workflow's cfg=1.0 (see KSampler) means the negative-prompt channel below is essentially inert, so there's no fallback path to suppress it either. Describe only the desired positive content."
+    }
+  },
+  "11": {
+    "inputs": {
+      "guidance": 10.0,
+      "conditioning": ["10", 0]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "Flux Guidance (10.0, lower than ComfyUI's official example's 30.0 — that example is a dramatic content-changing edit; ours wants the opposite, faithful continuation of the surrounding art, so less aggressive prompt-following is more appropriate here)"
+    }
+  },
+  "12": {
+    "inputs": {
+      "text": "",
+      "clip": ["7", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative) — left empty, matching ComfyUI's official Flux Fill example; Flux doesn't use classic negative-prompt CFG the way SD does, and KSampler's cfg is 1.0 below"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise_mask": false,
+      "positive": ["11", 0],
+      "negative": ["12", 0],
+      "vae": ["8", 0],
+      "pixels": ["3", 0],
+      "mask": ["5", 0]
+    },
+    "class_type": "InpaintModelConditioning",
+    "_meta": {
+      "title": "Inpaint Model Conditioning — Flux Fill's own architecture handles mask-aware reconstruction here, unlike the old SD1.5 VAEEncodeForInpaint approach"
+    }
+  },
+  "14": {
+    "inputs": {
+      "seed": 42,
+      "steps": 40,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": "{{DENOISE}}",
+      "model": ["9", 0],
+      "positive": ["13", 0],
+      "negative": ["13", 1],
+      "latent_image": ["13", 2]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler (40 steps, up from ComfyUI's official example's 20 — testing showed text baked into a busy/gradient background region, unlike plain-background text, still came out garbled at 20 steps; cfg 1.0 is correct for Flux, guidance comes from the FluxGuidance node instead; denoise 1.0 is Flux Fill's own documented default, not a partial-denoise trick)"
+    }
+  },
+  "15": {
+    "inputs": {
+      "samples": ["14", 0],
+      "vae": ["8", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "16": {
+    "inputs": {
+      "destination": ["3", 0],
+      "source": ["15", 0],
+      "mask": ["5", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "Paste the regenerated band back onto the ORIGINAL reflowed cover — Flux Fill already preserves unmasked content well on its own, but this guarantees it byte-for-byte regardless"
+    }
+  },
+  "17": {
+    "inputs": {
+      "filename_prefix": "GameCardCleanup",
+      "images": ["16", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image — still at the cover's own aspect ratio, not the card's. UGL's ResizeCoverFit reflows this to the actual card size afterward, then composites the real logo on top."
+    }
+  }
+}

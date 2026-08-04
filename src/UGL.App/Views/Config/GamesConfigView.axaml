@@ -4,11 +4,16 @@
              x:Class="UGL.App.Views.Config.GamesConfigView"
              x:DataType="vm:GamesConfigViewModel">
 
-  <Grid ColumnDefinitions="320,*">
+  <Grid>
 
     <!-- ═══════════════════════════════════════════
-         Left panel: game list + search
+         List view — shown only while no game is being edited. Hidden entirely
+         (rather than squeezed into a fixed 320px column) once the editor opens, so
+         Settings/Art get the full window width instead of being cramped next to it.
          ═══════════════════════════════════════════ -->
+    <Grid ColumnDefinitions="320,*" IsVisible="{Binding !IsEditorOpen}">
+
+    <!-- Left panel: game list + search -->
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" Margin="0,0,8,0">
 
       <!-- Search -->
@@ -36,19 +41,33 @@
         </ListBox.ItemTemplate>
       </ListBox>
 
-      <!-- List action buttons -->
+      <!-- List action buttons (controller: Left/Right to pick, A to activate) -->
       <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-        <Button Content="＋ Add"    Command="{Binding AddNewCommand}"      />
-        <Button Content="✎ Edit"   Command="{Binding EditSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-        <Button Content="✕ Delete" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <Button Content="＋ Add"    Command="{Binding AddNewCommand}"
+                Classes="cfgField" Classes.fieldFocused="{Binding IsAddActionFocused}"/>
+        <Button Content="✎ Edit"   Command="{Binding EditSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"
+                Classes="cfgField" Classes.fieldFocused="{Binding IsEditActionFocused}"/>
+        <Button Content="✕ Delete" Command="{Binding DeleteSelectedCommand}" IsEnabled="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}"
+                Classes="cfgField" Classes.fieldFocused="{Binding IsDeleteActionFocused}"/>
       </StackPanel>
 
     </Grid>
 
+      <!-- Placeholder when no game is selected -->
+      <Border Grid.Column="1"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center">
+        <TextBlock Text="Select a game to edit, or click ＋ Add"
+                   Foreground="#44FFFFFF"
+                   FontSize="16"/>
+      </Border>
+
+    </Grid>
+
     <!-- ═══════════════════════════════════════════
-         Right panel: editor form
+         Editor form — full window width while a game is open
          ═══════════════════════════════════════════ -->
-    <ScrollViewer Grid.Column="1" Classes="contentScroll"
+    <ScrollViewer Classes="contentScroll"
                   IsVisible="{Binding IsEditorOpen}"
                   VerticalScrollBarVisibility="Auto">
       <StackPanel Spacing="12" Margin="8,0,0,16">
@@ -58,29 +77,44 @@
                    FontWeight="Bold"
                    Foreground="White"/>
 
-        <!-- Title -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsTitleFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Title *" Foreground="#88FFFFFF" FontSize="12"/>
-            <TextBox Text="{Binding Editor.Title}" Watermark="Game title"/>
-          </StackPanel>
-        </Border>
+        <!-- Sub-tab selector -->
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSettingsTabActive}">
+            <Button Content="⚙ Settings" Command="{Binding SelectSettingsTabCommand}"
+                    Classes.tabActive="{Binding IsSettingsTabActive}"/>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsArtTabActive}">
+            <Button Content="🖼 Art" Command="{Binding SelectArtTabCommand}"
+                    Classes.tabActive="{Binding IsArtTabActive}"/>
+          </Border>
+        </StackPanel>
+        <TextBlock Text="Controller: LB/RB switches between these" Foreground="#66FFFFFF" FontSize="11"/>
 
-        <!-- System -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSystemFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="System * (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
-            <ComboBox ItemsSource="{Binding Systems}"
-                      SelectedValueBinding="{Binding Id}"
-                      SelectedValue="{Binding Editor.SelectedSystemId}"
-                      DisplayMemberBinding="{Binding Name}"
-                      HorizontalAlignment="Stretch"/>
-          </StackPanel>
-        </Border>
+        <!-- ═══════════════════════ SETTINGS TAB ═══════════════════════ -->
+        <StackPanel Spacing="8" IsVisible="{Binding IsSettingsTabActive}">
+
+        <!-- Title + System row -->
+        <Grid ColumnDefinitions="*,16,*">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsTitleFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="Title *" Foreground="#88FFFFFF" FontSize="12"/>
+              <TextBox Text="{Binding Editor.Title}" Watermark="Game title"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsSystemFocused}" Padding="6">
+            <StackPanel Spacing="4">
+              <TextBlock Text="System * (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
+              <ComboBox ItemsSource="{Binding Systems}"
+                        SelectedItem="{Binding SelectedSystemObject}"
+                        DisplayMemberBinding="{Binding Name}"
+                        HorizontalAlignment="Stretch"/>
+            </StackPanel>
+          </Border>
+        </Grid>
 
         <!-- Categories — a game can belong to more than one, e.g. both Racing and
              Multiplayer, and will show up when browsing either from the main menu. -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryFocused}" Padding="8">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCategoryFocused}" Padding="6">
           <StackPanel Spacing="4">
             <TextBlock Text="Categories * (select one or more — controller: A to enter, Up/Down to move, A to toggle, B to exit)"
                        Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
@@ -103,17 +137,16 @@
 
         <!-- Emulator + Genre row -->
         <Grid ColumnDefinitions="*,16,*">
-          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorFocused}" Padding="8">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsEmulatorFocused}" Padding="6">
             <StackPanel Spacing="4">
               <TextBlock Text="Emulator * (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
               <ComboBox ItemsSource="{Binding Emulators}"
-                        SelectedValueBinding="{Binding Id}"
-                        SelectedValue="{Binding Editor.SelectedEmulatorId}"
+                        SelectedItem="{Binding SelectedEmulatorObject}"
                         DisplayMemberBinding="{Binding Name}"
                         HorizontalAlignment="Stretch"/>
             </StackPanel>
           </Border>
-          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsGenreFocused}" Padding="8">
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsGenreFocused}" Padding="6">
             <StackPanel Spacing="4">
               <TextBlock Text="Genre" Foreground="#88FFFFFF" FontSize="12"/>
               <AutoCompleteBox ItemsSource="{Binding Genres}"
@@ -125,7 +158,7 @@
 
         <!-- Players + Favourite row -->
         <Grid ColumnDefinitions="*,16,*">
-          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsPlayersFocused}" Padding="8">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsPlayersFocused}" Padding="6">
             <StackPanel Spacing="4">
               <TextBlock Text="Players (controller: Left/Right)" Foreground="#88FFFFFF" FontSize="12"/>
               <ComboBox ItemsSource="{Binding PlayerCounts}"
@@ -133,7 +166,7 @@
                         HorizontalAlignment="Stretch"/>
             </StackPanel>
           </Border>
-          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsFavoriteFocused}" Padding="8">
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsFavoriteFocused}" Padding="6">
             <StackPanel Spacing="4" VerticalAlignment="Bottom">
               <TextBlock Text="controller: A to toggle" Foreground="#88FFFFFF" FontSize="12"/>
               <CheckBox IsChecked="{Binding Editor.IsFavorite}" Content="Favourite"/>
@@ -142,11 +175,9 @@
         </Grid>
 
         <!-- ROM path -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRomPathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="ROM Path" Foreground="#88FFFFFF" FontSize="12"/>
-            <TextBlock Text="For a Direct Launch emulator (Games tab → Systems → Emulators): the game's own .exe path, or a launcher protocol URI (e.g. steam://rungameid/12345)."
-                       Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRomPathFocused}" Padding="6">
+          <StackPanel Spacing="2">
+            <TextBlock Text="ROM Path — the game's own .exe path, or a launcher protocol URI (e.g. steam://rungameid/12345)" Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
             <Grid ColumnDefinitions="*,8,Auto">
               <TextBox Grid.Column="0" Text="{Binding Editor.RomPath}" Watermark="Path to ROM file"/>
               <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseRomCommand}"/>
@@ -155,106 +186,51 @@
         </Border>
 
         <!-- Process name override (Direct Launch hand-off titles only — Steam/Epic/GOG) -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsProcessNameOverrideFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Process Name Override (rare — Steam/Epic/GOG hand-off titles only)"
-                       Foreground="#88FFFFFF" FontSize="12"/>
-            <TextBlock Text="Leave blank for a plain .exe game. For a launcher protocol title where the launched process hands off to a separate game process, name that process here (no .exe extension) so UGL waits for it instead of ending the session when the launcher itself exits."
-                       Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsProcessNameOverrideFocused}" Padding="6">
+          <StackPanel Spacing="2">
+            <TextBlock Text="Process Name Override (rare — Steam/Epic/GOG hand-off titles; process to wait for instead of the launcher, no .exe)"
+                       Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
             <TextBox Text="{Binding Editor.ProcessNameOverride}" Watermark="e.g. GTA5"/>
           </StackPanel>
         </Border>
 
-        <!-- ─── Media ─── -->
-        <TextBlock Text="Media" FontSize="16" FontWeight="SemiBold"
-                   Foreground="White" Margin="0,8,0,0"/>
-
-        <!-- Cover art -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCoverPathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Cover Art" Foreground="#88FFFFFF" FontSize="12"/>
-            <Grid ColumnDefinitions="*,8,Auto" x:Name="CoverDropZone">
-              <TextBox Grid.Column="0" Text="{Binding Editor.CoverPath}" Watermark="Drag &amp; drop or browse…"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseCoverCommand}"/>
-            </Grid>
-            <TextBlock Text="{Binding RecommendedCoverSizeHint}" Foreground="#66FFFFFF" FontSize="11"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Background -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBackgroundPathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Background" Foreground="#88FFFFFF" FontSize="12"/>
-            <Grid ColumnDefinitions="*,8,Auto" x:Name="BgDropZone">
-              <TextBox Grid.Column="0" Text="{Binding Editor.BackgroundPath}" Watermark="Drag &amp; drop or browse…"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseBackgroundCommand}"/>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <!-- Logo -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLogoPathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Logo (PNG with transparency)" Foreground="#88FFFFFF" FontSize="12"/>
-            <Grid ColumnDefinitions="*,8,Auto" x:Name="LogoDropZone">
-              <TextBox Grid.Column="0" Text="{Binding Editor.LogoPath}" Watermark="Drag &amp; drop or browse…"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseLogoCommand}"/>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <!-- Video -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsVideoPathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Video Preview" Foreground="#88FFFFFF" FontSize="12"/>
-            <Grid ColumnDefinitions="*,8,Auto" x:Name="VideoDropZone">
-              <TextBox Grid.Column="0" Text="{Binding Editor.VideoPath}" Watermark="Drag &amp; drop or browse…"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseVideoCommand}"/>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <!-- Marquee -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMarqueePathFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Marquee" Foreground="#88FFFFFF" FontSize="12"/>
-            <Grid ColumnDefinitions="*,8,Auto" x:Name="MarqueeDropZone">
-              <TextBox Grid.Column="0" Text="{Binding Editor.MarqueePath}" Watermark="Drag &amp; drop or browse…"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseMarqueeCommand}"/>
-            </Grid>
-          </StackPanel>
-        </Border>
-
-        <!-- Bezel override -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBezelOverrideFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="Bezel Override (optional — only if this game needs a different bezel than its system's default)"
-                       Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
-            <Grid ColumnDefinitions="*,8,Auto">
-              <TextBox Grid.Column="0" Text="{Binding Editor.BezelOverridePath}" IsReadOnly="True" Watermark="None"/>
-              <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseBezelOverrideCommand}"/>
-            </Grid>
-          </StackPanel>
-        </Border>
+        <!-- Bezel + DemulShooter target row (both rare, single-line overrides) -->
+        <Grid ColumnDefinitions="*,16,*">
+          <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsBezelOverrideFocused}" Padding="6">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Bezel Override (optional)" Foreground="#88FFFFFF" FontSize="12"/>
+              <Grid ColumnDefinitions="*,8,Auto">
+                <TextBox Grid.Column="0" Text="{Binding Editor.BezelOverridePath}" IsReadOnly="True" Watermark="None"/>
+                <Button  Grid.Column="2" Content="Browse…" Command="{Binding BrowseBezelOverrideCommand}"/>
+              </Grid>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterTargetFocused}" Padding="6">
+            <StackPanel Spacing="2">
+              <TextBlock Text="DemulShooter Target (optional, e.g. &quot;hotd2&quot;)" Foreground="#88FFFFFF" FontSize="12"/>
+              <TextBox Text="{Binding Editor.DemulShooterTarget}" Watermark="e.g. hotd2" IsReadOnly="True"/>
+            </StackPanel>
+          </Border>
+        </Grid>
 
         <!-- Display mode override -->
         <TextBlock Text="Display Mode Override (optional — only if this game needs a different resolution/refresh rate than its system's default)"
-                   Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                   Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0"/>
         <Grid ColumnDefinitions="*,16,*,16,*">
           <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayWidthOverrideFocused}" Padding="6">
-            <StackPanel Spacing="4">
+            <StackPanel Spacing="2">
               <TextBlock Text="Width" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBox Text="{Binding Editor.DisplayModeOverrideWidthText}" IsReadOnly="True"/>
             </StackPanel>
           </Border>
           <Border Grid.Column="2" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayHeightOverrideFocused}" Padding="6">
-            <StackPanel Spacing="4">
+            <StackPanel Spacing="2">
               <TextBlock Text="Height" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBox Text="{Binding Editor.DisplayModeOverrideHeightText}" IsReadOnly="True"/>
             </StackPanel>
           </Border>
           <Border Grid.Column="4" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayRefreshHzOverrideFocused}" Padding="6">
-            <StackPanel Spacing="4">
+            <StackPanel Spacing="2">
               <TextBlock Text="Refresh Hz" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBox Text="{Binding Editor.DisplayModeOverrideRefreshHzText}" IsReadOnly="True"/>
             </StackPanel>
@@ -262,7 +238,7 @@
         </Grid>
 
         <!-- BIOS override -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBiosOverrideListFocused}" Padding="8">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBiosOverrideListFocused}" Padding="6">
           <StackPanel Spacing="4">
             <TextBlock Text="BIOS Override (optional — only if this game needs different BIOS file(s) than its emulator's default; A to enter, Up/Down to move, A to remove, B to exit)"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
@@ -283,12 +259,12 @@
             </ListBox>
           </StackPanel>
         </Border>
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAddBiosOverrideFocused}" Padding="8">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAddBiosOverrideFocused}" Padding="6">
           <Button Content="＋ Add BIOS Override File…" Command="{Binding BrowseAddBiosOverrideCommand}" HorizontalAlignment="Stretch"/>
         </Border>
 
         <!-- Disabled peripherals -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDisabledDeviceTypesFocused}" Padding="8">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDisabledDeviceTypesFocused}" Padding="6">
           <StackPanel Spacing="4">
             <TextBlock Text="Disabled Peripherals (optional — e.g. Lightgun/Wheel for a fighting game, so they can't interfere; A to enter, Up/Down to move, A to toggle, B to exit)"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
@@ -304,15 +280,6 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-          </StackPanel>
-        </Border>
-
-        <!-- DemulShooter target (lightgun aiming translation — rare) -->
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterTargetFocused}" Padding="8">
-          <StackPanel Spacing="4">
-            <TextBlock Text="DemulShooter Target (optional — only for lightgun games behind DemulShooter, e.g. &quot;hotd2&quot;)"
-                       Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap"/>
-            <TextBox Text="{Binding Editor.DemulShooterTarget}" Watermark="e.g. hotd2" IsReadOnly="True"/>
           </StackPanel>
         </Border>
 
@@ -337,7 +304,7 @@
             <Button Content="＋ Add" Command="{Binding AddPendingPlayerDeviceAssignmentCommand}"/>
           </Border>
         </Grid>
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlayerDeviceAssignmentsFocused}" Padding="8">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlayerDeviceAssignmentsFocused}" Padding="6">
           <StackPanel Spacing="4">
             <TextBlock Text="Assigned (A to enter, Up/Down to move, A to remove, B to exit)"
                        Foreground="#88FFFFFF" FontSize="11" TextWrapping="Wrap"/>
@@ -364,18 +331,6 @@
                    IsVisible="{Binding Editor.ValidationError,
                                Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
-        <!-- Scraper / ComfyUI -->
-        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
-          <Button Content="🔍 Scrape Metadata/Art" Command="{Binding ScrapeCommand}"
-                  Classes="cfgField" Classes.fieldFocused="{Binding IsScrapeFocused}"
-                  Padding="16,8"
-                  ToolTip.Tip="Searches the preferred source (Settings → Scraper) by Title, narrowed to the selected System, and applies the first match's genre/players/cover/logo/marquee. Wrong match? Left/Right on this button steps through the other results without re-searching. Review before saving."/>
-          <Button Content="🖼 Generate Card (ComfyUI)" Command="{Binding GenerateCardCommand}"
-                  Classes="cfgField" Classes.fieldFocused="{Binding IsGenerateCardFocused}"
-                  Padding="16,8"
-                  ToolTip.Tip="Generates cover art via the ComfyUI workflow configured in Settings → Scraper, using Title/Genre as the prompt."/>
-        </StackPanel>
-
         <!-- Save / Cancel -->
         <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
           <Button Content="💾 Save Game"   Command="{Binding SaveEditorCommand}"
@@ -386,6 +341,132 @@
                   Padding="16,8"/>
         </StackPanel>
 
+        </StackPanel>
+        <!-- ═══════════════════════ END SETTINGS TAB ═══════════════════════ -->
+
+        <!-- ═══════════════════════════ ART TAB ═══════════════════════════ -->
+        <Grid ColumnDefinitions="*,16,420" IsVisible="{Binding IsArtTabActive}">
+
+        <!-- Left: compact fields (no inline thumbnails — see the shared large
+             preview on the right instead) -->
+        <StackPanel Grid.Column="0" Spacing="8">
+
+        <!-- Cover art -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCoverPathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="CoverDropZone">
+            <TextBlock Grid.Column="0" Text="Cover Art" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.CoverPath}" Watermark="Drag &amp; drop or browse…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseCoverCommand}"/>
+          </Grid>
+        </Border>
+        <TextBlock Text="{Binding RecommendedCoverSizeHint}" Foreground="#66FFFFFF" FontSize="11" Margin="118,-4,0,0"/>
+
+        <!-- Background -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBackgroundPathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="BgDropZone">
+            <TextBlock Grid.Column="0" Text="Background" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.BackgroundPath}" Watermark="Drag &amp; drop or browse…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseBackgroundCommand}"/>
+          </Grid>
+        </Border>
+
+        <!-- Logo -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLogoPathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="LogoDropZone">
+            <TextBlock Grid.Column="0" Text="Logo" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.LogoPath}" Watermark="Drag &amp; drop or browse — PNG with transparency…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseLogoCommand}"/>
+          </Grid>
+        </Border>
+
+        <!-- Video -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsVideoPathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="VideoDropZone">
+            <TextBlock Grid.Column="0" Text="Video Preview" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.VideoPath}" Watermark="Drag &amp; drop or browse…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseVideoCommand}"/>
+          </Grid>
+        </Border>
+
+        <!-- Marquee -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMarqueePathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="MarqueeDropZone">
+            <TextBlock Grid.Column="0" Text="Marquee" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.MarqueePath}" Watermark="Drag &amp; drop or browse…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseMarqueeCommand}"/>
+          </Grid>
+        </Border>
+
+        <!-- Card Art — AI-generated poster/collage, a separate asset from Cover Art -->
+        <TextBlock Text="Card Art (AI-generated — separate from Cover Art; both remain available)"
+                   FontSize="13" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsCardArtPathFocused}" Padding="6">
+          <Grid ColumnDefinitions="110,*,8,Auto" x:Name="CardArtDropZone">
+            <TextBlock Grid.Column="0" Text="Card Art" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" Text="{Binding Editor.CardArtPath}" Watermark="Drag &amp; drop, browse, or generate below…"/>
+            <Button  Grid.Column="3" Content="Browse…" Command="{Binding BrowseCardArtCommand}"/>
+          </Grid>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPreferCardArtAsCoverFocused}" Padding="6">
+          <CheckBox IsChecked="{Binding Editor.PreferCardArtAsCover}" Content="Use Card Art as the browse-grid cover (controller: A to toggle)"/>
+        </Border>
+
+        <!-- Scraper / ComfyUI -->
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+          <Button Content="🔍 Scrape Metadata/Art" Command="{Binding ScrapeCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsScrapeFocused}"
+                  Padding="16,8"
+                  ToolTip.Tip="Searches the preferred source (Settings → Scraper) by Title, narrowed to the selected System, and applies the first match's genre/players/cover/logo/marquee. Wrong match? Left/Right on this button steps through the other results without re-searching. Review before saving."/>
+          <Button Content="🧹 Clean Cover for Card" Command="{Binding ResizeCoverToCardCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsResizeCoverToCardFocused}"
+                  Padding="16,8"
+                  ToolTip.Tip="Removes any logo/title baked into the scraped Cover Art, reconstructs the artwork, and reflows/upscales it to the current card resolution (via ComfyUI Cleanup Workflow, Settings → Scraper — falls back to a plain resize if not configured), then overlays the real logo on top. Result goes into Card Art, not Cover Art."/>
+          <Button Content="🎨 Generate Poster Collage (ComfyUI)" Command="{Binding GenerateCardCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsGenerateCardFocused}"
+                  Padding="16,8"
+                  ToolTip.Tip="Generates an artistic poster/collage from the game's scraped cover+screenshots via the ComfyUI workflow configured in Settings → Scraper, then overlays the real scraped logo. Result goes into Card Art, not Cover Art."/>
+        </StackPanel>
+
+        <!-- Validation error (mirrors Settings tab — validation applies to the whole
+             game record regardless of which sub-tab is active) -->
+        <TextBlock Text="{Binding Editor.ValidationError}"
+                   Foreground="#FFFF4444"
+                   IsVisible="{Binding Editor.ValidationError,
+                               Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <!-- Save / Cancel (same commands as the Settings tab's — either sub-tab can
+             commit or discard the whole game) -->
+        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+          <Button Content="💾 Save Game"   Command="{Binding SaveEditorCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsArtSaveFocused}"
+                  Background="#FF0078D4" Foreground="White" Padding="16,8"/>
+          <Button Content="✕ Cancel"       Command="{Binding CancelEditorCommand}"
+                  Classes="cfgField" Classes.fieldFocused="{Binding IsArtCancelFocused}"
+                  Padding="16,8"/>
+        </StackPanel>
+
+        </StackPanel>
+
+        <!-- Right: one large shared preview — shows whichever field above currently
+             has focus, rather than a small thumbnail per field. -->
+        <Border Grid.Column="2" Classes="cfgField" Padding="8" VerticalAlignment="Top">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding FocusedArtPreviewLabel}" Foreground="White" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <Border Background="#22000000" MinHeight="500" CornerRadius="4">
+              <Panel>
+                <Image Source="{Binding FocusedArtPreview}" Stretch="Uniform"
+                       IsVisible="{Binding FocusedArtPreview, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                <TextBlock Text="No preview available" Foreground="#44FFFFFF" FontSize="13"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           IsVisible="{Binding FocusedArtPreview, Converter={x:Static ObjectConverters.IsNull}}"/>
+              </Panel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+        </Grid>
+        <!-- ═══════════════════════════ END ART TAB ═══════════════════════════ -->
+
         <!-- Status -->
         <TextBlock Text="{Binding StatusMessage}"
                    Foreground="#FF44FF88"
@@ -394,16 +475,6 @@
 
       </StackPanel>
     </ScrollViewer>
-
-    <!-- Placeholder when editor is closed -->
-    <Border Grid.Column="1"
-            IsVisible="{Binding !IsEditorOpen}"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center">
-      <TextBlock Text="Select a game to edit, or click ＋ Add"
-                 Foreground="#44FFFFFF"
-                 FontSize="16"/>
-    </Border>
 
   </Grid>
 </UserControl>

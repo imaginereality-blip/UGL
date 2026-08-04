@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -26,20 +29,56 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     private readonly MediaAssetResolver _resolver;
     private readonly SkiaMediaCache _cache;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
+    private readonly ConfirmDialogViewModel _confirmDialog;
     private readonly ILogger<GamesConfigViewModel> _logger;
 
-    /// <summary>
-    /// Field position while the editor is open — 0=Title, 4=Genre, 7-13=ROM/process-name/
-    /// media paths (text, open the virtual keyboard), 18=Save, 19=Cancel. System(1)/Emulator(3) cycle
-    /// via Left/Right, Players(5) adjusts via Left/Right, Favorite(6) toggles via Confirm.
-    /// Category(2) is a multi-select checkbox grid — Confirm enters a sub-mode (see
-    /// IsCategoryOptionsFocused below), matching the same "enter list, Back exits it"
-    /// convention as Audio's track sub-list.
-    /// </summary>
-    [ObservableProperty] private int _editorFocusIndex;
-    private const int EditorPositionCount = 30;
+    // ── Editor sub-tabs: Settings / Art ─────────────────────────────────────
+    // Mirrors AudioConfigViewModel's Music/Sounds split: two independent focus-index
+    // cycles, switched via LB/RB (SwitchSubTabLeft/Right, wired from
+    // ConfigEditorViewModel) rather than folded into one long flat list. Room to add
+    // further sub-tabs later (e.g. per-game saves/play-data) the same way.
+    [ObservableProperty] private bool _isSettingsTabActive = true;
+    [ObservableProperty] private bool _isArtTabActive;
 
-    // ── Category checkbox sub-mode — entered via Confirm at EditorFocusIndex==2 ───────
+    [RelayCommand]
+    private void SelectSettingsTab()
+    {
+        IsSettingsTabActive = true;
+        IsArtTabActive = false;
+    }
+
+    [RelayCommand]
+    private void SelectArtTab()
+    {
+        IsSettingsTabActive = false;
+        IsArtTabActive = true;
+    }
+
+    public void SwitchSubTabLeft() => SelectSettingsTab();
+    public void SwitchSubTabRight() => SelectArtTab();
+
+    /// <summary>
+    /// Field position within the Settings sub-tab — 0=Title, 4=Genre, 7-8=ROM/process-
+    /// name (text, open the virtual keyboard), 21=Save, 22=Cancel. System(1)/
+    /// Emulator(3) cycle via Left/Right, Players(5) adjusts via Left/Right,
+    /// Favorite(6) toggles via Confirm. Category(2) is a multi-select checkbox grid —
+    /// Confirm enters a sub-mode (see IsCategoryOptionsFocused below), matching the
+    /// same "enter list, Back exits it" convention as Audio's track sub-list.
+    /// </summary>
+    [ObservableProperty] private int _settingsFocusIndex;
+    private const int SettingsPositionCount = 23;
+
+    /// <summary>
+    /// Field position within the Art sub-tab — 0-5 are media path fields (text, open
+    /// the virtual keyboard), 6 the "use as cover" checkbox, 7 Scrape, 8 Resize Cover
+    /// to Card, 9 Generate Poster Collage (ComfyUI), 10-11 Save/Cancel (same commands
+    /// as the Settings sub-tab's — either sub-tab can commit or discard the whole
+    /// game, not just its own fields).
+    /// </summary>
+    [ObservableProperty] private int _artFocusIndex;
+    private const int ArtPositionCount = 12;
+
+    // ── Category checkbox sub-mode — entered via Confirm at SettingsFocusIndex==2 ─────
     [ObservableProperty] private bool _isCategoryOptionsFocused;
     [ObservableProperty] private int _selectedCategoryOptionIndex;
 
@@ -61,7 +100,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Editor.DisabledDeviceTypeOptions[i].IsHighlighted = IsBrowsingDisabledDeviceTypes && i == SelectedDeviceTypeCheckIndex;
     }
 
-    // ── BIOS override sub-mode — entered via Confirm at EditorFocusIndex==18 ──────────
+    // ── BIOS override sub-mode — entered via Confirm at SettingsFocusIndex==13 ────────
     // Nearly always empty; only needed for the rare game that requires a BIOS
     // different from its emulator's own default list (Emulator.BiosPaths). Plain
     // strings, not a wrapper VM — the ListBox's own SelectedIndex binding drives the
@@ -69,7 +108,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [ObservableProperty] private bool _isBrowsingBiosOverrides;
     [ObservableProperty] private int _selectedBiosOverrideIndex;
 
-    // ── Disabled peripherals sub-mode — entered via Confirm at EditorFocusIndex==20 ──
+    // ── Disabled peripherals sub-mode — entered via Confirm at SettingsFocusIndex==15 ─
     // Nearly always all unchecked; only needed for the rare game where a lightgun,
     // wheel, etc. would interfere (e.g. disabling both for a fighting game).
     [ObservableProperty] private bool _isBrowsingDisabledDeviceTypes;
@@ -79,7 +118,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     // peripherals above (Game.PlayerDeviceAssignments). Two flat "pending" fields
     // (cycled via Left/Right, same convention as System/Emulator/Players) build up
     // one entry at a time; AddAssignment commits it; the list sub-mode (entered via
-    // Confirm at EditorFocusIndex==25) removes existing ones. Nearly always empty.
+    // Confirm at SettingsFocusIndex==20) removes existing ones. Nearly always empty.
     [ObservableProperty] private int _pendingAssignmentPlayerIndex = 1;
     [ObservableProperty] private int _pendingAssignmentDeviceIndex;
     [ObservableProperty] private bool _isBrowsingPlayerAssignments;
@@ -104,40 +143,33 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Editor.PlayerDeviceAssignmentEntries[i].IsHighlighted = IsBrowsingPlayerAssignments && i == SelectedPlayerAssignmentIndex;
     }
 
-    // ── Editor field highlight (drives the same Classes-binding highlight trick used
-    // everywhere else — sidebar menu, Peripheral Hooks, keyboard keys) ────────────────
-    public bool IsTitleFocused          => EditorFocusIndex == 0;
-    public bool IsSystemFocused         => EditorFocusIndex == 1;
-    public bool IsCategoryFocused       => EditorFocusIndex == 2;
-    public bool IsEmulatorFocused       => EditorFocusIndex == 3;
-    public bool IsGenreFocused          => EditorFocusIndex == 4;
-    public bool IsPlayersFocused        => EditorFocusIndex == 5;
-    public bool IsFavoriteFocused       => EditorFocusIndex == 6;
-    public bool IsRomPathFocused        => EditorFocusIndex == 7;
-    public bool IsProcessNameOverrideFocused => EditorFocusIndex == 8;
-    public bool IsCoverPathFocused      => EditorFocusIndex == 9;
-    public bool IsBackgroundPathFocused => EditorFocusIndex == 10;
-    public bool IsLogoPathFocused       => EditorFocusIndex == 11;
-    public bool IsVideoPathFocused      => EditorFocusIndex == 12;
-    public bool IsMarqueePathFocused    => EditorFocusIndex == 13;
-    public bool IsBezelOverrideFocused    => EditorFocusIndex == 14;
-    public bool IsDisplayWidthOverrideFocused     => EditorFocusIndex == 15;
-    public bool IsDisplayHeightOverrideFocused    => EditorFocusIndex == 16;
-    public bool IsDisplayRefreshHzOverrideFocused => EditorFocusIndex == 17;
-    public bool IsBiosOverrideListFocused => EditorFocusIndex == 18;
-    public bool IsAddBiosOverrideFocused  => EditorFocusIndex == 19;
-    public bool IsDisabledDeviceTypesFocused => EditorFocusIndex == 20;
-    public bool IsDemulShooterTargetFocused => EditorFocusIndex == 21;
-    public bool IsPendingAssignmentPlayerIndexFocused => EditorFocusIndex == 22;
-    public bool IsPendingAssignmentDeviceFocused      => EditorFocusIndex == 23;
-    public bool IsAddAssignmentFocused                => EditorFocusIndex == 24;
-    public bool IsPlayerDeviceAssignmentsFocused => EditorFocusIndex == 25;
-    public bool IsSaveFocused           => EditorFocusIndex == 26;
-    public bool IsCancelFocused         => EditorFocusIndex == 27;
-    public bool IsScrapeFocused         => EditorFocusIndex == 28;
-    public bool IsGenerateCardFocused   => EditorFocusIndex == 29;
+    // ── Settings sub-tab field highlight (drives the same Classes-binding highlight
+    // trick used everywhere else — sidebar menu, Peripheral Hooks, keyboard keys) ────
+    public bool IsTitleFocused          => SettingsFocusIndex == 0;
+    public bool IsSystemFocused         => SettingsFocusIndex == 1;
+    public bool IsCategoryFocused       => SettingsFocusIndex == 2;
+    public bool IsEmulatorFocused       => SettingsFocusIndex == 3;
+    public bool IsGenreFocused          => SettingsFocusIndex == 4;
+    public bool IsPlayersFocused        => SettingsFocusIndex == 5;
+    public bool IsFavoriteFocused       => SettingsFocusIndex == 6;
+    public bool IsRomPathFocused        => SettingsFocusIndex == 7;
+    public bool IsProcessNameOverrideFocused => SettingsFocusIndex == 8;
+    public bool IsBezelOverrideFocused    => SettingsFocusIndex == 9;
+    public bool IsDisplayWidthOverrideFocused     => SettingsFocusIndex == 10;
+    public bool IsDisplayHeightOverrideFocused    => SettingsFocusIndex == 11;
+    public bool IsDisplayRefreshHzOverrideFocused => SettingsFocusIndex == 12;
+    public bool IsBiosOverrideListFocused => SettingsFocusIndex == 13;
+    public bool IsAddBiosOverrideFocused  => SettingsFocusIndex == 14;
+    public bool IsDisabledDeviceTypesFocused => SettingsFocusIndex == 15;
+    public bool IsDemulShooterTargetFocused => SettingsFocusIndex == 16;
+    public bool IsPendingAssignmentPlayerIndexFocused => SettingsFocusIndex == 17;
+    public bool IsPendingAssignmentDeviceFocused      => SettingsFocusIndex == 18;
+    public bool IsAddAssignmentFocused                => SettingsFocusIndex == 19;
+    public bool IsPlayerDeviceAssignmentsFocused => SettingsFocusIndex == 20;
+    public bool IsSaveFocused           => SettingsFocusIndex == 21;
+    public bool IsCancelFocused         => SettingsFocusIndex == 22;
 
-    partial void OnEditorFocusIndexChanged(int value)
+    partial void OnSettingsFocusIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsTitleFocused));
         OnPropertyChanged(nameof(IsSystemFocused));
@@ -148,11 +180,6 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsFavoriteFocused));
         OnPropertyChanged(nameof(IsRomPathFocused));
         OnPropertyChanged(nameof(IsProcessNameOverrideFocused));
-        OnPropertyChanged(nameof(IsCoverPathFocused));
-        OnPropertyChanged(nameof(IsBackgroundPathFocused));
-        OnPropertyChanged(nameof(IsLogoPathFocused));
-        OnPropertyChanged(nameof(IsVideoPathFocused));
-        OnPropertyChanged(nameof(IsMarqueePathFocused));
         OnPropertyChanged(nameof(IsBezelOverrideFocused));
         OnPropertyChanged(nameof(IsDisplayWidthOverrideFocused));
         OnPropertyChanged(nameof(IsDisplayHeightOverrideFocused));
@@ -167,8 +194,38 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPlayerDeviceAssignmentsFocused));
         OnPropertyChanged(nameof(IsSaveFocused));
         OnPropertyChanged(nameof(IsCancelFocused));
+    }
+
+    // ── Art sub-tab field highlight ──────────────────────────────────────────
+    public bool IsCoverPathFocused      => ArtFocusIndex == 0;
+    public bool IsBackgroundPathFocused => ArtFocusIndex == 1;
+    public bool IsLogoPathFocused       => ArtFocusIndex == 2;
+    public bool IsVideoPathFocused      => ArtFocusIndex == 3;
+    public bool IsMarqueePathFocused    => ArtFocusIndex == 4;
+    public bool IsCardArtPathFocused    => ArtFocusIndex == 5;
+    public bool IsPreferCardArtAsCoverFocused => ArtFocusIndex == 6;
+    public bool IsScrapeFocused         => ArtFocusIndex == 7;
+    public bool IsResizeCoverToCardFocused => ArtFocusIndex == 8;
+    public bool IsGenerateCardFocused   => ArtFocusIndex == 9;
+    public bool IsArtSaveFocused        => ArtFocusIndex == 10;
+    public bool IsArtCancelFocused      => ArtFocusIndex == 11;
+
+    partial void OnArtFocusIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsCoverPathFocused));
+        OnPropertyChanged(nameof(IsBackgroundPathFocused));
+        OnPropertyChanged(nameof(IsLogoPathFocused));
+        OnPropertyChanged(nameof(IsVideoPathFocused));
+        OnPropertyChanged(nameof(IsMarqueePathFocused));
+        OnPropertyChanged(nameof(IsCardArtPathFocused));
+        OnPropertyChanged(nameof(IsPreferCardArtAsCoverFocused));
         OnPropertyChanged(nameof(IsScrapeFocused));
+        OnPropertyChanged(nameof(IsResizeCoverToCardFocused));
         OnPropertyChanged(nameof(IsGenerateCardFocused));
+        OnPropertyChanged(nameof(IsArtSaveFocused));
+        OnPropertyChanged(nameof(IsArtCancelFocused));
+        OnPropertyChanged(nameof(FocusedArtPreview));
+        OnPropertyChanged(nameof(FocusedArtPreviewLabel));
     }
 
     // ── Game list ──────────────────────────────────────────────────────────
@@ -181,6 +238,22 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [ObservableProperty] private bool _isEditorOpen;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _statusMessage = string.Empty;
+
+    /// <summary>Which of the Add/Edit/Delete buttons is gamepad-focused while the
+    /// editor is closed — cycled via Left/Right (otherwise unused while just browsing
+    /// the list). Defaults to Edit (1) so Confirm's existing "edit the highlighted
+    /// game" behavior is unchanged unless the user explicitly cycles to Add/Delete.</summary>
+    [ObservableProperty] private int _selectedListActionIndex = 1;
+    public bool IsAddActionFocused    => SelectedListActionIndex == 0;
+    public bool IsEditActionFocused   => SelectedListActionIndex == 1;
+    public bool IsDeleteActionFocused => SelectedListActionIndex == 2;
+
+    partial void OnSelectedListActionIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsAddActionFocused));
+        OnPropertyChanged(nameof(IsEditActionFocused));
+        OnPropertyChanged(nameof(IsDeleteActionFocused));
+    }
 
     // ── Editor form ────────────────────────────────────────────────────────
 
@@ -211,8 +284,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         MediaAssetResolver resolver,
         SkiaMediaCache cache,
         VirtualKeyboardViewModel virtualKeyboard,
+        ConfirmDialogViewModel confirmDialog,
         ILogger<GamesConfigViewModel> logger)
     {
+        _confirmDialog = confirmDialog;
         _gameRepo = gameRepo;
         _config = config;
         _emulatorRepo = emulatorRepo;
@@ -240,8 +315,47 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 OnPropertyChanged(nameof(SelectedSystemObject));
             else if (args.PropertyName == nameof(GameEditViewModel.SelectedEmulatorId))
                 OnPropertyChanged(nameof(SelectedEmulatorObject));
+            else if (args.PropertyName is nameof(GameEditViewModel.CoverPreview) or
+                     nameof(GameEditViewModel.BackgroundPreview) or nameof(GameEditViewModel.LogoPreview) or
+                     nameof(GameEditViewModel.MarqueePreview) or nameof(GameEditViewModel.CardArtPreview))
+                OnPropertyChanged(nameof(FocusedArtPreview));
         };
     }
+
+    /// <summary>The single large preview shown in the Art sub-tab — whichever image
+    /// field currently has gamepad/keyboard focus (falls back to null for fields with
+    /// no image, e.g. Video or the checkbox/buttons). One shared panel instead of a
+    /// small inline thumbnail per field.</summary>
+    public Avalonia.Media.Imaging.Bitmap? FocusedArtPreview => ArtFocusIndex switch
+    {
+        0 => Editor.CoverPreview,
+        1 => Editor.BackgroundPreview,
+        2 => Editor.LogoPreview,
+        4 => Editor.MarqueePreview,
+        5 => Editor.CardArtPreview,
+        // Scrape/Resize/Generate are buttons, not fields, but showing the most
+        // relevant image while they're focused makes each action's result visible
+        // immediately — cycling scrape matches (Left/Right) updates the cover shown
+        // here without needing to move focus to the Cover field itself.
+        7 => Editor.CoverPreview,
+        8 => Editor.CardArtPreview,
+        9 => Editor.CardArtPreview,
+        _ => null,
+    };
+
+    public string FocusedArtPreviewLabel => ArtFocusIndex switch
+    {
+        0 => "Cover Art",
+        1 => "Background",
+        2 => "Logo",
+        3 => "Video Preview (no image preview)",
+        4 => "Marquee",
+        5 => "Card Art",
+        7 => "Cover Art (from scrape — Left/Right to cycle matches)",
+        8 => "Card Art (resized from Cover)",
+        9 => "Card Art (generated)",
+        _ => "No preview for this field",
+    };
 
     /// <summary>Bind ComboBoxes to this (SelectedItem) rather than Editor.SelectedSystemId
     /// directly via SelectedValue/SelectedValueBinding — see the constructor note above.</summary>
@@ -329,9 +443,11 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     partial void OnSearchTextChanged(string value) => ApplySearch();
 
     // ── Controller navigation ────────────────────────────────────────────
-    // Browses the (search-filtered) game list when the editor is closed. Once the editor
-    // is open, Up/Down instead moves EditorFocusIndex between fields; Confirm on a text
-    // field opens the virtual keyboard, on Save/Cancel triggers those actions directly.
+    // Browses the (search-filtered) game list when the editor is closed. Once the
+    // editor is open, Up/Down instead moves SettingsFocusIndex or ArtFocusIndex
+    // between fields (whichever sub-tab is active — see IsArtTabActive); Confirm on a
+    // text field opens the virtual keyboard, on Save/Cancel triggers those actions
+    // directly. LB/RB (SwitchSubTabLeft/Right) switches between the two sub-tabs.
     public void NavigateUp()
     {
         if (IsCategoryOptionsFocused)
@@ -364,7 +480,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
         if (IsEditorOpen)
         {
-            EditorFocusIndex = (EditorFocusIndex - 1 + EditorPositionCount) % EditorPositionCount;
+            if (IsArtTabActive)
+                ArtFocusIndex = (ArtFocusIndex - 1 + ArtPositionCount) % ArtPositionCount;
+            else
+                SettingsFocusIndex = (SettingsFocusIndex - 1 + SettingsPositionCount) % SettingsPositionCount;
             return;
         }
 
@@ -406,7 +525,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
         if (IsEditorOpen)
         {
-            EditorFocusIndex = (EditorFocusIndex + 1) % EditorPositionCount;
+            if (IsArtTabActive)
+                ArtFocusIndex = (ArtFocusIndex + 1) % ArtPositionCount;
+            else
+                SettingsFocusIndex = (SettingsFocusIndex + 1) % SettingsPositionCount;
             return;
         }
 
@@ -418,29 +540,51 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     public void NavigateLeft()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
-        switch (EditorFocusIndex)
+        if (!IsEditorOpen)
+        {
+            SelectedListActionIndex = (SelectedListActionIndex - 1 + 3) % 3;
+            return;
+        }
+        if (IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
+
+        if (IsArtTabActive)
+        {
+            if (ArtFocusIndex == 7) _ = CycleScrapeResultAsync(-1);
+            return;
+        }
+
+        switch (SettingsFocusIndex)
         {
             case 1: CycleSystem(-1); break;
             case 3: CycleEmulator(-1); break;
             case 5: Editor.Players = Math.Max(1, Editor.Players - 1); break;
-            case 22: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
-            case 23: CyclePendingAssignmentDevice(-1); break;
-            case 28: _ = CycleScrapeResultAsync(-1); break;
+            case 17: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
+            case 18: CyclePendingAssignmentDevice(-1); break;
         }
     }
 
     public void NavigateRight()
     {
-        if (!IsEditorOpen || IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
-        switch (EditorFocusIndex)
+        if (!IsEditorOpen)
+        {
+            SelectedListActionIndex = (SelectedListActionIndex + 1) % 3;
+            return;
+        }
+        if (IsBrowsingBiosOverrides || IsBrowsingDisabledDeviceTypes || IsBrowsingPlayerAssignments) return;
+
+        if (IsArtTabActive)
+        {
+            if (ArtFocusIndex == 7) _ = CycleScrapeResultAsync(1);
+            return;
+        }
+
+        switch (SettingsFocusIndex)
         {
             case 1: CycleSystem(1); break;
             case 3: CycleEmulator(1); break;
             case 5: Editor.Players = Math.Min(8, Editor.Players + 1); break;
-            case 22: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
-            case 23: CyclePendingAssignmentDevice(1); break;
-            case 28: _ = CycleScrapeResultAsync(1); break;
+            case 17: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
+            case 18: CyclePendingAssignmentDevice(1); break;
         }
     }
 
@@ -512,7 +656,12 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     {
         if (!IsEditorOpen)
         {
-            if (SelectedGame is not null) EditSelected();
+            switch (SelectedListActionIndex)
+            {
+                case 0: AddNew(); break;
+                case 1: if (SelectedGame is not null) EditSelected(); break;
+                case 2: if (SelectedGame is not null) await DeleteSelectedAsync(); break;
+            }
             return;
         }
 
@@ -558,7 +707,27 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
-        switch (EditorFocusIndex)
+        if (IsArtTabActive)
+        {
+            switch (ArtFocusIndex)
+            {
+                case 0: _virtualKeyboard.Open("Cover Path", Editor.CoverPath, v => Editor.CoverPath = v); break;
+                case 1: _virtualKeyboard.Open("Background Path", Editor.BackgroundPath, v => Editor.BackgroundPath = v); break;
+                case 2: _virtualKeyboard.Open("Logo Path", Editor.LogoPath, v => Editor.LogoPath = v); break;
+                case 3: _virtualKeyboard.Open("Video Path", Editor.VideoPath, v => Editor.VideoPath = v); break;
+                case 4: _virtualKeyboard.Open("Marquee Path", Editor.MarqueePath, v => Editor.MarqueePath = v); break;
+                case 5: _virtualKeyboard.Open("Card Art Path", Editor.CardArtPath, v => Editor.CardArtPath = v); break;
+                case 6: Editor.PreferCardArtAsCover = !Editor.PreferCardArtAsCover; break;
+                case 7: await ScrapeAsync(); break;
+                case 8: await ResizeCoverToCardAsync(); break;
+                case 9: await GenerateCardAsync(); break;
+                case 10: await SaveEditorAsync(); break;
+                case 11: CancelEditor(); break;
+            }
+            return;
+        }
+
+        switch (SettingsFocusIndex)
         {
             case 0: _virtualKeyboard.Open("Title", Editor.Title, v => Editor.Title = v); break;
             case 2:
@@ -569,47 +738,40 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 }
                 break;
             case 4: _virtualKeyboard.Open("Genre", Editor.Genre, v => Editor.Genre = v); break;
+            case 6: Editor.IsFavorite = !Editor.IsFavorite; break;
             case 7: _virtualKeyboard.Open("ROM Path", Editor.RomPath, v => Editor.RomPath = v); break;
             case 8: _virtualKeyboard.Open("Process Name Override", Editor.ProcessNameOverride, v => Editor.ProcessNameOverride = v); break;
-            case 9: _virtualKeyboard.Open("Cover Path", Editor.CoverPath, v => Editor.CoverPath = v); break;
-            case 10: _virtualKeyboard.Open("Background Path", Editor.BackgroundPath, v => Editor.BackgroundPath = v); break;
-            case 11: _virtualKeyboard.Open("Logo Path", Editor.LogoPath, v => Editor.LogoPath = v); break;
-            case 12: _virtualKeyboard.Open("Video Path", Editor.VideoPath, v => Editor.VideoPath = v); break;
-            case 13: _virtualKeyboard.Open("Marquee Path", Editor.MarqueePath, v => Editor.MarqueePath = v); break;
-            case 14: await BrowseBezelOverrideAsync(); break;
-            case 15: OpenNumericKeyboard("Display Width Override (0 = use system default)", Editor.DisplayModeOverrideWidth, v => Editor.DisplayModeOverrideWidth = v); break;
-            case 16: OpenNumericKeyboard("Display Height Override (0 = use system default)", Editor.DisplayModeOverrideHeight, v => Editor.DisplayModeOverrideHeight = v); break;
-            case 17: OpenNumericKeyboard("Display Refresh Hz Override (0 = use system default)", Editor.DisplayModeOverrideRefreshHz, v => Editor.DisplayModeOverrideRefreshHz = v); break;
-            case 18:
+            case 9: await BrowseBezelOverrideAsync(); break;
+            case 10: OpenNumericKeyboard("Display Width Override (0 = use system default)", Editor.DisplayModeOverrideWidth, v => Editor.DisplayModeOverrideWidth = v); break;
+            case 11: OpenNumericKeyboard("Display Height Override (0 = use system default)", Editor.DisplayModeOverrideHeight, v => Editor.DisplayModeOverrideHeight = v); break;
+            case 12: OpenNumericKeyboard("Display Refresh Hz Override (0 = use system default)", Editor.DisplayModeOverrideRefreshHz, v => Editor.DisplayModeOverrideRefreshHz = v); break;
+            case 13:
                 if (Editor.BiosOverridePaths.Count > 0)
                 {
                     IsBrowsingBiosOverrides = true;
                     SelectedBiosOverrideIndex = Math.Clamp(SelectedBiosOverrideIndex, 0, Editor.BiosOverridePaths.Count - 1);
                 }
                 break;
-            case 19: await BrowseAddBiosOverrideAsync(); break;
-            case 20:
+            case 14: await BrowseAddBiosOverrideAsync(); break;
+            case 15:
                 if (Editor.DisabledDeviceTypeOptions.Count > 0)
                 {
                     IsBrowsingDisabledDeviceTypes = true;
                     SelectedDeviceTypeCheckIndex = Math.Clamp(SelectedDeviceTypeCheckIndex, 0, Editor.DisabledDeviceTypeOptions.Count - 1);
                 }
                 break;
-            case 21: _virtualKeyboard.Open("DemulShooter Target", Editor.DemulShooterTarget, v => Editor.DemulShooterTarget = v); break;
-            case 24: AddPendingPlayerDeviceAssignment(); break;
-            case 25:
+            case 16: _virtualKeyboard.Open("DemulShooter Target", Editor.DemulShooterTarget, v => Editor.DemulShooterTarget = v); break;
+            case 19: AddPendingPlayerDeviceAssignment(); break;
+            case 20:
                 if (Editor.PlayerDeviceAssignmentEntries.Count > 0)
                 {
                     IsBrowsingPlayerAssignments = true;
                     SelectedPlayerAssignmentIndex = Math.Clamp(SelectedPlayerAssignmentIndex, 0, Editor.PlayerDeviceAssignmentEntries.Count - 1);
                 }
                 break;
-            case 26: await SaveEditorAsync(); break;
-            case 27: CancelEditor(); break;
-            case 6: Editor.IsFavorite = !Editor.IsFavorite; break;
-            case 28: await ScrapeAsync(); break;
-            case 29: await GenerateCardAsync(); break;
-            // 1, 3, 5 (System/Emulator/Players), 22, 23 (pending assignment player
+            case 21: await SaveEditorAsync(); break;
+            case 22: CancelEditor(); break;
+            // 1, 3, 5 (System/Emulator/Players), 17, 18 (pending assignment player
             // index/device) are all adjusted via Left/Right, not Confirm.
         }
     }
@@ -652,6 +814,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     // field can step through alternate matches instead of being stuck with whatever
     // the first (possibly wrong-platform/wrong-game) result was — see CycleScrapeResultAsync.
     private List<ScraperSearchResult> _lastScrapeResults = [];
+    private ScraperGameMetadata? _lastScrapedMetadata;
     private int _scrapeResultIndex;
     private ScraperSourceType _lastScrapeSource;
 
@@ -713,6 +876,8 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             return;
         }
 
+        _lastScrapedMetadata = details;
+
         if (!string.IsNullOrWhiteSpace(details.Genre)) Editor.Genre = details.Genre;
         if (details.Players is { } p) Editor.Players = Math.Clamp(p, 1, 8);
 
@@ -725,6 +890,16 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         var marqueePath = await DownloadToScratchAsync(details.MarqueeImageUrl, "marquee");
         if (marqueePath is not null) Editor.MarqueePath = marqueePath;
 
+        // Persisted like Cover/Logo/Marquee (via CopyMediaFilesAsync on Save) so the
+        // ComfyUI poster-collage generator has real reference material to reuse later
+        // without needing to re-scrape every session.
+        Editor.ScreenshotPaths.Clear();
+        foreach (var screenshotUrl in details.ScreenshotImageUrls.Take(3))
+        {
+            var screenshotPath = await DownloadToScratchAsync(screenshotUrl, "screenshot");
+            if (screenshotPath is not null) Editor.ScreenshotPaths.Add(screenshotPath);
+        }
+
         var platformSuffix = string.IsNullOrWhiteSpace(picked.Platform) ? "" : $" [{picked.Platform}]";
         StatusMessage = $"Match {_scrapeResultIndex + 1}/{_lastScrapeResults.Count}: '{details.Title}'{platformSuffix} on {source} — Left/Right for other matches, review, then Save.";
         _logger.LogInformation("Scraped '{Title}' from {Source} (matched '{MatchedTitle}', {Index}/{Count}).",
@@ -732,10 +907,192 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Generates card art via the configured ComfyUI workflow, using the game's
-    /// Title/Genre as the prompt, and applies it as the Cover Art field (like
-    /// ScrapeAsync, the actual file copy happens on Save — this just points
-    /// Editor.CoverPath at a downloaded scratch file).
+    /// Generator #1 ("Clean Cover for Card"): a 4-step pipeline over the actual
+    /// scraped Cover Art —
+    ///   1) Remove logo/text: a single-image ComfyUI masked-inpainting pass (see
+    ///      ScraperSettings.ComfyUiCleanupWorkflowPath) regenerates only the regions
+    ///      actually detected as logo/text, pasting the result back onto the untouched
+    ///      original everywhere else (ImageCompositeMasked in the workflow). The mask
+    ///      itself comes from two local, no-cloud detectors so this works regardless of
+    ///      where a given cover happens to put its logo (an earlier fixed-top-band
+    ///      version couldn't generalize across covers): LogoRegionDetector template-
+    ///      matches the game's own scraped logo asset against the cover to find the
+    ///      main title logo wherever it sits, and TextRegionDetector (optional,
+    ///      ScraperSettings.TextDetectionModelPath) runs a local ONNX text-detection
+    ///      model to catch other stray badges (publisher/platform logos) that aren't
+    ///      an asset UGL has on file to match against. Falls back to a fixed top-band
+    ///      guess only if neither detector finds anything. Deliberately run at the
+    ///      cover's OWN aspect ratio (just rounded to a multiple of 8 for the latent),
+    ///      not the card's tall aspect ratio — stretching a ~2:3 cover into a ~1:2.6
+    ///      canvas first is what caused whole-image distortion in an earlier version.
+    ///   2) Resize (not crop) to the current card resolution.
+    ///   3) Upscale/increase detail as needed.
+    ///   (steps 2+3 are both just ResizeCoverFit — see its own doc comment)
+    ///   4) Composite the real, un-regenerated logo on top (CompositeLogo).
+    /// If no cleanup workflow is configured (or ComfyUI is unreachable), step 1 is
+    /// skipped and steps 2-4 still run on the plain scraped cover. Result goes to Card
+    /// Art, the same slot generator #2 uses — both are just two ways to produce it.
+    /// </summary>
+    [RelayCommand]
+    private async Task ResizeCoverToCardAsync()
+    {
+        var absoluteCoverPath = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(Editor.CoverPath);
+        if (string.IsNullOrWhiteSpace(absoluteCoverPath) || !File.Exists(absoluteCoverPath))
+        {
+            StatusMessage = "No Cover Art to clean up — scrape or browse for one first.";
+            return;
+        }
+
+        try
+        {
+            var coverBytes = await File.ReadAllBytesAsync(absoluteCoverPath);
+            var settings = await _scraperSettingsRepo.GetSettingsAsync();
+            var absoluteLogoPathForDetection = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(Editor.LogoPath);
+
+            var imageBytes = coverBytes;
+            var cleanedUp = false;
+            if (!string.IsNullOrWhiteSpace(settings.ComfyUiCleanupWorkflowPath))
+            {
+                StatusMessage = "Cleaning up cover art via ComfyUI (removing logo/text)… this can take a while.";
+                // Deliberately no negation ("no text", "no logo", etc.) — diffusion
+                // models (Flux included) are notoriously bad at negation prompting and
+                // often render the very thing they're told to exclude just because the
+                // word appears in the prompt. Flux Fill's own workflow also runs at
+                // cfg=1.0 (see GameCardCleanup_ComfyUI_workflow.json), which makes the
+                // negative-prompt channel essentially inert, so there's no fallback
+                // channel to suppress it either — the positive prompt has to describe
+                // only what should be there.
+                const string cleanupPrompt = "a smooth, plain continuation of the surrounding artwork and background colors, blended seamlessly";
+
+                // Step 1 works at the cover's own aspect ratio, not the card's — only
+                // rounded up to the nearest multiple of 8 (a hard requirement for
+                // SD/SDXL-family latents). The mask must match this exact size, not
+                // the final card resolution (that reflow happens afterward, in step
+                // 2, once the cleaned image is back).
+                int coverWidth, coverHeight;
+                using (var probeStream = new MemoryStream(coverBytes))
+                using (var probeBitmap = new Bitmap(probeStream))
+                {
+                    coverWidth = probeBitmap.Width;
+                    coverHeight = probeBitmap.Height;
+                }
+                var workWidth = RoundUpToMultipleOf8(coverWidth);
+                var workHeight = RoundUpToMultipleOf8(coverHeight);
+
+                // Detect where the logo/text actually is on THIS cover, in the
+                // cover's own original pixel space, then scale into working-canvas
+                // space (near 1:1 — workWidth/Height only differ from
+                // coverWidth/Height by up to 7px of multiple-of-8 rounding).
+                var detectedRegions = new List<System.Drawing.Rectangle>();
+                if (!string.IsNullOrWhiteSpace(absoluteLogoPathForDetection) && File.Exists(absoluteLogoPathForDetection))
+                {
+                    try
+                    {
+                        var logoBytesForDetection = await File.ReadAllBytesAsync(absoluteLogoPathForDetection);
+                        var match = LogoRegionDetector.LocateLogo(coverBytes, logoBytesForDetection);
+                        if (match is not null)
+                        {
+                            detectedRegions.Add(match.Value.Bounds);
+                            _logger.LogInformation("Logo template match found at {Bounds} (confidence {Confidence:F2}).", match.Value.Bounds, match.Value.Confidence);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Logo template match found nothing above the confidence threshold.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Logo template-match against the cover failed — continuing without it.");
+                    }
+                }
+                if (!string.IsNullOrWhiteSpace(settings.TextDetectionModelPath) && File.Exists(settings.TextDetectionModelPath))
+                {
+                    var textRegions = TextRegionDetector.DetectTextRegions(coverBytes, settings.TextDetectionModelPath, _logger);
+                    _logger.LogInformation("Text detection found {Count} region(s): {Regions}", textRegions.Count, string.Join(", ", textRegions));
+                    detectedRegions.AddRange(textRegions);
+                }
+
+                double regionScaleX = (double)workWidth / coverWidth;
+                double regionScaleY = (double)workHeight / coverHeight;
+                var scaledRegions = detectedRegions.Select(r => new System.Drawing.Rectangle(
+                    (int)(r.X * regionScaleX), (int)(r.Y * regionScaleY),
+                    (int)(r.Width * regionScaleX), (int)(r.Height * regionScaleY)));
+
+                var maskBytes = scaledRegions.Any()
+                    ? BuildRegionsMask(workWidth, workHeight, scaledRegions)
+                    : BuildTopBandMask(workWidth, workHeight, CleanupMaskBandFraction);
+
+                // 1.0 is Flux Fill's own documented default (see
+                // GameCardCleanup_ComfyUI_workflow.json) — its InpaintModelConditioning
+                // architecture handles unmasked-region preservation directly, unlike
+                // the older SD1.5 VAEEncodeForInpaint approach that relied on a
+                // partial denoise value to avoid a full repaint.
+                var cleaned = await _comfyUiClient.GenerateImageAsync(
+                    cleanupPrompt, [coverBytes, maskBytes], denoise: 1.0,
+                    workflowPathOverride: settings.ComfyUiCleanupWorkflowPath,
+                    extraNumericTokens: new Dictionary<string, double>
+                    {
+                        ["{{WORK_WIDTH}}"] = workWidth,
+                        ["{{WORK_HEIGHT}}"] = workHeight,
+                    });
+                if (cleaned is not null)
+                {
+                    imageBytes = cleaned;
+                    cleanedUp = true;
+                }
+                else
+                {
+                    _logger.LogWarning("ComfyUI cleanup pass failed — falling back to a plain local resize of the cover.");
+                }
+            }
+
+            // Steps 2+3: resize (not crop) to the card size, upscaling/increasing
+            // detail as needed — see ResizeCoverFit's own doc comment.
+            var (width, height) = GetTargetCardResolution();
+            imageBytes = ResizeCoverFit(imageBytes, width, height);
+
+            var logoComposited = false;
+            if (!string.IsNullOrWhiteSpace(absoluteLogoPathForDetection) && File.Exists(absoluteLogoPathForDetection))
+            {
+                try
+                {
+                    imageBytes = CompositeLogo(imageBytes, absoluteLogoPathForDetection);
+                    logoComposited = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to composite the game logo onto the cleaned-up card art.");
+                }
+            }
+
+            Directory.CreateDirectory(ScrapeScratchDir);
+            var scratchPath = Path.Combine(ScrapeScratchDir, $"cardresize_{Guid.NewGuid():N}.png");
+            await File.WriteAllBytesAsync(scratchPath, imageBytes);
+            Editor.CardArtPath = scratchPath;
+
+            var basis = cleanedUp ? "cleaned-up Cover Art" : "Cover Art (no cleanup workflow configured — plain resize only)";
+            StatusMessage = logoComposited
+                ? $"✓ Card art produced from {basis} at {width}×{height}, with logo overlay. Review it, then Save."
+                : $"✓ Card art produced from {basis} at {width}×{height} (no logo overlay — none was scraped for this game). Review it, then Save.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to produce card art from Cover Art.");
+            StatusMessage = "Failed to produce card art from Cover Art — see logs.";
+        }
+    }
+
+    /// <summary>
+    /// Generator #2: generates card art via the configured ComfyUI workflow, using the
+    /// game's Title/Genre as the prompt plus up to 3 of the most recently scraped
+    /// cover/screenshot images as collage source material (so the result is a
+    /// literal collage of the game's actual imagery, not a reinterpretation). The
+    /// game's actual logo (Editor.LogoPath, from the most recent scrape) is then
+    /// composited on top — pasted as-is rather than regenerated, since diffusion
+    /// models can't reliably reproduce exact logo art/text — and applies the result
+    /// as the Card Art field, a separate asset from Cover Art (like ScrapeAsync, the
+    /// actual file copy happens on Save — this just points Editor.CardArtPath at a
+    /// downloaded scratch file).
     /// </summary>
     [RelayCommand]
     private async Task GenerateCardAsync()
@@ -747,15 +1104,46 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         }
 
         var prompt = string.IsNullOrWhiteSpace(Editor.Genre)
-            ? $"video game box art for \"{Editor.Title}\""
-            : $"video game box art for \"{Editor.Title}\", a {Editor.Genre} game";
+            ? $"a cohesive video game poster blending the exact characters and scenes shown into one image for \"{Editor.Title}\". Do not invent new characters or scenes not shown. Do not add any text, logos, or watermarks."
+            : $"a cohesive video game poster blending the exact characters and scenes shown into one image for \"{Editor.Title}\", a {Editor.Genre} game. Do not invent new characters or scenes not shown. Do not add any text, logos, or watermarks.";
 
-        StatusMessage = "Generating card art via ComfyUI… this can take a while.";
-        var imageBytes = await _comfyUiClient.GenerateImageAsync(prompt);
+        var referenceImages = await DownloadReferenceImagesAsync();
+
+        StatusMessage = referenceImages.Count > 0
+            ? $"Generating card art via ComfyUI using {referenceImages.Count} reference image(s)… this can take a while."
+            : "No scraped reference images available — generating from text prompt alone via ComfyUI… this can take a while.";
+        var imageBytes = await _comfyUiClient.GenerateImageAsync(prompt, referenceImages, denoise: 0.35);
         if (imageBytes is null)
         {
             StatusMessage = "ComfyUI generation failed — check logs\\ugl.log for the actual error (endpoint unreachable, workflow rejected, no {{PROMPT}} token, or a timed-out render).";
             return;
+        }
+
+        // Force the actual current card resolution regardless of whatever the
+        // workflow's own internal sampling/output resolution happens to be — the
+        // workflow file would otherwise need to be kept in sync by hand every time
+        // the card-grid size changes (different window size, theme, etc.).
+        var (targetWidth, targetHeight) = GetTargetCardResolution();
+        imageBytes = ResizeCoverFit(imageBytes, targetWidth, targetHeight);
+
+        var logoComposited = false;
+        // LogoPath from a previously-saved game is stored "portable" (relative to the
+        // app's own folder) — must resolve it the same way the rest of the app does
+        // before touching the filesystem, or a real, already-scraped logo silently
+        // reads as "missing" (this was the NFL Blitz 2001 case: logo scraped fine,
+        // but File.Exists on the raw relative path failed).
+        var absoluteLogoPath = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(Editor.LogoPath);
+        if (!string.IsNullOrWhiteSpace(absoluteLogoPath) && File.Exists(absoluteLogoPath))
+        {
+            try
+            {
+                imageBytes = CompositeLogo(imageBytes, absoluteLogoPath);
+                logoComposited = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to composite the game logo onto the generated card art.");
+            }
         }
 
         try
@@ -763,14 +1151,329 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Directory.CreateDirectory(ScrapeScratchDir);
             var scratchPath = Path.Combine(ScrapeScratchDir, $"comfyui_{Guid.NewGuid():N}.png");
             await File.WriteAllBytesAsync(scratchPath, imageBytes);
-            Editor.CoverPath = scratchPath;
-            StatusMessage = "Card art generated. Review it, then Save.";
+            Editor.CardArtPath = scratchPath;
+            // Both branches are a success — Card Art was generated either way. The
+            // second just notes the logo overlay was skipped, since a status message
+            // starting with "no logo" reads like an error to a quick glance even
+            // though generation fully succeeded.
+            StatusMessage = logoComposited
+                ? "✓ Card art generated with logo overlay. Review it, then Save."
+                : "✓ Card art generated successfully (no logo overlay — none was scraped for this game, or your source doesn't provide one; ScreenScraper/TheGamesDB can, IGDB can't). Review it, then Save.";
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to save ComfyUI-generated image to the scratch folder.");
             StatusMessage = "Generated the image but failed to save it locally — see logs.";
         }
+    }
+
+    /// <summary>Default card resolution used only when <see cref="CardDimensionInfo"/>
+    /// hasn't measured anything yet this session (e.g. Generate/Resize used before
+    /// ever browsing a category's game grid).</summary>
+    private const int FallbackCardWidth = 756;
+    private const int FallbackCardHeight = 1968;
+
+    /// <summary>The resolution both card-art generators should target — the actual
+    /// live on-screen size of a rendered game card (device pixels, DPI-scaled) when
+    /// available, since that's the true "best size" for this window/theme, falling
+    /// back to a fixed default only if no card has rendered yet this session.</summary>
+    private static (int Width, int Height) GetTargetCardResolution()
+    {
+        var measured = CardDimensionInfo.GameCardPixelSize;
+        return measured.Width > 0 && measured.Height > 0
+            ? ((int)Math.Round(measured.Width), (int)Math.Round(measured.Height))
+            : (FallbackCardWidth, FallbackCardHeight);
+    }
+
+    /// <summary>Rounds up to the nearest multiple of 8 — SD/SDXL-family latents require
+    /// both dimensions to be multiples of 8, so the cleanup workflow's working canvas
+    /// (the cover's own size, not the card's) has to be snapped to one.</summary>
+    private static int RoundUpToMultipleOf8(int value) => (int)(Math.Ceiling(value / 8.0) * 8);
+
+    /// <summary>Fraction of the working canvas height that "Clean Cover for Card"
+    /// clears via masked inpainting — matches CompositeLogo's own band so the region
+    /// the ComfyUI cleanup pass regenerates is exactly the region the real logo will
+    /// be pasted over afterward.</summary>
+    private const double CleanupMaskBandFraction = 0.28;
+
+    /// <summary>Builds a black/white mask image (white = regenerate, black = leave
+    /// untouched) covering the top <paramref name="bandFraction"/> of the canvas, with
+    /// a soft feathered gradient at the band's lower edge so the ComfyUI inpainting
+    /// pass doesn't leave a hard seam where the regenerated band meets the original
+    /// artwork. Uploaded to ComfyUI as a second reference image and converted to an
+    /// actual MASK by the cleanup workflow's own ImageToMask node.</summary>
+    private static byte[] BuildTopBandMask(int width, int height, double bandFraction)
+    {
+        using var mask = new Bitmap(width, height);
+        using (var g = Graphics.FromImage(mask))
+        {
+            g.Clear(Color.Black);
+
+            float bandHeight = (float)(height * bandFraction);
+            float featherHeight = bandHeight * 0.25f;
+            float solidHeight = bandHeight - featherHeight;
+
+            g.FillRectangle(Brushes.White, 0, 0, width, solidHeight);
+
+            using var brush = new LinearGradientBrush(
+                new RectangleF(0, solidHeight, width, featherHeight),
+                Color.White, Color.Black, LinearGradientMode.Vertical);
+            g.FillRectangle(brush, 0, solidHeight, width, featherHeight);
+        }
+
+        using var outStream = new MemoryStream();
+        mask.Save(outStream, ImageFormat.Png);
+        return outStream.ToArray();
+    }
+
+    /// <summary>Builds a black/white mask image (white = regenerate, black = leave
+    /// untouched) covering the given detected logo/text regions — the
+    /// detection-driven counterpart to <see cref="BuildTopBandMask"/>, used whenever
+    /// LogoRegionDetector/TextRegionDetector actually found something, so the
+    /// cleanup pass only ever touches where a given cover's logo/text really is,
+    /// rather than a guessed fixed band. Each region gets a small extra pad (on top
+    /// of whatever padding the detector itself already applied) since a mask that's a
+    /// hair too small leaves a visible sliver of the original logo/text behind.
+    ///
+    /// The whole mask is then given a soft blur so there's no hard seam at any
+    /// region's edge — via a real area-averaged downscale (Graphics.DrawImage with
+    /// HighQualityBicubic), NOT the plain `new Bitmap(src, w, h)` constructor
+    /// <see cref="BuildBlurredCoverBackground"/> uses for full-frame photographic
+    /// content: that constructor's default resampling can flat-out miss an isolated
+    /// small-to-medium rectangle on an otherwise solid-black canvas (it doesn't average
+    /// over each output pixel's source block), which silently produced a near-empty
+    /// mask and made an earlier version of this method regenerate almost nothing at
+    /// all. A modest blur radius (not an aggressive 20x downscale) keeps enough
+    /// resolution that even a fairly small detected region survives intact.</summary>
+    private static byte[] BuildRegionsMask(int width, int height, IEnumerable<System.Drawing.Rectangle> regions)
+    {
+        using var mask = new Bitmap(width, height);
+        using (var g = Graphics.FromImage(mask))
+        {
+            g.Clear(Color.Black);
+            // Wider than the original 0.15 — testing showed text sitting on a busy,
+            // non-uniform background (e.g. baked into a graphic's own gradient/shape)
+            // needs more surrounding context erased for the model to have room to
+            // reconstruct a coherent region, rather than "completing" a stray edge of
+            // the original glyph strokes it can still see just outside a tight mask.
+            const float extraPadFraction = 0.35f;
+            foreach (var region in regions)
+            {
+                int padX = (int)(region.Width * extraPadFraction);
+                int padY = (int)(region.Height * extraPadFraction);
+                int x = Math.Max(0, region.X - padX);
+                int y = Math.Max(0, region.Y - padY);
+                int w = Math.Min(width - x, region.Width + padX * 2);
+                int h = Math.Min(height - y, region.Height + padY * 2);
+                if (w <= 0 || h <= 0) continue;
+                g.FillRectangle(Brushes.White, x, y, w, h);
+            }
+        }
+
+        const int blurDownscaleFactor = 6;
+        int smallWidth = Math.Max(1, width / blurDownscaleFactor);
+        int smallHeight = Math.Max(1, height / blurDownscaleFactor);
+        using var shrunk = new Bitmap(smallWidth, smallHeight);
+        using (var g = Graphics.FromImage(shrunk))
+        {
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.DrawImage(mask, 0, 0, smallWidth, smallHeight);
+        }
+        using var blurred = new Bitmap(width, height);
+        using (var g = Graphics.FromImage(blurred))
+        {
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.DrawImage(shrunk, 0, 0, width, height);
+        }
+
+        using var outStream = new MemoryStream();
+        blurred.Save(outStream, ImageFormat.Png);
+        return outStream.ToArray();
+    }
+
+    /// <summary>Reconstructs the source image at the target dimensions without losing
+    /// any content: the full source is scaled (up or down, high-quality bicubic — this
+    /// is where low-res covers get "increased resolution if needed") to fit entirely
+    /// inside the target box, then centered over a softly blurred, cover-fit version of
+    /// the same image stretched to fill the rest of the canvas. Unlike a hard center-crop,
+    /// nothing from the original image is cut off — the target's leftover space (from the
+    /// aspect-ratio mismatch between a typical box cover and a tall card) is filled with
+    /// context from the same artwork instead of a blank bar or a chopped-off edge.</summary>
+    private static byte[] ResizeCoverFit(byte[] imageBytes, int targetWidth, int targetHeight)
+    {
+        using var sourceStream = new MemoryStream(imageBytes);
+        using var source = new Bitmap(sourceStream);
+
+        using var result = new Bitmap(targetWidth, targetHeight);
+        using (var g = Graphics.FromImage(result))
+        {
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Background: cover-fit (fills the whole canvas, cropping overflow) then
+            // blurred, so the leftover space around the contained foreground reads as
+            // an extension of the artwork rather than a hard crop or empty bar.
+            using (var background = BuildBlurredCoverBackground(source, targetWidth, targetHeight))
+            {
+                g.DrawImage(background, 0, 0, targetWidth, targetHeight);
+            }
+
+            // Foreground: contain-fit (the entire source, no cropping), centered on top.
+            double containScale = Math.Min((double)targetWidth / source.Width, (double)targetHeight / source.Height);
+            int drawWidth = (int)Math.Round(source.Width * containScale);
+            int drawHeight = (int)Math.Round(source.Height * containScale);
+            int drawX = (targetWidth - drawWidth) / 2;
+            int drawY = (targetHeight - drawHeight) / 2;
+            g.DrawImage(source, new Rectangle(drawX, drawY, drawWidth, drawHeight));
+        }
+
+        using var outStream = new MemoryStream();
+        result.Save(outStream, ImageFormat.Png);
+        return outStream.ToArray();
+    }
+
+    /// <summary>Builds a cover-fit (crop-to-fill), softly blurred backdrop from the
+    /// source image at the target size — used to pad out the frame behind a contain-fit
+    /// foreground. The blur is a cheap downscale/upscale trick (no Gaussian kernel needed):
+    /// shrinking the cover-fit image destroys fine detail, and the following high-quality
+    /// bicubic upscale spreads what remains into a smooth blur.</summary>
+    private static Bitmap BuildBlurredCoverBackground(Bitmap source, int targetWidth, int targetHeight)
+    {
+        double coverScale = Math.Max((double)targetWidth / source.Width, (double)targetHeight / source.Height);
+        int coveredWidth = (int)Math.Ceiling(source.Width * coverScale);
+        int coveredHeight = (int)Math.Ceiling(source.Height * coverScale);
+        int offsetX = (coveredWidth - targetWidth) / 2;
+        int offsetY = (coveredHeight - targetHeight) / 2;
+
+        using var covered = new Bitmap(targetWidth, targetHeight);
+        using (var g = Graphics.FromImage(covered))
+        {
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.DrawImage(source, new Rectangle(-offsetX, -offsetY, coveredWidth, coveredHeight));
+        }
+
+        const int blurDownscaleFactor = 12;
+        int smallWidth = Math.Max(1, targetWidth / blurDownscaleFactor);
+        int smallHeight = Math.Max(1, targetHeight / blurDownscaleFactor);
+        using var shrunk = new Bitmap(covered, smallWidth, smallHeight);
+
+        var blurred = new Bitmap(targetWidth, targetHeight);
+        using (var g = Graphics.FromImage(blurred))
+        {
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.DrawImage(shrunk, 0, 0, targetWidth, targetHeight);
+        }
+        return blurred;
+    }
+
+    /// <summary>Pastes the game's actual logo image (not regenerated — diffusion
+    /// models can't reliably reproduce exact logo art/text) onto the generated poster,
+    /// scaled to fit within the top 25% of the card and centered (both axes) within
+    /// that band, with a soft drop shadow for legibility against busy artwork.</summary>
+    private static byte[] CompositeLogo(byte[] posterBytes, string logoPath)
+    {
+        using var posterStream = new MemoryStream(posterBytes);
+        using var poster = new Bitmap(posterStream);
+        using var logo = new Bitmap(logoPath);
+
+        const double bandHeightFraction = 0.25;
+        const double maxWidthFraction = 0.85;
+        const double bandPaddingFraction = 0.02;
+
+        double bandHeight = poster.Height * bandHeightFraction;
+        double maxWidth = poster.Width * maxWidthFraction;
+        double maxHeight = bandHeight * (1 - 2 * bandPaddingFraction);
+        double scale = Math.Min(maxWidth / logo.Width, maxHeight / logo.Height);
+
+        int logoWidth = (int)(logo.Width * scale);
+        int logoHeight = (int)(logo.Height * scale);
+        int x = (poster.Width - logoWidth) / 2;
+        int y = (int)((bandHeight - logoHeight) / 2);
+
+        using var g = Graphics.FromImage(poster);
+        g.CompositingQuality = CompositingQuality.HighQuality;
+        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+
+        // Soft drop shadow: a black silhouette of the logo, offset and semi-transparent,
+        // drawn first so the logo itself sits on top.
+        var shadowMatrix = new ColorMatrix(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0.5f, 0],
+            [0, 0, 0, 0, 1],
+        ]);
+        using (var shadowAttributes = new ImageAttributes())
+        {
+            shadowAttributes.SetColorMatrix(shadowMatrix);
+            const int shadowOffset = 6;
+            g.DrawImage(logo, new Rectangle(x + shadowOffset, y + shadowOffset, logoWidth, logoHeight),
+                0, 0, logo.Width, logo.Height, GraphicsUnit.Pixel, shadowAttributes);
+        }
+
+        g.DrawImage(logo, new Rectangle(x, y, logoWidth, logoHeight));
+
+        using var outStream = new MemoryStream();
+        poster.Save(outStream, ImageFormat.Png);
+        return outStream.ToArray();
+    }
+
+    /// <summary>Picks up to 3 URLs — the main cover first (the hero image for the
+    /// collage), then screenshots, then alternate covers/artwork as filler — from the
+    /// most recently scraped metadata and downloads their raw bytes for use as ComfyUI
+    /// collage source images. Individual read/download failures are skipped rather
+    /// than aborting the whole card generation.
+    ///
+    /// Reads the game's own persisted local files first (Cover, then Screenshots —
+    /// both saved like any other media asset since screenshots started being
+    /// persisted on scrape/save) rather than re-downloading by URL. This is what
+    /// makes regenerating a previously-saved game's card art work without
+    /// re-scraping first: the reference material survives a save/reopen cycle the
+    /// same way Cover/Logo/Marquee already did. Falls back to downloading
+    /// alternate-artwork URLs from the most recent in-session scrape only as filler
+    /// when local files alone don't reach 3 images (artwork isn't persisted as its
+    /// own asset).</summary>
+    private async Task<List<byte[]>> DownloadReferenceImagesAsync()
+    {
+        var result = new List<byte[]>();
+
+        var localPaths = new[] { Editor.CoverPath }.Concat(Editor.ScreenshotPaths);
+        foreach (var localPath in localPaths)
+        {
+            if (result.Count >= 3) break;
+            if (string.IsNullOrWhiteSpace(localPath)) continue;
+            var absolutePath = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(localPath);
+            if (!File.Exists(absolutePath)) continue;
+            try
+            {
+                result.Add(await File.ReadAllBytesAsync(absolutePath));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to read local reference image {Path} for card generation.", absolutePath);
+            }
+        }
+
+        if (result.Count < 3 && _lastScrapedMetadata is { } meta)
+        {
+            foreach (var url in meta.ArtworkImageUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct())
+            {
+                if (result.Count >= 3) break;
+                try
+                {
+                    result.Add(await _imageDownloadClient.GetByteArrayAsync(url));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to download reference image from {Url} for card generation.", url);
+                }
+            }
+        }
+
+        return result;
     }
 
     private async Task<string?> DownloadToScratchAsync(string? url, string label)
@@ -817,7 +1520,9 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         Editor.SyncPlayerDeviceAssignments([], _peripheralRegistry.KnownDevices);
         Editor.Id = string.Empty; // Force new-game Id generation on save
         IsEditorOpen = true;
-        EditorFocusIndex = 0;
+        SelectSettingsTab();
+        SettingsFocusIndex = 0;
+        ArtFocusIndex = 0;
         IsCategoryOptionsFocused = false;
         SelectedCategoryOptionIndex = 0;
         IsBrowsingBiosOverrides = false;
@@ -829,16 +1534,20 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         PendingAssignmentPlayerIndex = 1;
         PendingAssignmentDeviceIndex = 0;
         SelectedGame = null;
+        _lastScrapedMetadata = null;
     }
 
     [RelayCommand]
     private void EditSelected()
     {
         if (SelectedGame is null) return;
+        _lastScrapedMetadata = null;
         Editor.PopulateFrom(SelectedGame);
         Editor.SyncPlayerDeviceAssignments(SelectedGame.PlayerDeviceAssignments, _peripheralRegistry.KnownDevices);
         IsEditorOpen = true;
-        EditorFocusIndex = 0;
+        SelectSettingsTab();
+        SettingsFocusIndex = 0;
+        ArtFocusIndex = 0;
         IsCategoryOptionsFocused = false;
         SelectedCategoryOptionIndex = 0;
         IsBrowsingBiosOverrides = false;
@@ -852,7 +1561,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteSelectedAsync()
+    private Task DeleteSelectedAsync()
+    {
+        if (SelectedGame is null) return Task.CompletedTask;
+        _confirmDialog.Open($"Delete '{SelectedGame.Title}'? This cannot be undone.", () => _ = PerformDeleteSelectedAsync());
+        return Task.CompletedTask;
+    }
+
+    private async Task PerformDeleteSelectedAsync()
     {
         if (SelectedGame is null) return;
         await _gameRepo.DeleteAsync(SelectedGame.Id);
@@ -931,6 +1647,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         => Editor.MarqueePath = await BrowseImageAsync() ?? Editor.MarqueePath;
 
     [RelayCommand]
+    private async Task BrowseCardArtAsync()
+        => Editor.CardArtPath = await BrowseImageAsync() ?? Editor.CardArtPath;
+
+    [RelayCommand]
     private async Task BrowseBezelOverrideAsync()
         => Editor.BezelOverridePath = await BrowseImageAsync() ?? Editor.BezelOverridePath;
 
@@ -980,7 +1700,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     /// <summary>
     /// Called by the View when files are dropped onto a media field.
-    /// fieldName: "cover", "background", "logo", "video", "marquee"
+    /// fieldName: "cover", "background", "logo", "video", "marquee", "cardart"
     /// </summary>
     public void AcceptMediaDrop(string fieldName, string filePath)
     {
@@ -991,6 +1711,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case "logo":       Editor.LogoPath        = filePath; break;
             case "video":      Editor.VideoPath       = filePath; break;
             case "marquee":    Editor.MarqueePath     = filePath; break;
+            case "cardart":    Editor.CardArtPath     = filePath; break;
         }
     }
 
@@ -1011,6 +1732,17 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         var logo       = await CopyMediaFileAsync(game, game.Media.LogoPath,       "logos",       mediaRoot);
         var video      = await CopyMediaFileAsync(game, game.Media.VideoPath,      "video",       mediaRoot);
         var marquee    = await CopyMediaFileAsync(game, game.Media.MarqueePath,    "marquees",    mediaRoot);
+        var cardArt    = await CopyMediaFileAsync(game, game.Media.CardArtPath,    "cardart",     mediaRoot);
+
+        // Screenshots: no single-file precedent to reuse — CopyMediaFileAsync's
+        // optional suffix param gives each of up to 3 its own filename
+        // ({slug}-1.ext, -2.ext, -3.ext) in a shared "screenshots" subfolder.
+        var screenshots = new List<string>();
+        for (int i = 0; i < game.Media.ScreenshotPaths.Count; i++)
+        {
+            var copied = await CopyMediaFileAsync(game, game.Media.ScreenshotPaths[i], "screenshots", mediaRoot, suffix: $"-{i + 1}");
+            screenshots.Add(copied ?? game.Media.ScreenshotPaths[i]);
+        }
 
         return new Game
         {
@@ -1033,12 +1765,15 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 LogoPath       = logo       ?? game.Media.LogoPath,
                 VideoPath      = video      ?? game.Media.VideoPath,
                 MarqueePath    = marquee    ?? game.Media.MarqueePath,
+                CardArtPath    = cardArt    ?? game.Media.CardArtPath,
+                PreferCardArtAsCover = game.Media.PreferCardArtAsCover,
+                ScreenshotPaths = screenshots,
             }
         };
     }
 
     private async Task<string?> CopyMediaFileAsync(
-        Game game, string sourcePath, string subfolder, string mediaRoot)
+        Game game, string sourcePath, string subfolder, string mediaRoot, string suffix = "")
     {
         if (string.IsNullOrWhiteSpace(sourcePath)) return null;
 
@@ -1064,7 +1799,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         var slug = $"{game.SystemId}-{game.Id}".ToLowerInvariant();
         var destDir = Path.Combine(mediaRoot, subfolder);
         Directory.CreateDirectory(destDir);
-        var destPath = Path.Combine(destDir, slug + ext);
+        var destPath = Path.Combine(destDir, slug + suffix + ext);
 
         await Task.Run(() => File.Copy(absoluteSource, destPath, overwrite: true));
 

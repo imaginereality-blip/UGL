@@ -31,9 +31,18 @@ public sealed class MediaAssetResolver
 
     public string? ResolveCover(Game game)
     {
+        if (game.Media.PreferCardArtAsCover && ResolveCardArt(game) is { } cardArt)
+            return cardArt;
         if (!string.IsNullOrWhiteSpace(game.Media.CoverPath))
             return ResolvePath(game.Media.CoverPath);
         return FindImage("covers", Slug(game));
+    }
+
+    public string? ResolveCardArt(Game game)
+    {
+        if (!string.IsNullOrWhiteSpace(game.Media.CardArtPath))
+            return ResolvePath(game.Media.CardArtPath);
+        return FindImage("cardart", Slug(game));
     }
 
     public string? ResolveBackground(Game game)
@@ -55,6 +64,27 @@ public sealed class MediaAssetResolver
         if (!string.IsNullOrWhiteSpace(game.Media.CoverPath))
             return ResolvePath(game.Media.BackgroundPath);
         return FindImage("screenshots", Slug(game));
+    }
+
+    /// <summary>Up to 3 persisted screenshots (see GameMedia.ScreenshotPaths) — used
+    /// as ComfyUI poster-collage reference material. Distinct from the single-file
+    /// ResolveScreenshot above.</summary>
+    public List<string> ResolveScreenshots(Game game)
+    {
+        if (game.Media.ScreenshotPaths.Count > 0)
+            return game.Media.ScreenshotPaths
+                .Select(ResolvePath)
+                .Where(p => p is not null)
+                .Select(p => p!)
+                .ToList();
+
+        var slug = Slug(game);
+        var found = new List<string>();
+        for (int i = 1; i <= 3; i++)
+        {
+            if (FindImage("screenshots", $"{slug}-{i}") is { } path) found.Add(path);
+        }
+        return found;
     }
 
     public string? ResolveMarquee(Game game)

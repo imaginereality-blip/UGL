@@ -47,9 +47,32 @@ public sealed class ScraperSettings
     /// nodes/settings are entirely up to whatever the user has installed. UGL
     /// substitutes the literal token "{{PROMPT}}" (must appear in exactly one node's
     /// text input, e.g. a CLIPTextEncode "text" field) with a prompt built from the
-    /// game's title/genre before submitting.
+    /// game's title/genre before submitting. Used by the "Generate Poster Collage"
+    /// action (multi-image collage from cover + screenshots).
     /// </summary>
     public string ComfyUiWorkflowPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Path to a second, separate workflow JSON used only by the "Clean Cover for
+    /// Card" action: a single-image img2img pass that erases baked-in logo/text from
+    /// the scraped cover and reconstructs the artwork underneath, before UGL composites
+    /// the real (un-regenerated) logo back on top. Deliberately not the same workflow
+    /// file as ComfyUiWorkflowPath — that one stitches up to 3 images into a collage,
+    /// which is the wrong shape of graph for cleaning up a single cover. Optional: if
+    /// left blank, the action falls back to a plain local resize with no cleanup.
+    /// </summary>
+    public string ComfyUiCleanupWorkflowPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Path to a PP-OCRv3 "DB" text-detection ONNX model (e.g.
+    /// text_detection_en_ppocrv3_2023may.onnx from github.com/opencv/opencv_zoo) used
+    /// by "Clean Cover for Card" to find stray logo/text regions anywhere on the cover
+    /// — not just the main title logo, which is located separately via template
+    /// matching against the game's own scraped logo asset (LogoRegionDetector). Optional:
+    /// if left blank, that detection pass is skipped and the mask falls back to the
+    /// main-logo match alone, or a fixed top-band guess if that also finds nothing.
+    /// </summary>
+    public string TextDetectionModelPath { get; set; } = string.Empty;
 }
 
 /// <summary>One candidate match from a scraper search — enough to let the user (or,
@@ -74,5 +97,12 @@ public sealed class ScraperGameMetadata
     public string? CoverImageUrl { get; init; }
     public string? LogoImageUrl { get; init; }
     public string? MarqueeImageUrl { get; init; }
-    public string? ScreenshotImageUrl { get; init; }
+
+    /// <summary>All screenshots the source returned (not just the first) — used as
+    /// IP-Adapter reference images for card-art generation.</summary>
+    public List<string> ScreenshotImageUrls { get; init; } = [];
+
+    /// <summary>Alternate box art / key art / fan art beyond the primary cover — also
+    /// used as IP-Adapter reference images for card-art generation.</summary>
+    public List<string> ArtworkImageUrls { get; init; } = [];
 }

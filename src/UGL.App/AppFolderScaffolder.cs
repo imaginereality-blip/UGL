@@ -13,11 +13,19 @@ internal static class AppFolderScaffolder
     [
         "config",
         Path.Combine("media", "categories"),
-        Path.Combine("media", "games", "covers"),
-        Path.Combine("media", "games", "video"),
-        Path.Combine("media", "games", "logos"),
-        Path.Combine("media", "games", "marquees"),
-        Path.Combine("media", "games", "screenshots"),
+        // Flat, not media\games\* — must match the actual subfolder names
+        // CopyMediaFileAsync/MediaAssetResolver use (GamesConfigViewModel.cs /
+        // MediaAssetResolver.cs). An earlier version of this scaffolder (and its
+        // README below) documented a media\games\covers\ nested convention that the
+        // save/load code never actually implemented, leaving media\games\* as
+        // permanently-empty decoy folders while real art silently landed flat.
+        Path.Combine("media", "covers"),
+        Path.Combine("media", "backgrounds"),
+        Path.Combine("media", "logos"),
+        Path.Combine("media", "marquees"),
+        Path.Combine("media", "cardart"),
+        Path.Combine("media", "screenshots"),
+        Path.Combine("media", "video"),
         Path.Combine("media", "sounds"),
         Path.Combine("media", "music"),
         Path.Combine("media", "themes"),
@@ -78,17 +86,24 @@ internal static class AppFolderScaffolder
             "This folder holds all the artwork, video, and audio UGL displays\r\n" +
             "and plays. You don't usually need to drop files in here directly —\r\n" +
             "when you Browse to an image/video/sound file anywhere in Settings,\r\n" +
-            "UGL copies it into the right spot below automatically.\r\n" +
+            "UGL copies it into the right spot below automatically, named\r\n" +
+            "{systemId}-{gameId}.{ext} (games) or by whatever filename you gave it\r\n" +
+            "(categories).\r\n" +
             "\r\n" +
             "  categories\\           Category card art (Home Menu)\r\n" +
-            "  games\\covers\\         Game cover art\r\n" +
-            "  games\\video\\          Game preview video, plays when a game is selected\r\n" +
-            "  games\\logos\\          Game logo/wheel art\r\n" +
-            "  games\\marquees\\       Game marquee art\r\n" +
-            "  games\\screenshots\\    Game screenshots\r\n" +
+            "  covers\\               Game cover art\r\n" +
+            "  backgrounds\\          Game background art (shown behind the card grid)\r\n" +
+            "  logos\\                Game logo/wheel art\r\n" +
+            "  marquees\\             Game marquee art\r\n" +
+            "  cardart\\              Generated/cleaned-up card art (Games -> Art tab)\r\n" +
+            "  screenshots\\          Game screenshots (up to 3 per game)\r\n" +
+            "  video\\                Game preview video, plays when a game is selected\r\n" +
             "  sounds\\               Navigate/confirm/back/error sound effects\r\n" +
             "  music\\                Background music tracks (Settings -> Audio)\r\n" +
-            "  themes\\               UI themes\r\n");
+            "  themes\\               UI themes\r\n" +
+            "\r\n" +
+            "Note: these are all flat folders (no per-game subfolder) — a game's own\r\n" +
+            "identity is baked into its filename instead.");
 
         // A single, ordered overview at the app's own root — not tucked inside any
         // one folder — since a first-time user extracting the portable ZIP sees this

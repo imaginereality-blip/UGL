@@ -43,6 +43,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     private readonly IConfigurationService _config;
     private readonly IAudioService _audioService;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
+    private readonly ConfirmDialogViewModel _confirmDialog;
     private readonly ILogger<AudioConfigViewModel> _logger;
 
     // ── Tab selection ──────────────────────────────────────────────────────
@@ -217,6 +218,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         IConfigurationService config,
         IAudioService audioService,
         VirtualKeyboardViewModel virtualKeyboard,
+        ConfirmDialogViewModel confirmDialog,
         ILogger<AudioConfigViewModel> logger)
     {
         _playlistRepo = playlistRepo;
@@ -224,6 +226,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
         _config = config;
         _audioService = audioService;
         _virtualKeyboard = virtualKeyboard;
+        _confirmDialog = confirmDialog;
         _logger = logger;
     }
 
@@ -518,7 +521,7 @@ public sealed partial class AudioConfigViewModel : ObservableObject
                 }
                 break;
             case 8: EditPlaylistShuffle = !EditPlaylistShuffle; break;
-            case 9: await DeleteSelectedPlaylistAsync(); break;
+            case 9: DeleteSelectedPlaylist(); break;
             case 10: await BrowseAddTrackAsync(); break;
             case 11:
                 if (AvailableTracks.Count > 0)
@@ -557,7 +560,13 @@ public sealed partial class AudioConfigViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteSelectedPlaylistAsync()
+    private void DeleteSelectedPlaylist()
+    {
+        if (SelectedPlaylist is null) return;
+        _confirmDialog.Open($"Delete playlist '{SelectedPlaylist.Name}'? This cannot be undone.", () => _ = PerformDeleteSelectedPlaylistAsync());
+    }
+
+    private async Task PerformDeleteSelectedPlaylistAsync()
     {
         if (SelectedPlaylist is null) return;
         var removedId = SelectedPlaylist.Id;

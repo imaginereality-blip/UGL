@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using UGL.Core.Models;
 
@@ -95,6 +96,62 @@ public sealed partial class GameEditViewModel : ObservableObject
     [ObservableProperty] private string _logoPath = string.Empty;
     [ObservableProperty] private string _videoPath = string.Empty;
     [ObservableProperty] private string _marqueePath = string.Empty;
+
+    /// <summary>AI-generated poster/collage card art — a separate asset from
+    /// CoverPath, populated by GamesConfigViewModel.GenerateCardAsync and stored in
+    /// its own media/cardart/ subfolder on save.</summary>
+    [ObservableProperty] private string _cardArtPath = string.Empty;
+
+    /// <summary>When true, the browse grid displays CardArtPath instead of CoverPath
+    /// for this game (see MediaAssetResolver.ResolveCover) — both remain
+    /// independently editable regardless of this flag.</summary>
+    [ObservableProperty] private bool _preferCardArtAsCover;
+
+    /// <summary>Up to 3 scraped screenshots, persisted like Cover/Logo/Marquee so the
+    /// ComfyUI poster-collage generator can reuse them without re-scraping every
+    /// session. Populated by GamesConfigViewModel's scrape flow.</summary>
+    public ObservableCollection<string> ScreenshotPaths { get; } = [];
+
+    // Live thumbnails for the Art sub-tab, refreshed whenever the corresponding path
+    // changes (scrape, browse, drag-drop, or GenerateCardAsync completing). These are
+    // arbitrary local file paths, not resolver-based game media, so each is loaded
+    // directly from disk rather than through SkiaMediaCache/MediaAssetResolver.
+    [ObservableProperty] private Bitmap? _coverPreview;
+    [ObservableProperty] private Bitmap? _backgroundPreview;
+    [ObservableProperty] private Bitmap? _logoPreview;
+    [ObservableProperty] private Bitmap? _marqueePreview;
+    [ObservableProperty] private Bitmap? _cardArtPreview;
+
+    partial void OnCoverPathChanged(string value) => CoverPreview = LoadPreview(value, CoverPreview);
+    partial void OnBackgroundPathChanged(string value) => BackgroundPreview = LoadPreview(value, BackgroundPreview);
+    partial void OnLogoPathChanged(string value) => LogoPreview = LoadPreview(value, LogoPreview);
+    partial void OnMarqueePathChanged(string value) => MarqueePreview = LoadPreview(value, MarqueePreview);
+    partial void OnCardArtPathChanged(string value) => CardArtPreview = LoadPreview(value, CardArtPreview);
+
+    /// <summary>Disposes the previous preview bitmap (if any) and loads the new one
+    /// from disk. Returns null on a missing/empty/unreadable path rather than
+    /// throwing — this runs on every keystroke while typing a path manually.
+    /// Paths coming from a saved Game (via PopulateFrom) are stored "portable" —
+    /// relative to the app's own folder — by PortablePathHelper.ToPortablePath, so
+    /// they must be resolved back to absolute before touching the filesystem; a
+    /// scratch path from a fresh scrape/generate is already absolute and passes
+    /// through ToAbsolutePath unchanged.</summary>
+    private static Bitmap? LoadPreview(string path, Bitmap? previous)
+    {
+        previous?.Dispose();
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        var absolutePath = UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(path);
+        if (!File.Exists(absolutePath)) return null;
+        try
+        {
+            using var stream = File.OpenRead(absolutePath);
+            return new Bitmap(stream);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     /// <summary>Rare per-game override of the system's default bezel image. Empty in
     /// the overwhelming majority of cases.</summary>
@@ -235,6 +292,10 @@ public sealed partial class GameEditViewModel : ObservableObject
         LogoPath = game.Media.LogoPath;
         VideoPath = game.Media.VideoPath;
         MarqueePath = game.Media.MarqueePath;
+        CardArtPath = game.Media.CardArtPath;
+        PreferCardArtAsCover = game.Media.PreferCardArtAsCover;
+        ScreenshotPaths.Clear();
+        foreach (var screenshot in game.Media.ScreenshotPaths) ScreenshotPaths.Add(screenshot);
         BezelOverridePath = game.BezelOverridePath;
         DisplayModeOverrideWidth     = game.DisplayModeOverride?.Width     ?? 0;
         DisplayModeOverrideHeight    = game.DisplayModeOverride?.Height    ?? 0;
@@ -286,6 +347,11 @@ public sealed partial class GameEditViewModel : ObservableObject
                 LogoPath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(LogoPath.Trim()),
                 VideoPath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(VideoPath.Trim()),
                 MarqueePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(MarqueePath.Trim()),
+                CardArtPath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(CardArtPath.Trim()),
+                PreferCardArtAsCover = PreferCardArtAsCover,
+                ScreenshotPaths = ScreenshotPaths
+                    .Select(p => UGL.Core.Utilities.PortablePathHelper.ToPortablePath(p))
+                    .ToList(),
             },
             BezelOverridePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(BezelOverridePath.Trim()),
             DisplayModeOverride = (DisplayModeOverrideWidth, DisplayModeOverrideHeight, DisplayModeOverrideRefreshHz) == (0, 0, 0)

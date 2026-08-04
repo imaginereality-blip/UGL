@@ -142,7 +142,8 @@ public sealed class ScreenScraperSource : IGameScraperSource
                 }
             }
 
-            string? cover = null, logo = null, marquee = null, screenshot = null;
+            string? cover = null, logo = null, marquee = null;
+            List<string> screenshots = [], altCovers = [];
             if (jeu.TryGetProperty("medias", out var mediasEl) && mediasEl.ValueKind == JsonValueKind.Array)
             {
                 foreach (var media in mediasEl.EnumerateArray())
@@ -152,10 +153,13 @@ public sealed class ScreenScraperSource : IGameScraperSource
                     if (type is null || url2 is null) continue;
                     switch (type)
                     {
-                        case "box-2D": cover ??= url2; break;
+                        case "box-2D":
+                            if (cover is null) cover = url2; else altCovers.Add(url2);
+                            break;
+                        case "box-3D": altCovers.Add(url2); break;
                         case "wheel": case "wheel-hd": logo ??= url2; break;
                         case "marquee": marquee ??= url2; break;
-                        case "ss": screenshot ??= url2; break;
+                        case "ss": screenshots.Add(url2); break;
                     }
                 }
             }
@@ -169,7 +173,8 @@ public sealed class ScreenScraperSource : IGameScraperSource
                 CoverImageUrl = cover,
                 LogoImageUrl = logo,
                 MarqueeImageUrl = marquee,
-                ScreenshotImageUrl = screenshot,
+                ScreenshotImageUrls = screenshots,
+                ArtworkImageUrls = altCovers,
             };
         }
         catch (Exception ex)

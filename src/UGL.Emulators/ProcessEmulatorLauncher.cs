@@ -121,7 +121,19 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
                 }
 
                 var romPath = ResolveRomPath(game.RomPath);
-                var args = emulator.Arguments.Replace("{rom}", romPath, StringComparison.OrdinalIgnoreCase);
+
+                // Windows' command-line tokenizer splits ProcessStartInfo.Arguments on
+                // whitespace, so an unquoted path containing a space (very common —
+                // "Crazy Taxi 2 (USA).chd") gets split into several garbage arguments
+                // that the emulator silently ignores, launching to its own home menu
+                // instead of the game. Quote the substituted path when it needs it,
+                // unless the template already quotes the token itself (avoids
+                // double-quoting "{rom}"-style templates).
+                var templateAlreadyQuotesToken = emulator.Arguments.Contains("\"{rom}\"", StringComparison.OrdinalIgnoreCase);
+                var substitutedRomPath = !templateAlreadyQuotesToken && romPath.Contains(' ')
+                    ? $"\"{romPath}\""
+                    : romPath;
+                var args = emulator.Arguments.Replace("{rom}", substitutedRomPath, StringComparison.OrdinalIgnoreCase);
 
                 psi = new ProcessStartInfo
                 {

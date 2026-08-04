@@ -32,6 +32,8 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
 
     [ObservableProperty] private string _comfyUiEndpoint = string.Empty;
     [ObservableProperty] private string _comfyUiWorkflowPath = string.Empty;
+    [ObservableProperty] private string _comfyUiCleanupWorkflowPath = string.Empty;
+    [ObservableProperty] private string _textDetectionModelPath = string.Empty;
 
     [ObservableProperty] private string _statusMessage = string.Empty;
 
@@ -68,16 +70,19 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
         TheGamesDbApiKey = s.TheGamesDbApiKey;
         ComfyUiEndpoint = s.ComfyUiEndpoint;
         ComfyUiWorkflowPath = s.ComfyUiWorkflowPath;
+        ComfyUiCleanupWorkflowPath = s.ComfyUiCleanupWorkflowPath;
+        TextDetectionModelPath = s.TextDetectionModelPath;
     }
 
     partial void OnPreferredSourceChanged(ScraperSourceType value) => OnPropertyChanged(nameof(PreferredSourceLabel));
 
     // ── Field highlight ───────────────────────────────────────────────────
     [ObservableProperty] private int _focusIndex;
-    private const int PositionCount = 11;
+    private const int PositionCount = 13;
     // 0 PreferredSource, 1 IgdbClientId, 2 IgdbClientSecret, 3 ScreenScraperUsername,
     // 4 ScreenScraperPassword, 5 ScreenScraperDevId, 6 ScreenScraperDevPassword,
-    // 7 TheGamesDbApiKey, 8 ComfyUiEndpoint, 9 ComfyUiWorkflowPath (Browse), 10 Save.
+    // 7 TheGamesDbApiKey, 8 ComfyUiEndpoint, 9 ComfyUiWorkflowPath (Browse),
+    // 10 ComfyUiCleanupWorkflowPath (Browse), 11 TextDetectionModelPath (Browse), 12 Save.
 
     public bool IsPreferredSourceFocused        => FocusIndex == 0;
     public bool IsIgdbClientIdFocused           => FocusIndex == 1;
@@ -89,7 +94,9 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
     public bool IsTheGamesDbApiKeyFocused       => FocusIndex == 7;
     public bool IsComfyUiEndpointFocused        => FocusIndex == 8;
     public bool IsComfyUiWorkflowPathFocused    => FocusIndex == 9;
-    public bool IsSaveFocused                   => FocusIndex == 10;
+    public bool IsComfyUiCleanupWorkflowPathFocused => FocusIndex == 10;
+    public bool IsTextDetectionModelPathFocused => FocusIndex == 11;
+    public bool IsSaveFocused                   => FocusIndex == 12;
 
     partial void OnFocusIndexChanged(int value)
     {
@@ -103,6 +110,8 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsTheGamesDbApiKeyFocused));
         OnPropertyChanged(nameof(IsComfyUiEndpointFocused));
         OnPropertyChanged(nameof(IsComfyUiWorkflowPathFocused));
+        OnPropertyChanged(nameof(IsComfyUiCleanupWorkflowPathFocused));
+        OnPropertyChanged(nameof(IsTextDetectionModelPathFocused));
         OnPropertyChanged(nameof(IsSaveFocused));
     }
 
@@ -140,7 +149,9 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
             case 7: _virtualKeyboard.Open("TheGamesDB API Key", TheGamesDbApiKey, v => TheGamesDbApiKey = v); break;
             case 8: _virtualKeyboard.Open("ComfyUI Endpoint", ComfyUiEndpoint, v => ComfyUiEndpoint = v); break;
             case 9: await BrowseWorkflowFileAsync(); break;
-            case 10: await SaveAsync(); break;
+            case 10: await BrowseCleanupWorkflowFileAsync(); break;
+            case 11: await BrowseTextDetectionModelFileAsync(); break;
+            case 12: await SaveAsync(); break;
         }
     }
 
@@ -150,6 +161,22 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
         if (BrowseFileRequested is null) return;
         var path = await BrowseFileRequested.Invoke("ComfyUI Workflow (API format JSON)", ["*.json"]);
         if (path is not null) ComfyUiWorkflowPath = path;
+    }
+
+    [RelayCommand]
+    private async Task BrowseCleanupWorkflowFileAsync()
+    {
+        if (BrowseFileRequested is null) return;
+        var path = await BrowseFileRequested.Invoke("ComfyUI Cleanup Workflow (API format JSON)", ["*.json"]);
+        if (path is not null) ComfyUiCleanupWorkflowPath = path;
+    }
+
+    [RelayCommand]
+    private async Task BrowseTextDetectionModelFileAsync()
+    {
+        if (BrowseFileRequested is null) return;
+        var path = await BrowseFileRequested.Invoke("Text Detection Model (ONNX)", ["*.onnx"]);
+        if (path is not null) TextDetectionModelPath = path;
     }
 
     [RelayCommand]
@@ -167,6 +194,8 @@ public sealed partial class ScraperConfigViewModel : ObservableObject
             TheGamesDbApiKey = TheGamesDbApiKey.Trim(),
             ComfyUiEndpoint = ComfyUiEndpoint.Trim(),
             ComfyUiWorkflowPath = ComfyUiWorkflowPath.Trim(),
+            ComfyUiCleanupWorkflowPath = ComfyUiCleanupWorkflowPath.Trim(),
+            TextDetectionModelPath = TextDetectionModelPath.Trim(),
         };
 
         await _settingsRepo.SaveSettingsAsync(settings);

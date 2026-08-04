@@ -92,16 +92,18 @@ public sealed partial class ConfigEditorView : UserControl
     }
 
     /// <summary>
-    /// A mouse click directly on the Quit row is inherently deliberate — unlike D-pad
-    /// navigation, you don't "pass through" a row by clicking it — so it confirms Quit
-    /// immediately rather than requiring a separate confirm step.
+    /// A mouse click directly on a menu row is inherently deliberate — unlike D-pad
+    /// navigation, you don't "pass through" a row by clicking it — so it acts
+    /// immediately rather than requiring a separate confirm step. ConfirmMenuSelection
+    /// already branches correctly between confirming Quit and entering a tab's
+    /// content, so the click and gamepad-Confirm paths share the same logic.
     /// </summary>
     private void OnMenuItemTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is ConfigEditorViewModel vm &&
-            e.Source is Control { DataContext: SettingsMenuItem { IsQuit: true } })
+            e.Source is Control { DataContext: SettingsMenuItem })
         {
-            vm.ConfirmQuit();
+            vm.ConfirmMenuSelection();
         }
     }
 

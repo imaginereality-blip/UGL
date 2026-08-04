@@ -21,7 +21,7 @@
         <StackPanel Spacing="4">
           <TextBlock Text="Media Root" Foreground="#88FFFFFF" FontSize="12"/>
           <TextBlock Foreground="#44FFFFFF" FontSize="11"
-                     Text="Card art, video previews, sounds, music. Sub-folders: categories\, games\covers\, games\video\, sounds\, music\"/>
+                     Text="Card art, video previews, sounds, music. Sub-folders (flat, no games\ prefix): categories\, covers\, backgrounds\, logos\, marquees\, cardart\, screenshots\, video\, sounds\, music\"/>
           <Grid ColumnDefinitions="*,8,Auto">
             <TextBox Grid.Column="0" Text="{Binding MediaRootPath}"
                      Watermark="media  (relative to exe, or full path like D:\UGL\media)"/>

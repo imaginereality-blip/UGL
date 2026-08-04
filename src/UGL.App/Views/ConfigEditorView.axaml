@@ -267,5 +267,32 @@
       </StackPanel>
     </Border>
 
+    <!-- Delete-confirmation overlay — topmost sibling, same pattern as the virtual
+         keyboard above. Defaults to "No" highlighted (see ConfirmDialogViewModel). -->
+    <Border IsVisible="{Binding ConfirmDialog.IsOpen}"
+            Background="#F00D0D1A">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="20" Width="480">
+
+        <TextBlock Text="{Binding ConfirmDialog.Message}"
+                   FontSize="18" Foreground="White" HorizontalAlignment="Center"
+                   TextWrapping="Wrap" TextAlignment="Center"/>
+
+        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding ConfirmDialog.IsYesSelected}">
+            <Button Content="Yes, Delete" Command="{Binding ConfirmDialog.ClickYesCommand}"
+                    Background="#FFCC3333" Foreground="White" Padding="20,10"/>
+          </Border>
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding !ConfirmDialog.IsYesSelected}">
+            <Button Content="Cancel" Command="{Binding ConfirmDialog.ClickNoCommand}"
+                    Padding="20,10"/>
+          </Border>
+        </StackPanel>
+
+        <TextBlock Text="←→ Move      A Confirm      B Cancel"
+                   FontSize="12" Foreground="#66FFFFFF" HorizontalAlignment="Center"/>
+
+      </StackPanel>
+    </Border>
+
   </Grid>
 </UserControl>
