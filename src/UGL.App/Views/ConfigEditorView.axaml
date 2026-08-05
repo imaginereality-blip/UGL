@@ -200,6 +200,9 @@
             <Border IsVisible="{Binding IsCardHighlightTabActive}">
               <views:CardHighlightConfigView DataContext="{Binding CardHighlight}"/>
             </Border>
+            <Border IsVisible="{Binding IsTitleGraphicsTabActive}">
+              <views:TitleGraphicsConfigView DataContext="{Binding TitleGraphics}"/>
+            </Border>
             <Border IsVisible="{Binding IsPathsTabActive}">
               <views:PathsConfigView DataContext="{Binding Paths}"/>
             </Border>

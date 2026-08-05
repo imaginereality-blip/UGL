@@ -27,6 +27,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     public AudioConfigViewModel         Audio         { get; }
     public ThemeConfigViewModel         Theme         { get; }
     public CardHighlightConfigViewModel CardHighlight { get; }
+    public TitleGraphicsConfigViewModel TitleGraphics { get; }
     public PathsConfigViewModel         Paths         { get; }
     public PeripheralConfigViewModel    Peripherals   { get; }
     public HookConfigViewModel          Hooks         { get; }
@@ -37,7 +38,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     private readonly ILogger<ConfigEditorViewModel> _logger;
 
-    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, Paths, Peripherals, Hooks, Updates, Scraper }
+    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, TitleGraphics, Paths, Peripherals, Hooks, Updates, Scraper }
 
     [ObservableProperty] private Tab  _activeTab = Tab.Categories;
     [ObservableProperty] private bool _isCategoriesTabActive = true;
@@ -46,6 +47,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isAudioTabActive;
     [ObservableProperty] private bool _isThemeTabActive;
     [ObservableProperty] private bool _isCardHighlightTabActive;
+    [ObservableProperty] private bool _isTitleGraphicsTabActive;
     [ObservableProperty] private bool _isPathsTabActive;
     [ObservableProperty] private bool _isPeripheralsTabActive;
     [ObservableProperty] private bool _isHooksTabActive;
@@ -69,6 +71,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         new("Appearance",           null, IsHeader: true),
         new("Theme",                Tab.Theme,          Icon: "🎨"),
         new("Card Highlight",       Tab.CardHighlight,  Icon: ""),
+        new("Title Graphics",       Tab.TitleGraphics,  Icon: "🔤"),
 
         new("System",               null, IsHeader: true),
         new("Audio",                Tab.Audio,          Icon: "🎵"),
@@ -141,6 +144,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         AudioConfigViewModel audio,
         ThemeConfigViewModel theme,
         CardHighlightConfigViewModel cardHighlight,
+        TitleGraphicsConfigViewModel titleGraphics,
         PathsConfigViewModel paths,
         PeripheralConfigViewModel peripherals,
         HookConfigViewModel hooks,
@@ -156,6 +160,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Audio         = audio;
         Theme         = theme;
         CardHighlight = cardHighlight;
+        TitleGraphics = titleGraphics;
         Paths         = paths;
         Peripherals   = peripherals;
         Hooks         = hooks;
@@ -315,6 +320,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Audio:         Audio.NavigateUp();         break;
             case Tab.Theme:         Theme.NavigateUp();         break;
             case Tab.CardHighlight: CardHighlight.NavigateUp(); break;
+            case Tab.TitleGraphics: TitleGraphics.NavigateUp(); break;
             case Tab.Paths:         Paths.NavigateUp();         break;
             case Tab.Peripherals:   Peripherals.NavigateUp();   break;
             case Tab.Hooks:         Hooks.NavigateUp();         break;
@@ -333,6 +339,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Audio:         Audio.NavigateDown();         break;
             case Tab.Theme:         Theme.NavigateDown();         break;
             case Tab.CardHighlight: CardHighlight.NavigateDown(); break;
+            case Tab.TitleGraphics: TitleGraphics.NavigateDown(); break;
             case Tab.Paths:         Paths.NavigateDown();         break;
             case Tab.Peripherals:   Peripherals.NavigateDown();   break;
             case Tab.Hooks:         Hooks.NavigateDown();         break;
@@ -351,6 +358,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Audio:         Audio.NavigateLeft();         break;
             case Tab.Theme:         Theme.NavigateLeft();         break;
             case Tab.CardHighlight: CardHighlight.NavigateLeft(); break;
+            case Tab.TitleGraphics: TitleGraphics.NavigateLeft(); break;
             case Tab.Paths:         Paths.NavigateLeft();         break;
             case Tab.Peripherals:   Peripherals.NavigateLeft();   break;
             case Tab.Hooks:         Hooks.NavigateLeft();         break;
@@ -368,6 +376,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Audio:         Audio.NavigateRight();         break;
             case Tab.Theme:         Theme.NavigateRight();         break;
             case Tab.CardHighlight: CardHighlight.NavigateRight(); break;
+            case Tab.TitleGraphics: TitleGraphics.NavigateRight(); break;
             case Tab.Paths:         Paths.NavigateRight();         break;
             case Tab.Peripherals:   Peripherals.NavigateRight();   break;
             case Tab.Hooks:         Hooks.NavigateRight();         break;
@@ -385,6 +394,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Audio:         await Audio.ConfirmAsync();         break;
             case Tab.Theme:         await Theme.ConfirmAsync();         break;
             case Tab.CardHighlight: await CardHighlight.ConfirmAsync(); break;
+            case Tab.TitleGraphics: await TitleGraphics.ConfirmAsync(); break;
             case Tab.Paths:         await Paths.ConfirmAsync();         break;
             case Tab.Peripherals:   await Peripherals.ConfirmAsync();   break;
             case Tab.Hooks:         await Hooks.ConfirmAsync();         break;
@@ -402,6 +412,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Tab.Audio         => $"IsMusicTabActive={Audio.IsMusicTabActive} SelectedPlaylist={Audio.SelectedPlaylist?.Name ?? "null"} SoundsFocusIndex={Audio.SoundsFocusIndex}",
         Tab.Theme         => $"SelectedTheme={Theme.SelectedTheme?.Name ?? "null"}",
         Tab.CardHighlight => $"FocusIndex={CardHighlight.FocusIndex} Color={CardHighlight.CustomHex} Thickness={CardHighlight.Thickness} Intensity={CardHighlight.Intensity} Pulsing={CardHighlight.IsPulsing}",
+        Tab.TitleGraphics => $"FocusIndex={TitleGraphics.FocusIndex} Enabled={TitleGraphics.IsEnabled} Placement={TitleGraphics.Placement}",
         Tab.Paths         => $"FocusIndex={Paths.FocusIndex}",
         Tab.Peripherals   => $"Devices.Count={Peripherals.Devices.Count} SelectedDevice={Peripherals.SelectedDevice?.FriendlyName ?? "null"}",
         Tab.Hooks         => $"FocusIndex={Hooks.FocusIndex} Enabled={Hooks.EnabledGlobally} Tool={Hooks.ToolType}",
@@ -416,6 +427,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         await Audio.InitializeAsync();
         await Theme.InitializeAsync();
         await CardHighlight.InitializeAsync();
+        await TitleGraphics.InitializeAsync();
         await Paths.InitializeAsync();
         await Peripherals.InitializeAsync();
         await Hooks.InitializeAsync();
@@ -438,6 +450,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         IsAudioTabActive          = tab == Tab.Audio;
         IsThemeTabActive          = tab == Tab.Theme;
         IsCardHighlightTabActive  = tab == Tab.CardHighlight;
+        IsTitleGraphicsTabActive  = tab == Tab.TitleGraphics;
         IsPathsTabActive          = tab == Tab.Paths;
         IsPeripheralsTabActive    = tab == Tab.Peripherals;
         IsHooksTabActive          = tab == Tab.Hooks;

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/classical-3eb21833-b70d-4668-b204-14c7055adcce/styles.css">
+  <script src="_ds/classical-3eb21833-b70d-4668-b204-14c7055adcce/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; background: var(--color-bg); }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent); }
+    .mockscreen { background: #1A1A2E; border-radius: 4px; overflow: hidden; position: relative; font-family: "Segoe UI", system-ui, sans-serif; }
+    .mocklabel { font-family: var(--font-body); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text); opacity: 0.55; margin-bottom: 10px; }
+  </style>
+</helmet>
+
+<div style="max-width: 1120px; margin: 0 auto; padding: 96px 40px 120px;">
+
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:28px;">
+    <span class="tag tag-outline">UI Audit</span>
+    <span class="tag tag-outline">Avalonia · AXAML</span>
+    <span class="tag tag-outline">Controller-First</span>
+  </div>
+
+  <h1 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 56px; line-height: 1.05; margin: 0 0 24px; max-width: 15ch;">
+    Five interface upgrades for a cleaner, more professional UGL
+  </h1>
+  <p style="font-family: var(--font-body); font-size: 19px; line-height: 1.65; max-width: 68ch; color: var(--color-text); text-wrap: pretty;">
+    UGL's controller-first shell — five full-height cards, a bottom hint bar, an
+    overlay-based Settings screen — is already the right structure for a cabinet
+    dashboard. What's holding it back from reading as premium is inconsistency:
+    magic-number overlay colors scattered across views, a hint bar written as one
+    run-on sentence, flat accent-fill selections, and emoji standing in for icons.
+    Below are five concrete, low-risk changes, each shown before/after against the
+    app's own dark theme — none require new dependencies, none touch the
+    controller-input or MVVM architecture.
+  </p>
+
+  <div class="hr" style="margin: 48px 0;"></div>
+
+  <div class="card" style="padding: 28px 32px;">
+    <div class="card-kicker">Constraints respected</div>
+    <div style="font-family: var(--font-body); font-size: 16px; line-height: 1.9; color: var(--color-text); display:grid; grid-template-columns: 1fr 1fr; gap: 4px 32px;">
+      <div>— Pure AXAML + <code>DynamicResource</code> theme keys, no CSS</div>
+      <div>— 1920×1080, fixed full-screen, no window chrome</div>
+      <div>— Cards stay text/gradient-free on the face (§6.1 spec)</div>
+      <div>— No hover states — gamepad/D-pad focus only</div>
+      <div>— Selection driven from code-behind, not Avalonia's focus system</div>
+      <div>— Zero new NuGet packages or fonts</div>
+    </div>
+  </div>
+
+  <!-- ================= 1 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">01</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Consolidate the magic-number overlays into theme tokens</h2>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>ConfigEditorView</code>, <code>FilterOverlayView</code> and
+      <code>MainWindow</code> each hand-roll their own translucent grays —
+      <code>#22FFFFFF</code>, <code>#33FFFFFF</code>, <code>#44FFFFFF</code>,
+      <code>#66FFFFFF</code>, <code>#88FFFFFF</code>, <code>#CC000000</code>,
+      <code>#EE0D0D1A</code>, <code>#F00D0D1A</code> — eight near-identical
+      grays with no shared name. <code>ThemeKeys.OverlayBg</code> already exists
+      in <code>AvaloniaThemeService</code> and is never referenced. Add
+      <code>Divider</code>, <code>ScrimHeavy</code> and <code>PanelBackground</code>
+      alongside it and point every one of those literals at a token — same
+      pixels today, themeable and consistent from here on.
+    </p>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — five unrelated grays</div>
+        <div class="mockscreen" style="height:220px; padding:20px;">
+          <div style="border:1px solid #22FFFFFF; border-radius:6px; padding:14px; margin-bottom:10px; color:#fff; font-size:13px;">BorderBrush #22FFFFFF</div>
+          <div style="border:1px solid #44FFFFFF; border-radius:8px; padding:14px; margin-bottom:10px; color:#fff; font-size:13px;">BorderBrush #44FFFFFF</div>
+          <div style="border-top:1px solid #66FFFFFF; padding-top:10px; color:#fff; font-size:13px;">BorderBrush #66FFFFFF</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — one Divider token</div>
+        <div class="mockscreen" style="height:220px; padding:20px;">
+          <div style="border:1px solid rgba(255,255,255,0.14); border-radius:6px; padding:14px; margin-bottom:10px; color:#fff; font-size:13px;">BorderBrush {DynamicResource UGL.Divider}</div>
+          <div style="border:1px solid rgba(255,255,255,0.14); border-radius:6px; padding:14px; margin-bottom:10px; color:#fff; font-size:13px;">BorderBrush {DynamicResource UGL.Divider}</div>
+          <div style="border-top:1px solid rgba(255,255,255,0.14); padding-top:10px; color:#fff; font-size:13px;">BorderBrush {DynamicResource UGL.Divider}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 2 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">02</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Wire up CardSpacing; soften the selection border into a glow</h2>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>ThemeKeys.CardSpacing</code> is defined and populated by
+      <code>AvaloniaThemeService</code>, but <code>CategoryCard</code>/<code>GameCard</code>
+      hardcode <code>Margin="2"</code> instead of binding to it — the token is
+      dead. Bind it, and cards get real, theme-driven breathing room. Separately,
+      the selection highlight is a single flat-color border — bold, but hard,
+      almost like an old browser input outline. A <code>Border.Effect</code> with
+      a soft <code>DropShadowEffect</code> in the highlight color (kept alongside
+      the existing border, not replacing it) reads as a glow the card is lit by,
+      not a rectangle drawn on top — same configurable color/pulse from
+      <code>CardHighlightSettings</code>, no new settings UI needed. The card
+      face itself stays exactly as spec'd — art only, no text, no scale-up.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — Margin 2, hard border</div>
+        <div class="mockscreen" style="height:200px; display:flex;">
+          <div style="flex:1; background:#233; margin:2px;"></div>
+          <div style="flex:1; background:#16213E; margin:2px; border:3px solid #FFD700;"></div>
+          <div style="flex:1; background:#233; margin:2px;"></div>
+          <div style="flex:1; background:#1c2842; margin:2px;"></div>
+          <div style="flex:1; background:#233; margin:2px;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — CardSpacing token, glow</div>
+        <div class="mockscreen" style="height:200px; display:flex; gap:8px; padding:0 4px;">
+          <div style="flex:1; background:#233;"></div>
+          <div style="flex:1; background:#16213E; border:2px solid #FFD700; box-shadow: 0 0 22px 4px rgba(255,215,0,0.55);"></div>
+          <div style="flex:1; background:#233;"></div>
+          <div style="flex:1; background:#1c2842;"></div>
+          <div style="flex:1; background:#233;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 3 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">03</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Turn the hint bar into scannable button chips</h2>
+      <span class="tag tag-accent-2" style="margin-left:auto;">Medium effort</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      Every hint bar (<code>HomeMenuView</code>, <code>GameBrowserView</code>,
+      <code>ConfigEditorView</code>, <code>FilterOverlayView</code>) is one long
+      <code>TextBlock</code> string — "A Launch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B Back&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← →&nbsp;Browse…" —
+      read from a couch, at a glance, while holding a controller. A small
+      reusable <code>ButtonHint</code> <code>UserControl</code> (round badge for
+      the glyph + label, bound to a lightweight <code>ButtonHintViewModel</code>
+      list) turns that string into discrete chips laid out in a
+      <code>StackPanel</code> — same data, same font tokens, dramatically easier
+      to scan. This is the one change here worth a small new control, since the
+      pattern repeats on four screens.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — one run-on string</div>
+        <div class="mockscreen" style="height:96px; display:flex; align-items:center; padding:0 20px;">
+          <span style="color:#B0B0C0; font-size:14px; white-space:nowrap;">A&nbsp;&nbsp;Launch&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B&nbsp;&nbsp;Back&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← →&nbsp;&nbsp;Browse&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X&nbsp;&nbsp;Favorite</span>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — button-hint chips</div>
+        <div class="mockscreen" style="height:96px; display:flex; align-items:center; gap:22px; padding:0 20px;">
+          <span style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px;">
+            <span style="width:24px; height:24px; border-radius:50%; background:#0078D4; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">A</span>Launch
+          </span>
+          <span style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px;">
+            <span style="width:24px; height:24px; border-radius:50%; background:#3a3a4a; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">B</span>Back
+          </span>
+          <span style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px;">
+            <span style="width:24px; height:24px; border-radius:50%; background:#3a3a4a; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">↔</span>Browse
+          </span>
+          <span style="display:flex; align-items:center; gap:8px; color:#fff; font-size:14px;">
+            <span style="width:24px; height:24px; border-radius:50%; background:#3a3a4a; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">X</span>Favorite
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 4 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">04</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Trade the flat accent-fill selection for a left-accent row</h2>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>ConfigEditorView</code>'s <code>Style Selector="ListBoxItem:selected"</code>
+      sets the whole row to a solid <code>UGL.AccentColor</code> fill —
+      necessary because the default Fluent highlight was too subtle to see
+      while D-pad navigating, but a full-block fill reads more like a
+      highlighter than a settings app. A tinted background
+      (<code>Accent</code> at low opacity) plus a 3px left bar in solid accent
+      keeps the same instant legibility with a lighter touch — the pattern
+      Windows Settings and most console dashboards use.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — solid fill</div>
+        <div class="mockscreen" style="height:230px; padding:10px;">
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Categories</div>
+          <div style="padding:12px 14px; background:#0078D4; color:#fff; font-size:15px; border-radius:2px;">Games</div>
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Systems</div>
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Audio</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — tint + left accent bar</div>
+        <div class="mockscreen" style="height:230px; padding:10px;">
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Categories</div>
+          <div style="padding:12px 14px 12px 11px; background:rgba(0,120,212,0.16); border-left:3px solid #0078D4; color:#fff; font-size:15px;">Games</div>
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Systems</div>
+          <div style="padding:12px 14px; color:#B0B0C0; font-size:15px;">Audio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 5 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">05</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Rebuild the toasts as dark surfaces with an accent stripe</h2>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>MainWindow</code>'s launch-error and update toasts are solid
+      <code>#CCFF2222</code> red and <code>#CC2266CC</code> blue pills — bright
+      enough to read as an alert, but they clash with every other surface in the
+      app, which are all near-black. Matching the rest of the UI's language —
+      dark <code>SurfaceColor</code> panel, a 3px colored left stripe, a small
+      status glyph — keeps the same instant color-coded read without the
+      floating-candy look.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — solid color pill</div>
+        <div class="mockscreen" style="height:120px; display:flex; align-items:center; justify-content:center;">
+          <div style="background:#CCFF2222; padding:12px 22px; border-radius:6px; color:#fff; font-size:15px; font-weight:600;">Failed to launch — emulator not found</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — dark surface, accent stripe</div>
+        <div class="mockscreen" style="height:120px; display:flex; align-items:center; justify-content:center;">
+          <div style="background:#16213E; border-left:3px solid #FF5C5C; padding:12px 22px 12px 18px; border-radius:4px; box-shadow:0 8px 24px rgba(0,0,0,0.4); color:#fff; font-size:15px; font-weight:600; display:flex; gap:10px; align-items:center;">
+            <span style="color:#FF5C5C;">⚠</span>Failed to launch — emulator not found
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 6 ================= -->
+  <div style="margin-top: 88px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">06</span>
+      <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; margin:0;">Swap emoji glyphs for Segoe Fluent Icons</h2>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      "⚙ Settings", "✕ Close" and the "★" favorite badge are literal emoji
+      characters — they render in Windows' colorful emoji font, at inconsistent
+      weight and baseline versus the surrounding UI text, and look noticeably
+      different across Windows versions. <em>Segoe Fluent Icons</em> ships with
+      Windows 10/11 already (it's the same font File Explorer and Settings use
+      for their glyphs) — setting <code>FontFamily="Segoe Fluent Icons"</code>
+      on those specific <code>TextBlock</code>s and swapping the character to
+      the matching Fluent codepoint costs nothing new and instantly reads as
+      native, monochrome, on-brand chrome instead of borrowed emoji.
+    </p>
+    <div class="mockscreen" style="margin-top:28px; height:110px; display:flex; align-items:center; justify-content:space-around; padding:0 20px;">
+      <div style="text-align:center; color:#888; font-size:13px;">
+        <div style="font-size:30px; margin-bottom:8px;">⚙</div>Emoji ⚙ (before)
+      </div>
+      <div style="text-align:center; color:#fff; font-size:13px;">
+        <div style="font-size:26px; margin-bottom:8px; font-weight:300;">⚙</div>Fluent glyph (after)
+      </div>
+      <div style="text-align:center; color:#888; font-size:13px;">
+        <div style="font-size:26px; margin-bottom:8px;">★</div>Emoji ★ (before)
+      </div>
+      <div style="text-align:center; color:#FFD700; font-size:13px;">
+        <div style="font-size:20px; margin-bottom:8px;">★</div>Fluent glyph (after)
+      </div>
+    </div>
+  </div>
+
+  <div class="hr" style="margin: 96px 0 56px;"></div>
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px;">
+    <span class="tag tag-outline">Settings menu deep-dive</span>
+  </div>
+  <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 38px; margin: 0 0 16px; max-width: 20ch;">The Settings screen itself has the most room to improve</h2>
+  <p style="font-family: var(--font-body); font-size: 17px; line-height: 1.65; max-width: 74ch; color: var(--color-text);">
+    Reading <code>GamesConfigView</code>, <code>ThemeConfigView</code> and their
+    siblings closely, the tab content is where UGL reads least "premium" —
+    long flat forms, help text baked into field labels, a broken Theme picker,
+    and status colors that don't match anything else in the app. Four more
+    fixes, same rules: AXAML/DynamicResource only, no new dependencies.
+  </p>
+
+  <!-- ================= 7 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">07</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Group the Games editor into labeled sections</h3>
+      <span class="tag tag-accent-2" style="margin-left:auto;">Medium effort</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      The Games → Settings tab is one flat <code>StackPanel</code> of roughly
+      fifteen field groups — Title, System, Categories, Emulator, Genre,
+      Players, ROM Path, Process Override, Bezel, DemulShooter, Display Mode,
+      BIOS Override, Disabled Peripherals, Player Device Assignments — with no
+      visual separation between "things every game needs" and "rare
+      per-game overrides." A few <code>.hr</code>-style divider Borders plus
+      small uppercase section captions (Identity / Launch / Display &amp;
+      Input — same idea already used to separate the hint bar from content)
+      turn it from a wall of fields into a form you can scan.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — one continuous list</div>
+        <div class="mockscreen" style="height:210px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — captioned sections</div>
+        <div class="mockscreen" style="height:210px; padding:16px 16px 0;">
+          <div style="color:#0078D4; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px;">Identity</div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px; margin-bottom:8px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px; margin-bottom:14px;"></div>
+          <div style="border-top:1px solid rgba(255,255,255,0.14); margin-bottom:10px;"></div>
+          <div style="color:#0078D4; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:6px;">Launch overrides</div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px; margin-bottom:8px;"></div>
+          <div style="height:26px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">08</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Pull controller-hint text out of the field labels</h3>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      Labels like "System * (controller: Left/Right)" and "BIOS Override
+      (optional — only if this game needs different BIOS file(s)…; A to enter,
+      Up/Down to move, A to remove, B to exit)" pack the field name, its
+      requirement state, a usage caveat, <em>and</em> the full control scheme
+      into one wrapped sentence. The control scheme is static per-widget-type
+      (every ComboBox is always Left/Right, every reorderable list is always
+      A/Up-Down/A/B) — it belongs once in the shared bottom hint bar bound to
+      whatever field currently has focus, not repeated and re-typed on every
+      field. Labels shrink to just the name and its requirement/caveat.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — everything in the label</div>
+        <div class="mockscreen" style="height:140px; padding:16px;">
+          <div style="color:#88FFFFFF; font-size:11.5px; line-height:1.5; margin-bottom:8px;">BIOS Override (optional — only if this game needs different BIOS file(s) than its emulator's default; A to enter, Up/Down to move, A to remove, B to exit)</div>
+          <div style="height:40px; border:1px solid #2a2a3c; border-radius:3px;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — label + focus-driven hint bar</div>
+        <div class="mockscreen" style="height:140px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="color:#88FFFFFF; font-size:12px; margin-bottom:8px;">BIOS Override <span style="opacity:0.6;">(optional)</span></div>
+            <div style="height:40px; border:1px solid #0078D4; border-radius:3px;"></div>
+          </div>
+          <div style="color:#B0B0C0; font-size:12px; border-top:1px solid rgba(255,255,255,0.14); padding-top:8px;">A&nbsp;&nbsp;Enter&nbsp;&nbsp;&nbsp;&nbsp;↑↓&nbsp;&nbsp;Move&nbsp;&nbsp;&nbsp;&nbsp;A&nbsp;&nbsp;Remove&nbsp;&nbsp;&nbsp;&nbsp;B&nbsp;&nbsp;Exit</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 9 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">09</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Fix the Theme tab's duplicate, non-functional picker</h3>
+      <span class="tag tag-accent-2" style="margin-left:auto;">Medium effort</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>ThemeConfigView</code> renders two selectors for the same choice:
+      a row of 200×140 "swatch cards" whose three color dots are hardcoded
+      literals (<code>#FF0078D4</code>/<code>#FF1A1A2E</code>/<code>#FF16213E</code>)
+      identical on every card regardless of theme, followed by a plain
+      <code>ListBox</code> commented "more reliable for now" — which is the
+      control that actually drives selection. That's a dead, misleading
+      picker sitting above the real one. Bind each card's three dots to that
+      theme's own <code>AccentColor</code>/<code>BackgroundColor</code>/
+      <code>SurfaceColor</code> and put the <code>SelectedItem</code> binding
+      directly on the cards' container (a <code>ListBox</code> with a
+      <code>WrapPanel</code> panel template can host exactly this card layout)
+      — one control, doing what it visually promises.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — identical dots, plus a separate list</div>
+        <div class="mockscreen" style="height:230px; padding:16px;">
+          <div style="display:flex; gap:12px; margin-bottom:14px;">
+            <div style="width:100px; height:70px; border-radius:6px; background:#1A1A2E; padding:8px; display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#0078D4;"></span><span style="width:10px;height:10px;border-radius:50%;background:#1A1A2E;border:1px solid #333;"></span><span style="width:10px;height:10px;border-radius:50%;background:#16213E;"></span></div>
+              <div style="color:#fff; font-size:10px;">Default Dark</div>
+            </div>
+            <div style="width:100px; height:70px; border-radius:6px; background:#1A1A2E; padding:8px; display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#0078D4;"></span><span style="width:10px;height:10px;border-radius:50%;background:#1A1A2E;border:1px solid #333;"></span><span style="width:10px;height:10px;border-radius:50%;background:#16213E;"></span></div>
+              <div style="color:#fff; font-size:10px;">Neon Arcade</div>
+            </div>
+          </div>
+          <div style="color:#88FFFFFF; font-size:11px; margin-bottom:4px;">Select Theme:</div>
+          <div style="background:#11FFFFFF; border-radius:3px; padding:6px 8px; color:#fff; font-size:12px;">Neon Arcade</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — one real, bound picker</div>
+        <div class="mockscreen" style="height:230px; padding:16px; display:flex; gap:12px;">
+          <div style="width:100px; height:70px; border-radius:6px; background:#1A1A2E; padding:8px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#0078D4;"></span><span style="width:10px;height:10px;border-radius:50%;background:#1A1A2E;border:1px solid #333;"></span><span style="width:10px;height:10px;border-radius:50%;background:#16213E;"></span></div>
+            <div style="color:#fff; font-size:10px;">Default Dark</div>
+          </div>
+          <div style="width:100px; height:70px; border-radius:6px; background:#101416; border:2px solid #39FF88; padding:8px; display:flex; flex-direction:column; gap:6px; box-shadow:0 0 14px rgba(57,255,136,0.4);">
+            <div style="display:flex; gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#39FF88;"></span><span style="width:10px;height:10px;border-radius:50%;background:#101416;border:1px solid #333;"></span><span style="width:10px;height:10px;border-radius:50%;background:#182022;"></span></div>
+            <div style="color:#fff; font-size:10px;">Neon Arcade</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 10 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">10</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Give status/destructive colors the same token treatment</h3>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      Validation errors are <code>#FFFF4444</code>, save-success status is
+      <code>#FF44FF88</code>, the Delete button's label is plain white text —
+      three more hardcoded literals repeated across every config tab, and
+      none related to the app's actual accent. Add <code>Success</code> and
+      <code>Danger</code> to <code>ThemeKeys</code> next to <code>Accent</code>,
+      and reuse the <code>quitRow</code> red already defined in
+      <code>ConfigEditorView.Styles</code> for every Delete button — it's
+      currently only applied to the Settings sidebar's Quit row, despite
+      Games/Systems/Categories all having their own Delete actions in plain
+      button styling today.
+    </p>
+    <div class="mockscreen" style="margin-top:28px; height:90px; display:flex; align-items:center; gap:28px; padding:0 24px;">
+      <span style="color:#B0B0C0; font-size:13px;">Save button</span>
+      <span style="background:#0078D4; color:#fff; padding:8px 16px; border-radius:3px; font-size:13px;">💾 Save Game</span>
+      <span style="color:#B0B0C0; font-size:13px; margin-left:20px;">Delete — before</span>
+      <span style="border:1px solid #444; color:#fff; padding:8px 16px; border-radius:3px; font-size:13px;">✕ Delete</span>
+      <span style="color:#B0B0C0; font-size:13px; margin-left:20px;">Delete — after</span>
+      <span style="border:1px solid #FF5C5C; color:#FF5C5C; padding:8px 16px; border-radius:3px; font-size:13px; font-weight:600;">Delete</span>
+    </div>
+  </div>
+
+  <!-- ================= 11 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">11</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Collapse the Paths tab's five repeated field blocks into a table</h3>
+      <span class="tag tag-accent-2" style="margin-left:auto;">Medium effort</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>PathsConfigView</code> repeats the same tall block — name, two lines
+      of description, a text field, a Browse button — five times in a row for
+      Media/ROMs/Emulators/Addons/Logs Root, pushing "Save Paths" and the whole
+      Per-System section below the fold. Since every row is genuinely the same
+      shape (label, one-line path, browse), a single compact table — one row
+      per root, description as a hover/focus caption instead of always-on body
+      text — fits all five in the space the first two currently take, and
+      reads like a real "Storage locations" settings pane instead of five
+      stacked forms.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — 5 tall repeated blocks</div>
+        <div class="mockscreen" style="height:220px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+          <div style="border:2px solid transparent; border-radius:4px; padding:8px; background:rgba(255,255,255,0.03);">
+            <div style="color:#88FFFFFF; font-size:10px; margin-bottom:3px;">Media Root</div>
+            <div style="color:#44FFFFFF; font-size:8px; margin-bottom:4px;">Card art, video previews, sounds, music…</div>
+            <div style="height:18px; border:1px solid #2a2a3c; border-radius:2px;"></div>
+          </div>
+          <div style="border:2px solid transparent; border-radius:4px; padding:8px; background:rgba(255,255,255,0.03);">
+            <div style="color:#88FFFFFF; font-size:10px; margin-bottom:3px;">ROMs Root</div>
+            <div style="color:#44FFFFFF; font-size:8px; margin-bottom:4px;">Default ROM location…</div>
+            <div style="height:18px; border:1px solid #2a2a3c; border-radius:2px;"></div>
+          </div>
+          <div style="opacity:0.5; color:#666; font-size:11px; text-align:center; margin-top:4px;">⋮ 3 more, then Save</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — one compact table</div>
+        <div class="mockscreen" style="height:200px; padding:14px;">
+          <div style="display:grid; grid-template-columns: 110px 1fr 60px; gap:2px 10px; font-size:11px; color:#fff;">
+            <div style="color:#66FFFFFF; font-size:10px; text-transform:uppercase; letter-spacing:0.06em;">Root</div>
+            <div style="color:#66FFFFFF; font-size:10px; text-transform:uppercase; letter-spacing:0.06em;">Path</div>
+            <div></div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08);">Media</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#B0B0C0;">media</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#0078D4;">Browse</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08);">ROMs</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#B0B0C0;">roms</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#0078D4;">Browse</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08);">Emulators</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#B0B0C0;">emulators</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#0078D4;">Browse</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08);">Addons</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#B0B0C0;">addons</div>
+            <div style="padding:6px 0; border-top:1px solid rgba(255,255,255,0.08); color:#0078D4;">Browse</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 12 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">12</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Make the Card Highlight preview an actual card, not a labeled box</h3>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>CardHighlightConfigView</code>'s "Preview" is a plain
+      <code>SurfaceColor</code> box with the word "Preview" centered in it and
+      the chosen border applied around the whole box — closer to a debug
+      swatch than a preview of what a selected card actually looks like. Since
+      this tab exists specifically to tune how the selection reads on real
+      cards, drop a placeholder cover thumbnail (reuse <code>CategoryCard</code>'s
+      own big-letter placeholder look) inside that box so the border/glow
+      renders exactly as it will on Home Menu and Game Browser — while also
+      being the one screen in this document where the recent art-direction
+      call (recommendation 02, glow instead of hard line) should land first,
+      since users tune it here before ever seeing it in play.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — labeled swatch box</div>
+        <div class="mockscreen" style="height:130px; display:flex; align-items:center; justify-content:center;">
+          <div style="width:180px; height:70px; background:#16213E; border:3px solid #FFD700; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#66FFFFFF; font-size:12px;">Preview</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — real card placeholder + glow</div>
+        <div class="mockscreen" style="height:130px; display:flex; align-items:center; justify-content:center;">
+          <div style="width:120px; height:100px; background:#16213E; border:2px solid #FFD700; border-radius:4px; box-shadow:0 0 20px 3px rgba(255,215,0,0.5); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.15); font-size:56px; font-weight:900;">C</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 13 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">13</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Collapse the sidebar on explicit enter, not on arrow-move</h3>
+      <span class="tag tag-accent-2" style="margin-left:auto;">Medium effort</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      The 240px sidebar <code>ListBox</code> currently switches tab content live
+      as <code>↑↓</code> moves the highlight — useful for quickly previewing
+      what's in each tab, but it means the sidebar can't simply auto-hide on
+      selection without hiding/reappearing on every arrow press while
+      browsing. Keep that live-preview behavior for <code>↑↓</code>, and add a
+      second, explicit state: pressing <b>A</b> "enters" the highlighted tab —
+      same commit gesture <code>GamesConfigViewModel.IsEditorOpen</code>
+      already uses to hide its own game list — collapsing the sidebar and
+      giving the content the full width. <b>B</b> returns to the sidebar
+      exactly like Cancel already does for the game editor. One new bool per
+      <code>ConfigEditorViewModel</code> (<code>IsSidebarCollapsed</code>),
+      no change to the live-preview browsing people already rely on.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — sidebar always visible</div>
+        <div class="mockscreen" style="height:170px; display:flex;">
+          <div style="width:70px; background:#110D0D1A; border-right:1px solid rgba(255,255,255,0.14); padding:8px 6px; display:flex; flex-direction:column; gap:6px;">
+            <div style="background:#0078D4; border-radius:2px; height:16px;"></div>
+            <div style="height:16px;"></div>
+            <div style="height:16px;"></div>
+            <div style="height:16px;"></div>
+          </div>
+          <div style="flex:1; padding:14px; color:#B0B0C0; font-size:11px;">Content — ~78% of width</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — A enters, sidebar collapses</div>
+        <div class="mockscreen" style="height:170px; padding:14px; position:relative;">
+          <div style="position:absolute; top:10px; left:12px; color:#66FFFFFF; font-size:10px;">B  ⟵  Games</div>
+          <div style="color:#B0B0C0; font-size:11px; margin-top:26px;">Content — full width</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 14 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">14</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Group the 11-row sidebar into labeled clusters</h3>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      <code>ConfigEditorViewModel.MenuItems</code> is one flat list — Categories,
+      Games, Systems, Audio, Theme, Card Highlight, Paths, Controllers, Output
+      Hooks, Updates, Scraper, Quit — mixing content (what's in the library),
+      appearance (how it looks) and infrastructure (where things live, what's
+      plugged in) with no visual separation. A <code>SettingsMenuItem</code>
+      already carries just <code>Label</code>/<code>Tab</code>/<code>IsQuit</code>
+      — add an optional non-selectable <code>SettingsMenuItem</code> header row
+      (its own <code>DataTemplate</code>, skipped by <code>NavigateMenuUp/Down</code>)
+      between three groups: <b>Content</b> (Categories, Games, Systems),
+      <b>Appearance</b> (Theme, Card Highlight), <b>System</b> (Audio, Paths,
+      Controllers, Output Hooks, Updates, Scraper). Same ordering, same rows,
+      just labeled — and it gives future tabs an obvious place to land.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — one undivided list</div>
+        <div class="mockscreen" style="height:265px; padding:8px; display:flex; flex-direction:column; gap:2px; font-size:12px; color:#B0B0C0;">
+          <div style="padding:6px 8px;">🗂 Categories</div>
+          <div style="padding:6px 8px;">🎮 Games</div>
+          <div style="padding:6px 8px;">🖥 Systems</div>
+          <div style="padding:6px 8px;">🎵 Audio</div>
+          <div style="padding:6px 8px;">🎨 Theme</div>
+          <div style="padding:6px 8px;">🌟 Card Highlight</div>
+          <div style="padding:6px 8px;">📁 Paths</div>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — labeled clusters</div>
+        <div class="mockscreen" style="height:265px; padding:8px; display:flex; flex-direction:column; gap:1px; font-size:12px; color:#B0B0C0;">
+          <div style="color:#0078D4; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:6px 8px 2px;">Content</div>
+          <div style="padding:5px 8px;">🗂 Categories</div>
+          <div style="padding:5px 8px;">🎮 Games</div>
+          <div style="padding:5px 8px;">🖥 Systems</div>
+          <div style="color:#0078D4; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:8px 8px 2px;">Appearance</div>
+          <div style="padding:5px 8px;">🎨 Theme</div>
+          <div style="padding:5px 8px;">🌟 Card Highlight</div>
+          <div style="color:#0078D4; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; padding:8px 8px 2px;">System</div>
+          <div style="padding:5px 8px;">🎵 Audio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 15 ================= -->
+  <div style="margin-top: 64px;">
+    <div style="display:flex; align-items:baseline; gap:16px; margin-bottom: 12px;">
+      <span style="font-family: var(--font-heading); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--color-accent-700);">15</span>
+      <h3 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 26px; margin:0;">Make the Systems tab's inner sub-tabs match Audio/Games</h3>
+      <span class="tag tag-accent" style="margin-left:auto;">Quick win</span>
+    </div>
+    <p style="font-family: var(--font-body); font-size: 16px; line-height: 1.7; max-width: 76ch; color: var(--color-text);">
+      Three tabs have an LB/RB-switchable inner tab bar — Games (Settings/Art),
+      Audio (Music/System Sounds), Systems (Systems/Emulators). Games and Audio
+      wrap each button in <code>Classes="cfgField" Classes.fieldFocused="…"</code>
+      so the currently-focused sub-tab gets the accent border everyone learns
+      to look for; <code>SystemsConfigView</code>'s two buttons
+      (<code>SystemsTabBtn</code>/<code>EmulatorsTabBtn</code>) are plain
+      <code>Button</code>s with no focus wrapper at all — the one place in
+      Settings where LB/RB switching gives no visual feedback that it did
+      anything. Wrapping them the same way is a one-file fix and removes the
+      one inconsistent corner of an otherwise-uniform pattern.
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 28px;">
+      <div>
+        <div class="mocklabel">Before — Systems tab, no focus state</div>
+        <div class="mockscreen" style="height:80px; display:flex; align-items:center; gap:8px; padding:0 16px;">
+          <span style="padding:8px 16px; color:#fff; font-size:13px; border-radius:3px;">🖥 Systems</span>
+          <span style="padding:8px 16px; color:#fff; font-size:13px; border-radius:3px;">🎮 Emulators</span>
+        </div>
+      </div>
+      <div>
+        <div class="mocklabel">After — same cfgField pattern as Games/Audio</div>
+        <div class="mockscreen" style="height:80px; display:flex; align-items:center; gap:8px; padding:0 16px;">
+          <span style="padding:8px 16px; color:#fff; font-size:13px; border-radius:3px; border:2px solid #0078D4;">🖥 Systems</span>
+          <span style="padding:8px 16px; color:#fff; font-size:13px; border-radius:3px; border:2px solid transparent;">🎮 Emulators</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr" style="margin: 72px 0 40px;"></div>
+
+  <h2 style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 30px; margin: 0 0 20px;">Rollout order</h2>
+  <table class="table">
+    <thead>
+      <tr><th>Change</th><th>Effort</th><th>Files touched</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Theme tokens for overlays</td><td>Quick win</td><td>ThemeKeys.cs, AvaloniaThemeService.cs, ConfigEditorView/FilterOverlayView/MainWindow.axaml</td></tr>
+      <tr><td>CardSpacing binding + glow effect</td><td>Quick win</td><td>CategoryCard.axaml(.cs), GameCard.axaml(.cs)</td></tr>
+      <tr><td>Settings sidebar left-accent style</td><td>Quick win</td><td>ConfigEditorView.axaml</td></tr>
+      <tr><td>Toast restyle</td><td>Quick win</td><td>MainWindow.axaml</td></tr>
+      <tr><td>Segoe Fluent Icons swap</td><td>Quick win</td><td>ConfigEditorView.axaml, GameCard.axaml</td></tr>
+      <tr><td>ButtonHint control</td><td>Medium effort</td><td>New Views/Controls/ButtonHint.axaml(.cs); HomeMenuView/GameBrowserView/ConfigEditorView/FilterOverlayView.axaml</td></tr>
+      <tr><td>Pull control-hints out of field labels</td><td>Quick win</td><td>GamesConfigView + other Config/*.axaml, hint bar bindings</td></tr>
+      <tr><td>Success/Danger tokens, reuse quitRow on Delete buttons</td><td>Quick win</td><td>ThemeKeys.cs, AvaloniaThemeService.cs, ConfigEditorView.axaml, GamesConfigView/CategoriesConfigView/SystemsConfigView</td></tr>
+      <tr><td>Group Games editor into sections</td><td>Medium effort</td><td>GamesConfigView.axaml</td></tr>
+      <tr><td>Fix Theme tab duplicate picker</td><td>Medium effort</td><td>ThemeConfigView.axaml(.cs)</td></tr>
+      <tr><td>Collapse Paths tab into a table</td><td>Medium effort</td><td>PathsConfigView.axaml(.cs)</td></tr>
+      <tr><td>Real card-preview in Card Highlight tab</td><td>Quick win</td><td>CardHighlightConfigView.axaml</td></tr>
+      <tr><td>Collapse sidebar on explicit A-enter</td><td>Quick win — <code>IsContentFocused</code> already exists, only the AXAML column-width binding is missing</td><td>ConfigEditorView.axaml</td></tr>
+      <tr><td>Group sidebar into labeled clusters</td><td>Quick win</td><td>ConfigEditorViewModel.cs (MenuItems), ConfigEditorView.axaml</td></tr>
+      <tr><td>Fix Systems tab's unstyled sub-tab buttons</td><td>Quick win</td><td>SystemsConfigView.axaml</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+</x-dc>
+</body>
+</html>

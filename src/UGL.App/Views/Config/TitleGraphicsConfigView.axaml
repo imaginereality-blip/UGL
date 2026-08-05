@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+             xmlns:controls="clr-namespace:UGL.App.Views.Controls"
+             x:Class="UGL.App.Views.Config.TitleGraphicsConfigView"
+             x:DataType="vm:TitleGraphicsConfigViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.tabActive">
+      <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="16" Margin="0,0,0,16">
+
+      <TextBlock Text="Title Graphics" FontSize="18" FontWeight="Bold" Foreground="White"/>
+      <TextBlock Text="Overlays each category's own title text on its card — useful for categories that don't have logo art of their own. Always shows the category's Label, filling 90% of the card width."
+                 Foreground="#88FFFFFF" FontSize="13" TextWrapping="Wrap"/>
+
+      <!-- On/off -->
+      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnabledFocused}" Padding="8">
+        <CheckBox IsChecked="{Binding IsEnabled}" Content="Show title text on category cards"/>
+      </Border>
+
+      <!-- Placement -->
+      <StackPanel Spacing="6" IsVisible="{Binding IsEnabled}">
+        <TextBlock Text="Placement" Foreground="#88FFFFFF" FontSize="12"/>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlacementFocused}" Padding="4">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="Top" Command="{Binding SetPlacementCommand}" CommandParameter="Top"
+                    Classes.tabActive="{Binding IsTopSelected}" Padding="16,6"/>
+            <Button Content="Middle" Command="{Binding SetPlacementCommand}" CommandParameter="Middle"
+                    Classes.tabActive="{Binding IsMiddleSelected}" Padding="16,6"/>
+            <Button Content="Bottom" Command="{Binding SetPlacementCommand}" CommandParameter="Bottom"
+                    Classes.tabActive="{Binding IsBottomSelected}" Padding="16,6"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Live preview — same CategoryTitleGraphic control CategoryCard uses (see
+           its own doc comment), inside the same 90%-width/row-zoned layout, so this
+           renders byte-for-byte what the Home Menu will show. -->
+      <StackPanel Spacing="6">
+        <TextBlock Text="Preview" Foreground="#88FFFFFF" FontSize="12"/>
+        <Border Width="220" Height="140" Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" ClipToBounds="True">
+          <Grid>
+            <TextBlock Text="C" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontSize="72" FontWeight="Black" Opacity="0.15"
+                       Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+            <Grid RowDefinitions="0.3*,0.4*,0.3*" IsVisible="{Binding IsEnabled}">
+              <!-- 1.15x scale matches CategoryCard's post-fit size bump; Bottom gets
+                   the same extra downward nudge, here as a fixed 14px (10% of this
+                   preview's fixed 140px height) since the preview card size never
+                   changes at runtime the way a real card's does. -->
+              <Grid Grid.Row="0" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsTopSelected}">
+                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
+                         RenderTransformOrigin="50%,50%">
+                  <Viewbox.RenderTransform>
+                    <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
+                  </Viewbox.RenderTransform>
+                  <Viewbox.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+                  </Viewbox.Effect>
+                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
+                </Viewbox>
+              </Grid>
+              <Grid Grid.Row="1" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsMiddleSelected}">
+                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
+                         RenderTransformOrigin="50%,50%">
+                  <Viewbox.RenderTransform>
+                    <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
+                  </Viewbox.RenderTransform>
+                  <Viewbox.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+                  </Viewbox.Effect>
+                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
+                </Viewbox>
+              </Grid>
+              <Grid Grid.Row="2" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsBottomSelected}">
+                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
+                         RenderTransformOrigin="50%,50%">
+                  <Viewbox.RenderTransform>
+                    <TransformGroup>
+                      <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
+                      <TranslateTransform Y="11.2"/>
+                    </TransformGroup>
+                  </Viewbox.RenderTransform>
+                  <Viewbox.Effect>
+                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+                  </Viewbox.Effect>
+                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
+                </Viewbox>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Button Content="💾 Save" Command="{Binding SaveCommand}"
+                Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}"
+                Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
+        <TextBlock Text="{Binding StatusMessage}"
+                   Foreground="{DynamicResource UGL.SuccessColor}" VerticalAlignment="Center"
+                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

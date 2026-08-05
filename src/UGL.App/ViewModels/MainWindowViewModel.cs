@@ -114,6 +114,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
             // opened, which may never happen in a given session.
             var s = _configuration.Settings;
             CardHighlightSettings.Load(s.CardHighlightColor, s.CardHighlightIntensity, s.CardHighlightStyle, s.CardHighlightThickness);
+            TitleGraphicsSettings.Load(s.TitleGraphicsEnabled, s.TitleGraphicsPlacement);
 
             await _homeMenu.InitializeAsync();
             await _audioService.StartAsync();

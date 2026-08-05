@@ -59,6 +59,13 @@ public sealed class AppSettings
     public string CardHighlightStyle     { get; set; } = "Solid"; // "Solid" | "Pulsing"
     public int    CardHighlightThickness { get; set; } = 4; // pixels, 2-5
 
+    // ── Title graphics (category card title-text overlay) ──────────────────
+    // Text-over-art overlay on category cards, showing the category's own Label —
+    // for categories with no logo art of their own. Configured in Settings → Title
+    // Graphics.
+    public bool   TitleGraphicsEnabled   { get; set; } = false;
+    public string TitleGraphicsPlacement { get; set; } = "Middle"; // "Top" | "Middle" | "Bottom"
+
     // ── Peripheral firewall (HidHide) ────────────────────────────────────────
     // Backs the real (OS-level) version of Game.DisabledDeviceTypes — without this,
     // "disabling" a peripheral only affects UGL's own RawInput event pipeline, not

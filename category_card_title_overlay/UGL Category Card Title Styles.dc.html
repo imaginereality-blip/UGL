@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<style>
+body{margin:0;background:#f0eee9;font-family:system-ui,sans-serif}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 15px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-tsub{font:400 13px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.55);margin:0 0 22px;max-width:70ch}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:600 12px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.75)}
+.dv-odesc{font:400 11.5px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5);max-width:340px}
+.dv-card{max-width:100%;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.18);overflow:hidden}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+.card{width:340px;height:220px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t28">
+  <div class="dv-thd"><a class="dv-tid" href="#t28">28</a><span class="dv-tname"><a class="dv-oid" href="#27a">27a</a> + 3 alternate extrusion directions</span></div>
+  <p class="dv-tsub">Same stroked 12px extrusion layers, fill, and outline as 27a throughout — only the direction each step moves in changes.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="28a">
+      <div class="dv-olabel"><a class="dv-oid" href="#28a">28a</a>27a, unchanged (up-left diagonal)</div>
+      <div class="dv-odesc">Steps move up and to the left — matches the letters' -5° tilt, reads as "popping toward the viewer."</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="28b">
+      <div class="dv-olabel"><a class="dv-oid" href="#28b">28b</a>Straight down</div>
+      <div class="dv-odesc">Steps move straight down, no horizontal shift — depth reads as hanging/dropping below the letters rather than a side pop.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:14px; left:0; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:10.5px; left:0; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:7px; left:0; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:3.5px; left:0; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="28c">
+      <div class="dv-olabel"><a class="dv-oid" href="#28c">28c</a>Straight right</div>
+      <div class="dv-odesc">Steps move horizontally only, to the right, no vertical shift — a sideways "sliding" depth instead of a diagonal pop.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:0; left:14px; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:0; left:10.5px; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:7px; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:3.5px; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="28d">
+      <div class="dv-olabel"><a class="dv-oid" href="#28d">28d</a>Opposite diagonal — down-right</div>
+      <div class="dv-odesc">Full mirror of 28a — steps move down and to the right instead of up-left, reading as receding into the card rather than popping out (the original, pre-reversal direction, for direct comparison).</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:14px; left:14px; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:10.5px; left:10.5px; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:7px; left:7px; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:3.5px; left:3.5px; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#28a">28a</a>" · "go with <a class="dv-oid" href="#28c">28c</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t27">
+  <div class="dv-thd"><a class="dv-tid" href="#t27">27</a><span class="dv-tname"><a class="dv-oid" href="#26b">26b</a> with a thicker/bolder extrusion</span></div>
+  <p class="dv-tsub">26b's 12px purple outline kept. The extrusion layers were plain solid-fill letter copies (thin relative to the now-thick outline) — these variants give the extrusion steps their own stroke weight so the whole depth stack reads as chunky as the outline, not just the front edge.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="27a">
+      <div class="dv-olabel"><a class="dv-oid" href="#27a">27a</a>Extrusion layers stroked to match outline weight</div>
+      <div class="dv-odesc">Each of the 4 cyan/magenta steps now renders as a 12px stroke (same weight as the purple outline) instead of a plain filled letterform — the whole depth block reads uniformly bold.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="27b">
+      <div class="dv-olabel"><a class="dv-oid" href="#27b">27b</a>Stroked extrusion + wider step spacing</div>
+      <div class="dv-odesc">Same 12px stroke on every extrusion layer as 27a, plus the diagonal step distance widened slightly — since each step is now visually heavier, more spacing between them keeps the individual bands legible instead of merging into one blob.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-18px; left:-18px; -webkit-text-stroke:12px #6E1B57; color:transparent; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-13.5px; left:-13.5px; -webkit-text-stroke:12px #0C6874; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; -webkit-text-stroke:12px #0F7784; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-4.5px; left:-4.5px; -webkit-text-stroke:12px #1596A6; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#27a">27a</a>" · "widen <a class="dv-oid" href="#27b">27b</a>'s spacing even more" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t26">
+  <div class="dv-thd"><a class="dv-tid" href="#t26">26</a><span class="dv-tname"><a class="dv-oid" href="#22a">22a</a> restated, plus a few close variations</span></div>
+  <p class="dv-tsub">26a is 22a unchanged, for direct comparison. 26b/26c/26d nudge one thing each — band width, outline thickness, extrusion depth — while keeping everything else identical.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="26a">
+      <div class="dv-olabel"><a class="dv-oid" href="#26a">26a</a>22a, unchanged</div>
+      <div class="dv-odesc">Orange band 38–62%, medium red edges, 4-step reversed cyan/magenta extrusion, purple+black double outline.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="26b">
+      <div class="dv-olabel"><a class="dv-oid" href="#26b">26b</a>Thicker purple outline</div>
+      <div class="dv-odesc">Same everything, purple stroke widened from 9px to 12px (black inner stroke unchanged at 4px) — outline reads bolder/heavier against the background art.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:12px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="26c">
+      <div class="dv-olabel"><a class="dv-oid" href="#26c">26c</a>Deeper extrusion (6 steps)</div>
+      <div class="dv-odesc">Same fill/outline, extrusion lengthened from 4 to 6 steps for a more dramatic pop, matching the depth from <a class="dv-oid" href="#17b">17b</a>.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="26d">
+      <div class="dv-olabel"><a class="dv-oid" href="#26d">26d</a>Wider orange band</div>
+      <div class="dv-odesc">Fill band widened to 30–70% (between 22a and 21a) — a bit more orange presence in the letter while keeping the same medium-red edges.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 30%,#FFA23C 50%,#FF7A2E 70%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#26a">26a</a> as-is" · "combine <a class="dv-oid" href="#26b">26b</a>'s thicker outline with <a class="dv-oid" href="#26c">26c</a>'s deeper extrusion" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t25">
+  <div class="dv-thd"><a class="dv-tid" href="#t25">25</a><span class="dv-tname">Shiny gold text fill</span></div>
+  <p class="dv-tsub">Same double outline, 4-step reversed cyan/magenta extrusion and -5° tilt — fill swapped from chrome-steel to a metallic gold banded gradient (same light→dark→light reflective structure, warm hue), angled at 135° like <a class="dv-oid" href="#24a">24a</a>.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="25a">
+      <div class="dv-olabel"><a class="dv-oid" href="#25a">25a</a>Classic bright gold</div>
+      <div class="dv-odesc">Pale-gold highlight bands, warm amber mid-tones, deep bronze in the darkest band — reads as polished gold trophy/lettering.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(135deg,#FFF6D8 0%,#F0C862 20%,#9C6A1E 40%,#FFECB0 52%,#7A4E12 68%,#E0AC4C 84%,#FFF4CE 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="25b">
+      <div class="dv-olabel"><a class="dv-oid" href="#25b">25b</a>Deep antique gold</div>
+      <div class="dv-odesc">Darker, richer bronze/gold overall (less pale-yellow, more brass) — a heavier, more "aged trophy" metal look, higher contrast against the bright purple outline.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(135deg,#E8C878 0%,#B8862E 20%,#6B4712 40%,#D9AC5C 52%,#4A2F0C 68%,#9C6E24 84%,#EAC988 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="25c">
+      <div class="dv-olabel"><a class="dv-oid" href="#25c">25c</a>Gold with a hot orange-red glint</div>
+      <div class="dv-odesc">Same gold band structure as 25a, but the brightest highlight band is tinted warm orange-red instead of pale yellow — ties the metallic fill back to the card's red/orange palette while keeping the shine.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(135deg,#FFD9A0 0%,#E0A048 20%,#8A5A18 40%,#FF8A3C 52%,#7A4E12 68%,#D6A356 84%,#FFEBC2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#25a">25a</a>" · "narrow the bright bands in <a class="dv-oid" href="#25b">25b</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t24">
+  <div class="dv-thd"><a class="dv-tid" href="#t24">24</a><span class="dv-tname">Angling the chrome gradient — different light-source directions</span></div>
+  <p class="dv-tsub">Based on <a class="dv-oid" href="#23a">23a</a>'s cool-steel bands — same band sequence, only the gradient's angle changes, so the reflective highlight appears to come from a different direction each time.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="24a">
+      <div class="dv-olabel"><a class="dv-oid" href="#24a">24a</a>Diagonal, light from upper-left (135°)</div>
+      <div class="dv-odesc">Gradient runs corner-to-corner instead of straight down — highlight band now sweeps diagonally, as if lit from above and to the left, which also lines up with the letters' own -5° tilt.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(135deg,#FFFFFF 0%,#B9C0C9 20%,#6E747C 40%,#F5F7FA 52%,#565B62 68%,#9BA1A8 84%,#EDEFF2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="24b">
+      <div class="dv-olabel"><a class="dv-oid" href="#24b">24b</a>Steep diagonal, light from lower-right (-45°/315°)</div>
+      <div class="dv-odesc">Highlight sweep reversed to come from below and the right — opposite of 24a, plays against the extrusion direction (which now pops toward upper-left) for more contrast between "light" and "shadow" directions.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(315deg,#FFFFFF 0%,#B9C0C9 20%,#6E747C 40%,#F5F7FA 52%,#565B62 68%,#9BA1A8 84%,#EDEFF2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="24c">
+      <div class="dv-olabel"><a class="dv-oid" href="#24c">24c</a>Near-horizontal, light sweeping left-to-right (100°)</div>
+      <div class="dv-odesc">Gradient tipped almost horizontal — the highlight band now runs mostly left-to-right across the word rather than diagonally through it, like a single strong side-light rather than an overhead one.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(100deg,#FFFFFF 0%,#B9C0C9 20%,#6E747C 40%,#F5F7FA 52%,#565B62 68%,#9BA1A8 84%,#EDEFF2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#24a">24a</a>" · "try that same angle on the orange/red fill from <a class="dv-oid" href="#22a">22a</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t23">
+  <div class="dv-thd"><a class="dv-tid" href="#t23">23</a><span class="dv-tname">Shiny chrome fill options</span></div>
+  <p class="dv-tsub">Same double outline, 4-step reversed cyan/magenta extrusion and -5° tilt as <a class="dv-oid" href="#22a">22a</a> — fill swapped from red/orange to a metallic chrome banded gradient (light→dark→light, mimicking a curved reflective surface).</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="23a">
+      <div class="dv-olabel"><a class="dv-oid" href="#23a">23a</a>Cool steel chrome</div>
+      <div class="dv-odesc">Classic silver/steel bands — white highlight, mid-gray, darker gray, white highlight again — pure neutral metal, no color tint. Purple/black outline and cyan/magenta depth now carry all the color.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFFFFF 0%,#B9C0C9 20%,#6E747C 40%,#F5F7FA 52%,#565B62 68%,#9BA1A8 84%,#EDEFF2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="23b">
+      <div class="dv-olabel"><a class="dv-oid" href="#23b">23b</a>Warm chrome (gold-tinted highlights)</div>
+      <div class="dv-odesc">Same banded reflection structure, but the highlight bands shift warm — near-white-gold instead of pure white, dark bands a warm charcoal instead of neutral gray — bridges the metallic look with the red/orange palette used everywhere else on the card.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFF4DC 0%,#E0B978 20%,#6B4A2A 40%,#FFEBC2 52%,#5A3D22 68%,#D8A65E 84%,#FFF0D2 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="23c">
+      <div class="dv-olabel"><a class="dv-oid" href="#23c">23c</a>Chrome with an orange-red core reflection</div>
+      <div class="dv-odesc">Mostly the same cool-steel bands as 23a, but the mid-band reflection is tinted orange-red instead of gray — like a chrome surface reflecting a nearby fire/neon source, keeping one tie back to the card's established red/orange story.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFFFFF 0%,#C7CCD3 20%,#5A5F66 40%,#FF8A3C 52%,#4A4E54 68%,#B4BAC1 84%,#F5F7FA 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#23b">23b</a>" · "narrow the reflective bands in <a class="dv-oid" href="#23a">23a</a>" · "back to the orange/red fill from <a class="dv-oid" href="#22a">22a</a>"</p>
+</section>
+<section class="dv-turn" id="t22">
+  <div class="dv-thd"><a class="dv-tid" href="#t22">22</a><span class="dv-tname">Midpoint between <a class="dv-oid" href="#20a">20a</a> (thin/dark) and <a class="dv-oid" href="#21a">21a</a> (wide/bright)</span></div>
+  <p class="dv-tsub">Splitting the difference: orange band moderate width (not a thin line, not dominant), red at the edges medium-saturated (not near-black, not as bright as the orange itself). Same 4-step depth throughout.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="22a">
+      <div class="dv-olabel"><a class="dv-oid" href="#22a">22a</a>Balanced band, medium red</div>
+      <div class="dv-odesc">Orange band 38–62%, red a clear mid-saturation red (brighter than 20a's near-black, more muted than 21a's vivid red) at the top/bottom.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#D6231E 0%,#FF7A2E 38%,#FFA23C 50%,#FF7A2E 62%,#D6231E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="22b">
+      <div class="dv-olabel"><a class="dv-oid" href="#22b">22b</a>Slightly narrower band, redder edges</div>
+      <div class="dv-odesc">A touch closer to 20a — orange band tightened to 42–58%, red edges a bit deeper than 22a but still a true visible red, not near-black.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#B81C18 0%,#FF6B26 42%,#FF9E38 50%,#FF6B26 58%,#B81C18 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="22c">
+      <div class="dv-olabel"><a class="dv-oid" href="#22c">22c</a>Slightly wider band, brighter edges</div>
+      <div class="dv-odesc">A touch closer to 21a — orange band opened to 32–68%, red pushed brighter/more saturated than 22a while still reading as a distinct color from the orange peak.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#EB2A22 0%,#FF8632 32%,#FFA83C 50%,#FF8632 68%,#EB2A22 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#22a">22a</a>" · "nudge <a class="dv-oid" href="#22c">22c</a> a bit more toward orange" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t21">
+  <div class="dv-thd"><a class="dv-tid" href="#t21">21</a><span class="dv-tname">Restoring a true orange↔red gradient (not a thin line on dark red)</span></div>
+  <p class="dv-tsub">Back to a real gradient, not a bright accent on an otherwise-dark fill: bright orange holds through the whole center of the letter, blending smoothly out to a lighter, more saturated red at the top and bottom — same 4-step depth as <a class="dv-oid" href="#19a">19a</a>.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="21a">
+      <div class="dv-olabel"><a class="dv-oid" href="#21a">21a</a>Wide orange band, bright red edges</div>
+      <div class="dv-odesc">Bright orange from 25–75%, smoothly fading to a vivid (not dark) red at the very top and bottom — most of the letter reads orange, red is a real gradient endpoint, not a shadow.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF2E2E 0%,#FF7A2E 25%,#FFA23C 50%,#FF7A2E 75%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="21b">
+      <div class="dv-olabel"><a class="dv-oid" href="#21b">21b</a>Orange dominant, red only right at the tips</div>
+      <div class="dv-odesc">Orange holds even wider (15–85%), red confined to a small band only in the last 15% at each edge — reads as "orange letters with a red rim," strongest orange presence of the set.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FFA23C 15%,#FFA23C 85%,#FF3333 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="21c">
+      <div class="dv-olabel"><a class="dv-oid" href="#21c">21c</a>Smooth continuous fade, no flat bands</div>
+      <div class="dv-odesc">No held-flat middle section at all — pure continuous fade from red at the top, through orange at dead-center, back to red at the bottom (closest to the very first red→orange ask, re-centered).</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF2E2E 0%,#FFA23C 50%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#21a">21a</a>" · "make <a class="dv-oid" href="#21b">21b</a>'s orange even brighter" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t20">
+  <div class="dv-thd"><a class="dv-tid" href="#t20">20</a><span class="dv-tname">Thin bright orange band, deep red top/bottom</span></div>
+  <p class="dv-tsub">Same 4-step depth as <a class="dv-oid" href="#19a">19a</a>. Fill narrowed to a tight, bright orange line at the exact center, with the red darkened and holding for most of the letter height above and below it.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="20a">
+      <div class="dv-olabel"><a class="dv-oid" href="#20a">20a</a>Thin orange line, deep red</div>
+      <div class="dv-odesc">Deep red 0–46% and 54–100%, a narrow bright-orange band 48–52% — reads as a hot filament line running through dark red letters.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#8C0F0F 0%,#8C0F0F 46%,#FFB238 50%,#8C0F0F 54%,#8C0F0F 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="20b">
+      <div class="dv-olabel"><a class="dv-oid" href="#20b">20b</a>Same, with the orange line glowing</div>
+      <div class="dv-odesc">Identical fill bands, plus a soft warm glow confined to just the orange line (a low-blur DropShadowEffect on the fill layer) — the filament now visibly emits light instead of just being a bright color stripe.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#8C0F0F 0%,#8C0F0F 46%,#FFB238 50%,#8C0F0F 54%,#8C0F0F 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 8px rgba(255,178,56,.7));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="20c">
+      <div class="dv-olabel"><a class="dv-oid" href="#20c">20c</a>Even thinner line, near-black-red edges</div>
+      <div class="dv-odesc">Orange band narrowed further (49–51%) and the red darkened almost to a blackish maroon at the far top/bottom — maximum contrast between the thin bright line and the rest of the letter.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#4A0808 0%,#4A0808 47%,#FFC050 50%,#4A0808 53%,#4A0808 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#20b">20b</a>" · "make <a class="dv-oid" href="#20c">20c</a>'s edges even darker" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t19">
+  <div class="dv-thd"><a class="dv-tid" href="#t19">19</a><span class="dv-tname">Shallower depth + orange-center/red-edge fill</span></div>
+  <p class="dv-tsub">Extrusion trimmed from 6-7 steps down to 4, same reversed up-left direction. Fill flipped from edge-bright to center-bright: orange peaks in the middle, fading to red at both the top and bottom.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="19a">
+      <div class="dv-olabel"><a class="dv-oid" href="#19a">19a</a>4-step depth, orange-center fill</div>
+      <div class="dv-odesc">Fill: red at 0%, bright orange peak at 50%, back to red at 100% — a middle "hot band" instead of a top-to-bottom fade. Extrusion shortened to 4 cyan steps + thin magenta.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF2E2E 0%,#FF8A3C 50%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="19b">
+      <div class="dv-olabel"><a class="dv-oid" href="#19b">19b</a>4-step depth, punchier orange-center (wider hot band)</div>
+      <div class="dv-odesc">Same 4-step extrusion; fill's orange band widened (holds bright orange from ~35–65% instead of a single peak point) so more of the letter reads orange before fading to red at the very top/bottom edges.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-14px; left:-14px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-10.5px; left:-10.5px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-7px; left:-7px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-3.5px; left:-3.5px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF2E2E 0%,#FF9A4C 35%,#FFAE5C 50%,#FF9A4C 65%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#19b">19b</a>" · "trim the depth even more" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t18">
+  <div class="dv-thd"><a class="dv-tid" href="#t18">18</a><span class="dv-tname">Brighter fill options on <a class="dv-oid" href="#17b">17b</a> — maximum pop</span></div>
+  <p class="dv-tsub">Same reversed 6-step cyan/magenta extrusion, outline and tilt as 17b — only the fill brightness/contrast changes across these four, each pushing further than the last.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="18a">
+      <div class="dv-olabel"><a class="dv-oid" href="#18a">18a</a>Hotter red-orange, brighter top highlight</div>
+      <div class="dv-odesc">Fill gradient stops pushed brighter/more saturated (near-white-hot red at the very top edge, fading to a hot orange) — same two-color story as before, just turned up.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFE082 0%,#FF5B1A 28%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="18b">
+      <div class="dv-olabel"><a class="dv-oid" href="#18b">18b</a>White-hot core, red-orange edges only</div>
+      <div class="dv-odesc">Center of the fill blows out to near-white, red/orange pushed to the very top and bottom edges only — reads like the letters are glowing so hot the middle overexposes, strongest "pop" of the set.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FFF3D6 45%,#FFF3D6 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="18c">
+      <div class="dv-olabel"><a class="dv-oid" href="#18c">18c</a>18a's gradient + glow on the fill itself</div>
+      <div class="dv-odesc">Same bright top-hot gradient as 18a, plus a soft warm DropShadowEffect on the fill layer only (not the whole stack) — the letters look lit from within, adding pop without touching the extrusion or outline.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFE082 0%,#FF5B1A 28%,#FF2E2E 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 10px rgba(255,140,40,.75));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="18d">
+      <div class="dv-olabel"><a class="dv-oid" href="#18d">18d</a>18b's white-hot core + brighter cyan/magenta extrusion to match</div>
+      <div class="dv-odesc">18b's blown-out fill, plus the cyan/magenta extrusion steps themselves brightened/more saturated (not just darkened toward black) so the whole lockup — fill, outline, extrusion — reads at the same high-energy intensity instead of a bright front on a duller back.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#B0349A; opacity:.6;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#0E7688;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#118CA0;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#14A2B8;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#17B8D0;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#1ACEE8;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#3CE7FF;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FFF3D6 45%,#FFF3D6 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#18b">18b</a>" · "combine <a class="dv-oid" href="#18c">18c</a>'s glow with <a class="dv-oid" href="#18d">18d</a>'s brighter extrusion" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t17">
+  <div class="dv-thd"><a class="dv-tid" href="#t17">17</a><span class="dv-tname">Reversing the extrusion direction — popping toward the viewer</span></div>
+  <p class="dv-tsub">16a/16b's steps went down-right, which reads as the block receding away from the viewer (like a raised stamp). Flipping the step direction to up-left makes the front face read as closest to the viewer, bottom-right — the classic "leaping off the screen" comic-title trick. Same cyan-stack + thin magenta palette as <a class="dv-oid" href="#16a">16a</a>.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="17a">
+      <div class="dv-olabel"><a class="dv-oid" href="#17a">17a</a>Reversed 4-step cyan + thin magenta</div>
+      <div class="dv-odesc">Same layer count/colors as 16a, offsets flipped to up-left — combined with the drop shadow still falling down-right, the letters now read as jutting toward the viewer rather than sunk into the card.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:-15px; left:-15px; color:#7A1F60; opacity:.55;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0A5A66;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0E7688;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#1391AA;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#17ACCC;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="17b">
+      <div class="dv-olabel"><a class="dv-oid" href="#17b">17b</a>Reversed + deeper 6-step throw</div>
+      <div class="dv-odesc">Same reversal, longer 6-step throw (like 16b) for a more exaggerated "leaping forward" depth.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:-21px; left:-21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:-18px; left:-18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:-15px; left:-15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:-12px; left:-12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:-3px; left:-3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#17a">17a</a>" · "make <a class="dv-oid" href="#17b">17b</a>'s throw even longer" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t16">
+  <div class="dv-thd"><a class="dv-tid" href="#t16">16</a><span class="dv-tname">3D extrusion built from the two ghost colors themselves</span></div>
+  <p class="dv-tsub">Replacing the purple-family extrusion stack with the glitch palette: several stepped cyan layers form the bulk of the 3D depth, with one thinner magenta/pink-purple layer furthest back (the "second shadow" a real chromatic split would cast). Outline and fill unchanged.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="16a">
+      <div class="dv-olabel"><a class="dv-oid" href="#16a">16a</a>4 cyan steps + 1 thin magenta back-layer</div>
+      <div class="dv-odesc">4 diagonally-stepped cyan copies right behind the outline, darkening slightly with distance; one magenta copy sits one step further back and thinner (achieved with a smaller stroke-equivalent — here, lower opacity to read as "thin").</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:15px; left:15px; color:#7A1F60; opacity:.55;">RACING</span>
+          <span style="position:absolute; top:12px; left:12px; color:#0A5A66;">RACING</span>
+          <span style="position:absolute; top:9px; left:9px; color:#0E7688;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#1391AA;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#17ACCC;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="16b">
+      <div class="dv-olabel"><a class="dv-oid" href="#16b">16b</a>6 cyan steps (longer throw) + thin magenta</div>
+      <div class="dv-odesc">Deeper cyan stack (6 steps) for a bolder cast-shadow block, magenta kept as a single thin sliver at the very back — most of the depth now reads unmistakably cyan/blue, with the magenta only as a faint accent at the furthest edge.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:21px; left:21px; color:#6E1B57; opacity:.5;">RACING</span>
+          <span style="position:absolute; top:18px; left:18px; color:#074A54;">RACING</span>
+          <span style="position:absolute; top:15px; left:15px; color:#095964;">RACING</span>
+          <span style="position:absolute; top:12px; left:12px; color:#0C6874;">RACING</span>
+          <span style="position:absolute; top:9px; left:9px; color:#0F7784;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#128694;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1596A6;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="16c">
+      <div class="dv-olabel"><a class="dv-oid" href="#16c">16c</a>4 cyan steps, magenta layer interleaved (not just at the back)</div>
+      <div class="dv-odesc">Same 4-step cyan depth as 16a, but the thin magenta layer sits second-from-front (just behind the outline) instead of at the very back — a bright magenta seam shows right at the base of the extrusion, cyan carries the rest of the depth behind it.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:15px; left:15px; color:#0A5A66;">RACING</span>
+          <span style="position:absolute; top:12px; left:12px; color:#0E7688;">RACING</span>
+          <span style="position:absolute; top:9px; left:9px; color:#1391AA;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#17ACCC;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#C63CB0; opacity:.75;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#16a">16a</a>" · "make <a class="dv-oid" href="#16b">16b</a>'s cyan even deeper" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t15">
+  <div class="dv-thd"><a class="dv-tid" href="#t15">15</a><span class="dv-tname">Diagonal ghost offset (horizontal + vertical) on <a class="dv-oid" href="#14a">14a</a></span></div>
+  <p class="dv-tsub">Same full-opacity ghosts, still layered behind the outline — each ghost now shifts on both axes instead of purely sideways, so the split reads as a diagonal signal-tear rather than a flat horizontal mirror.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="15a">
+      <div class="dv-olabel"><a class="dv-oid" href="#15a">15a</a>Opposite diagonals (cyan up-left, magenta down-right)</div>
+      <div class="dv-odesc">Cyan shifts up and left, magenta shifts down and right — mirrors the -5° tilt of the letters themselves, so the offset direction feels connected to the type rather than arbitrary.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:-6px; left:-6px; color:#00F0FF;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#FF00C8;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="15b">
+      <div class="dv-olabel"><a class="dv-oid" href="#15b">15b</a>Same diagonal, both shifted up (cyan far, magenta near)</div>
+      <div class="dv-odesc">Both ghosts move up and to the sides (not opposite up/down) with slightly different vertical distances — reads as one consistent "light source" direction rather than a symmetric mirror split.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:-8px; left:-7px; color:#00F0FF;">RACING</span>
+          <span style="position:absolute; top:-3px; left:7px; color:#FF00C8;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="15c">
+      <div class="dv-olabel"><a class="dv-oid" href="#15c">15c</a>Steeper diagonal, larger offset</div>
+      <div class="dv-odesc">Same opposite-diagonal direction as 15a but pushed further (±9px both axes) — more dramatic tear, still fully behind the outline so it stays a sliver, not a doubled word.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:-9px; left:-9px; color:#00F0FF;">RACING</span>
+          <span style="position:absolute; top:9px; left:9px; color:#FF00C8;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#15a">15a</a>" · "make <a class="dv-oid" href="#15c">15c</a>'s offset even bigger" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t14">
+  <div class="dv-thd"><a class="dv-tid" href="#t14">14</a><span class="dv-tname">Turning up the ghost intensity on <a class="dv-oid" href="#13a">13a</a></span></div>
+  <p class="dv-tsub">Same layering as 13a (ghosts behind the outline, only a sliver peeking past the purple/black edge) — pushing opacity and saturation up in steps to find how far it can go before it starts fighting the fill again.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="14a">
+      <div class="dv-olabel"><a class="dv-oid" href="#14a">14a</a>Full opacity ghosts</div>
+      <div class="dv-odesc">Opacity raised from .9 to 1.0 and blend mode dropped (flat color, not screen) — the sliver that peeks past the outline is now a fully solid, saturated cyan/magenta edge instead of a translucent one.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; color:#00F0FF;">RACING</span>
+          <span style="position:absolute; top:0; left:6px; color:#FF00C8;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="14b">
+      <div class="dv-olabel"><a class="dv-oid" href="#14b">14b</a>Full opacity + wider offset (8px)</div>
+      <div class="dv-odesc">Same solid full-opacity ghosts as 14a, offset pushed further to 8px — more of the cyan/magenta sliver shows past the outline on each side, reads louder/more "glitched" while staying behind the outline layer.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:-8px; color:#00F0FF;">RACING</span>
+          <span style="position:absolute; top:0; left:8px; color:#FF00C8;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#14a">14a</a>" · "push <a class="dv-oid" href="#14b">14b</a> even wider" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t13">
+  <div class="dv-thd"><a class="dv-tid" href="#t13">13</a><span class="dv-tname">Making <a class="dv-oid" href="#12b">12b</a>'s wide offset more readable</span></div>
+  <p class="dv-tsub">12b's problem: the cyan/magenta ghosts sit in front of/beside the fill at full strength, so they compete with the letterform itself instead of reading as a shadow behind it. Three fixes, each keeping the ~6px wide offset you liked.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="13a">
+      <div class="dv-olabel"><a class="dv-oid" href="#13a">13a</a>Ghosts pushed behind the outline (not just behind the fill)</div>
+      <div class="dv-odesc">Reordered so both outline layers paint on top of the ghosts, not the other way around — only a sliver of cyan/magenta peeks past the purple/black edge, like a shadow cast behind the whole lockup rather than smeared across it.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; color:#3CE7FF; opacity:.9;">RACING</span>
+          <span style="position:absolute; top:0; left:6px; color:#FF3CB0; opacity:.9;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="13b">
+      <div class="dv-olabel"><a class="dv-oid" href="#13b">13b</a>Same layering as 12b, thinner ghost strokes</div>
+      <div class="dv-odesc">Keeps ghosts in front like 12b, but renders them as a thin outline only (not a filled letterform) — a colored line 6px to each side rather than a solid colored duplicate, so they read as an edge artifact instead of a second copy of the whole word.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; -webkit-text-stroke:2px #3CE7FF; color:transparent; opacity:.85; mix-blend-mode:screen;">RACING</span>
+          <span style="position:absolute; top:0; left:6px; -webkit-text-stroke:2px #FF3CB0; color:transparent; opacity:.85; mix-blend-mode:screen;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="13c">
+      <div class="dv-olabel"><a class="dv-oid" href="#13c">13c</a>Ghosts confined to top/bottom edge only</div>
+      <div class="dv-odesc">Clips the two ghost copies to thin strips at the very top and bottom of the letterform (where a real chromatic-fringe artifact actually concentrates) instead of the full height — keeps the wide 6px offset fully visible at the edges while leaving the readable center of each letter completely clean.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; color:#3CE7FF; opacity:.85; mix-blend-mode:screen; clip-path:inset(0 0 78% 0);">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; color:#3CE7FF; opacity:.85; mix-blend-mode:screen; clip-path:inset(80% 0 0 0);">RACING</span>
+          <span style="position:absolute; top:0; left:6px; color:#FF3CB0; opacity:.85; mix-blend-mode:screen; clip-path:inset(0 0 78% 0);">RACING</span>
+          <span style="position:absolute; top:0; left:6px; color:#FF3CB0; opacity:.85; mix-blend-mode:screen; clip-path:inset(80% 0 0 0);">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#13a">13a</a>" · "combine <a class="dv-oid" href="#13c">13c</a>'s edge-clip with <a class="dv-oid" href="#13b">13b</a>'s thin stroke" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t12">
+  <div class="dv-thd"><a class="dv-tid" href="#t12">12</a><span class="dv-tname">Variations on <a class="dv-oid" href="#11c">11c</a>'s RGB glitch split</span></div>
+  <p class="dv-tsub">Same chassis (black+purple double outline, purple extrusion, red→orange fill, -5° tilt) — varying the glitch offset's distance, axis, and whether it's a constant static look or implies a periodic "flicker" (a DispatcherTimer nudging the offset every so often, like the existing pulse-highlight timer).</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="12a">
+      <div class="dv-olabel"><a class="dv-oid" href="#12a">12a</a>Subtler offset (barely-there aberration)</div>
+      <div class="dv-odesc">Cyan/magenta copies pulled in to ~1.5px offset and lower opacity — reads as a lens-aberration artifact rather than a deliberate "glitch," calmer at a glance.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-1.5px; color:#3CE7FF; opacity:.45; mix-blend-mode:screen;">RACING</span>
+          <span style="position:absolute; top:0; left:1.5px; color:#FF3CB0; opacity:.45; mix-blend-mode:screen;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="12b">
+      <div class="dv-olabel"><a class="dv-oid" href="#12b">12b</a>Wider, punchier offset</div>
+      <div class="dv-odesc">Larger separation (~6px) and full opacity — much more overt "double-vision" glitch read, closer to a deliberate signal-corruption title card.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-6px; color:#3CE7FF; opacity:.8; mix-blend-mode:screen;">RACING</span>
+          <span style="position:absolute; top:0; left:6px; color:#FF3CB0; opacity:.8; mix-blend-mode:screen;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="12c">
+      <div class="dv-olabel"><a class="dv-oid" href="#12c">12c</a>Vertical split instead of horizontal</div>
+      <div class="dv-odesc">Cyan/magenta ghosts offset up/down instead of left/right — a less common variant of the effect, reads slightly more "scanline tear" than "horizontal chromatic aberration."</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:-4px; left:0; color:#3CE7FF; opacity:.65; mix-blend-mode:screen;">RACING</span>
+          <span style="position:absolute; top:4px; left:0; color:#FF3CB0; opacity:.65; mix-blend-mode:screen;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="12d">
+      <div class="dv-olabel"><a class="dv-oid" href="#12d">12d</a>Only on part of the word (partial glitch band)</div>
+      <div class="dv-odesc">Ghosts clipped to a horizontal band across the middle of the word instead of the whole thing — like a signal tear passing through one moment, not a constant effect on every letter. In Avalonia this uses a Clip/RectangleGeometry on the two ghost TextBlocks, cheap and static.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-5px; color:#3CE7FF; opacity:.85; mix-blend-mode:screen; clip-path:inset(35% 0 30% 0);">RACING</span>
+          <span style="position:absolute; top:0; left:5px; color:#FF3CB0; opacity:.85; mix-blend-mode:screen; clip-path:inset(35% 0 30% 0);">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#12b">12b</a>" · "combine <a class="dv-oid" href="#12d">12d</a>'s banded clip with <a class="dv-oid" href="#12c">12c</a>'s vertical offset" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t11">
+  <div class="dv-thd"><a class="dv-tid" href="#t11">11</a><span class="dv-tname">90s comic / videogame / cyberpunk / synthwave — leaning into the influences directly</span></div>
+  <p class="dv-tsub">Same chassis as <a class="dv-oid" href="#8a">8a</a> (black+purple double outline, purple-family extrusion, -5° tilt, red→orange fill) — each option adds one signature device from those references rather than a new fill gradient.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="11a">
+      <div class="dv-olabel"><a class="dv-oid" href="#11a">11a</a>Halftone comic shading</div>
+      <div class="dv-odesc">90s comic-print halftone dots overlaid on the fill (classic Ben-Day dot shading, like old X-Men/Image Comics logos) instead of a smooth gradient — a repeating-radial-gradient dot pattern masked to the letterforms.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px transparent; background:repeating-radial-gradient(circle,#1a0510 0 1.4px, transparent 1.4px 6px); -webkit-background-clip:text; background-clip:text; color:transparent; opacity:.5; mix-blend-mode:multiply;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="11b">
+      <div class="dv-olabel"><a class="dv-oid" href="#11b">11b</a>16-bit pixel-edge (90s videogame)</div>
+      <div class="dv-odesc">Letterforms kept but the outline steps in coarse jagged increments (drop-shadow at whole-pixel offsets, no anti-aliasing feel) like a SNES/Genesis title-card logo — chunkier, less smooth than the comic version.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%); image-rendering:pixelated;">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Courier New',monospace; font-weight:900; font-size:50px; letter-spacing:2px; filter:drop-shadow(4px 4px 0 #63229F) drop-shadow(8px 8px 0 #3D1466);">
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:6px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="11c">
+      <div class="dv-olabel"><a class="dv-oid" href="#11c">11c</a>Cyberpunk RGB glitch split</div>
+      <div class="dv-odesc">A thin cyan and thin magenta copy of the letterform offset by a couple px on either side of the main fill (chromatic-aberration/glitch look) — signature cyberpunk title-card device, layered on top of the existing purple/black outline rather than replacing it.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:-3px; color:#3CE7FF; opacity:.65; mix-blend-mode:screen;">RACING</span>
+          <span style="position:absolute; top:0; left:3px; color:#FF3CB0; opacity:.65; mix-blend-mode:screen;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="11d">
+      <div class="dv-olabel"><a class="dv-oid" href="#11d">11d</a>Synthwave scanlines + grid horizon</div>
+      <div class="dv-odesc">Restoring the low grid-horizon backdrop from the earlier synthwave pass (<a class="dv-oid" href="#1b">1b</a>) behind this exact letter treatment, plus faint horizontal scanlines over the whole card — grounds it in the synthwave reference without touching the fill itself.</div>
+      <div class="dv-card card" style="background:linear-gradient(180deg,#1a0b2e 0%,#3b0f5c 60%,#1a0b2e 100%);">
+        <div style="position:absolute; bottom:0; left:0; right:0; height:50%; background-image:repeating-linear-gradient(90deg, rgba(255,90,220,.3) 0 1px, transparent 1px 24px); -webkit-mask-image:linear-gradient(180deg,transparent,#000 40%);"></div>
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(180deg, rgba(0,0,0,.25) 0 1px, transparent 1px 3px); pointer-events:none;"></div>
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "combine <a class="dv-oid" href="#11c">11c</a>'s glitch with <a class="dv-oid" href="#11d">11d</a>'s grid" · "go with <a class="dv-oid" href="#11a">11a</a>'s halftone" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t10">
+  <div class="dv-thd"><a class="dv-tid" href="#t10">10</a><span class="dv-tname">Fill alternatives — chrome, retro stripe, glossy plastic</span></div>
+  <p class="dv-tsub">Sunburst dropped. Same chassis as <a class="dv-oid" href="#8a">8a</a> (black + purple double outline, purple-family extrusion, -5° tilt) — only the fill treatment changes across these three.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="10a">
+      <div class="dv-olabel"><a class="dv-oid" href="#10a">10a</a>Chrome metal</div>
+      <div class="dv-odesc">Brushed-steel look: a tight light→dark→light→dark banded gradient (mimics a metal reflection), cool highlight near the top edge. No hue at all in the fill — the purple/black outline carries all the color.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#F5F7FA 0%,#C7CDD6 18%,#8A919C 32%,#F5F7FA 48%,#6D7480 60%,#B4BAC4 78%,#E8EBF0 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="10b">
+      <div class="dv-olabel"><a class="dv-oid" href="#10b">10b</a>Retro racing stripe fill</div>
+      <div class="dv-odesc">Hard-edged horizontal bands (not a smooth fade) — cream, red, cream, red — like a vintage racing livery painted onto the letters. Reads as "retro" without needing rainbow pixel-block styling.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:repeating-linear-gradient(180deg,#FF3B3B 0 12px,#F4E8C9 12px 20px,#FF8A3C 20px 32px,#F4E8C9 32px 40px); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="10c">
+      <div class="dv-olabel"><a class="dv-oid" href="#10c">10c</a>Glossy plastic (candy-shell highlight)</div>
+      <div class="dv-odesc">Back to the plain red→orange vertical fill, but with one added glossy highlight band (a semi-transparent white streak near the top) — the "wet paint / candy shell" look of classic arcade cabinet lettering, not a full sunburst.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FFB199 0%,#FF3333 18%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#10c">10c</a>" · "combine <a class="dv-oid" href="#10a">10a</a>'s chrome with <a class="dv-oid" href="#10b">10b</a>'s stripes" · "none of these — start over with a plain flat fill, no gradient"</p>
+</section>
+<section class="dv-turn" id="t9">
+  <div class="dv-thd"><a class="dv-tid" href="#t9">9</a><span class="dv-tname">Sunburst fill + taller letterforms</span></div>
+  <p class="dv-tsub">Fill swapped from a linear red→orange gradient to a radiating sunburst (alternating red/orange rays from a center point, clipped to the text — a RadialGradientBrush with a striped GradientStops set in Avalonia). Letters stretched taller via a vertical scale on the text stack. Same double outline + purple extrusion as <a class="dv-oid" href="#8a">8a</a>.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="9a">
+      <div class="dv-olabel"><a class="dv-oid" href="#9a">9a</a>Centered sunburst, moderate stretch (1.15×)</div>
+      <div class="dv-odesc">Burst rays radiate from the word's center; text scaled 1.15× vertically for a taller, more condensed-poster feel.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg) scaleY(1.15); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:repeating-conic-gradient(from 0deg at 50% 50%, #FF2E2E 0deg 18deg, #FF8A3C 18deg 36deg); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="9b">
+      <div class="dv-olabel"><a class="dv-oid" href="#9b">9b</a>Off-center sunburst (upper-left), taller stretch (1.25×)</div>
+      <div class="dv-odesc">Burst origin shifted to the upper-left of the word so rays sweep across rather than radiating symmetrically — reads more dynamic; text stretched further (1.25×) for a bolder, taller block.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg) scaleY(1.25); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:50px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:repeating-conic-gradient(from -20deg at 15% 30%, #FF2E2E 0deg 20deg, #FF8A3C 20deg 40deg); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="9c">
+      <div class="dv-olabel"><a class="dv-oid" href="#9c">9c</a>Fewer, wider rays — reads calmer at small card size</div>
+      <div class="dv-odesc">Only 4 wide rays instead of many thin ones, so the pattern doesn't turn to visual noise once scaled down to actual card size; same 1.15× stretch as 9a.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg) scaleY(1.15); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:repeating-conic-gradient(from 0deg at 50% 50%, #FF2E2E 0deg 45deg, #FF8A3C 45deg 90deg); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#9c">9c</a>" · "stretch <a class="dv-oid" href="#9a">9a</a> even taller" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t8">
+  <div class="dv-thd"><a class="dv-tid" href="#t8">8</a><span class="dv-tname">Purple extrusion (matching the outline) + fixed red→orange gradient</span></div>
+  <p class="dv-tsub">Extrusion steps recolored from deep blue to the same purple family as the outline. Fill gradient re-tuned so red is actually visible — the previous 0%→100% red-to-orange washed out to mostly-orange at this letter height; stops now hold red longer before transitioning. Based on <a class="dv-oid" href="#7a">7a</a>'s double outline.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="8a">
+      <div class="dv-olabel"><a class="dv-oid" href="#8a">8a</a>Darker-purple extrusion, red-heavy gradient</div>
+      <div class="dv-odesc">Extrusion steps in a darkened purple (same hue family as the #A855FF outline, stepped darker for depth). Fill gradient: red 0%–55%, transitioning to orange only in the last 45%.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3333 0%,#FF3B3B 55%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="8b">
+      <div class="dv-olabel"><a class="dv-oid" href="#8b">8b</a>Same purple extrusion, red/orange split down the letter</div>
+      <div class="dv-odesc">Sharper transition — solid red top half, solid orange bottom half, brief blend band between — so both colors read clearly rather than smoothly fading.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#3D1466;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#4F1B82;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#63229F;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF2E2E 0% 42%,#FF8A3C 58% 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#8a">8a</a>" · "make the red/orange split in <a class="dv-oid" href="#8b">8b</a> softer" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t7">
+  <div class="dv-thd"><a class="dv-tid" href="#t7">7</a><span class="dv-tname">No glow — double outline: black inner, bright purple outer</span></div>
+  <p class="dv-tsub">Dropping the background glow entirely. Yes, a double outline is straightforward: one more stacked TextBlock layer in Avalonia — thin black stroke sits right against the letterform for contrast, a thicker bright-purple stroke sits just outside it. Same shallow 3-step deep-blue extrusion and red→orange fill as <a class="dv-oid" href="#5a">5a</a>.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="7a">
+      <div class="dv-olabel"><a class="dv-oid" href="#7a">7a</a>Thin black line, thick purple ring</div>
+      <div class="dv-odesc">Black stroke ~4px, purple stroke ~9px outside it — purple dominates the read, black just keeps the letter edges crisp.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:4px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="7b">
+      <div class="dv-olabel"><a class="dv-oid" href="#7b">7b</a>Even split, black then purple then fill</div>
+      <div class="dv-odesc">Black ~6px and purple ~6px roughly equal weight — the black ring reads as its own visible band, not just an edge-liner.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:11px #A855FF; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:6px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="7c">
+      <div class="dv-olabel"><a class="dv-oid" href="#7c">7c</a>Black outer, purple inner (reversed order)</div>
+      <div class="dv-odesc">Flips which ring sits outside — black forms the outermost silhouette against the art (max legibility on any background), purple sits as a thin bright seam right at the fill's edge.</div>
+      <div class="dv-card card" style="background-image:repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:11px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:5px #A855FF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#7a">7a</a>" · "thin out the purple ring in <a class="dv-oid" href="#7b">7b</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t6">
+  <div class="dv-thd"><a class="dv-tid" href="#t6">6</a><span class="dv-tname">Refining <a class="dv-oid" href="#5a">5a</a> — brighter purple outline + soft background glow</span></div>
+  <p class="dv-tsub">Same shallow 3-step deep-blue extrusion and red→orange fill as <a class="dv-oid" href="#5a">5a</a>. Outline pushed to a lighter, more saturated purple; three takes on where the glow sits behind the letters.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="6a">
+      <div class="dv-olabel"><a class="dv-oid" href="#6a">6a</a>Centered radial glow, brighter violet outline</div>
+      <div class="dv-odesc">One soft radial bloom centered behind the whole word (a single Ellipse w/ RadialGradientBrush in Avalonia) + outline brightened to a lighter, more electric violet.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:absolute; width:300px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(155,90,255,.45), transparent 70%); filter:blur(3px);"></div>
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #A855FF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="6b">
+      <div class="dv-olabel"><a class="dv-oid" href="#6b">6b</a>Wider, dimmer glow + purple outline glow of its own</div>
+      <div class="dv-odesc">Softer, larger background bloom (lower opacity, bigger spread) so it reads as ambient light rather than a spotlight; outline itself also picks up a thin DropShadowEffect in the same violet so it emits a touch of light, not just a hard edge.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:absolute; width:400px; height:280px; border-radius:50%; background:radial-gradient(circle, rgba(168,85,255,.3), transparent 72%); filter:blur(4px);"></div>
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5)) drop-shadow(0 0 20px rgba(168,85,255,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #B368FF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="6c">
+      <div class="dv-olabel"><a class="dv-oid" href="#6c">6c</a>Off-axis glow + brightest outline (most dramatic)</div>
+      <div class="dv-odesc">Glow offset toward the upper-left (as if a light source), pushing extra contrast on the lower-right of each letter; outline brightened furthest into a near-white-violet for maximum pop.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:absolute; width:320px; height:220px; border-radius:50%; background:radial-gradient(circle, rgba(196,140,255,.5), transparent 68%); top:20px; left:0px; filter:blur(3px);"></div>
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #C88CFF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#6b">6b</a>" · "brighten the outline even more on <a class="dv-oid" href="#6a">6a</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t5">
+  <div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Red→orange fill, purple outline, deep-blue extrusion</span></div>
+  <p class="dv-tsub">Fixed palette per your spec: fill is a top-to-bottom red→orange gradient, outline is bright purple, and a deep-blue extrusion stack sits behind for the 3D depth (in place of the flat DropShadowEffect glow from earlier turns). Two takes on how heavy that extrusion reads.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Shallow extrusion (3 steps)</div>
+      <div class="dv-odesc">3 diagonally-stepped deep-blue TextBlock copies behind the purple-outlined fill — reads as a solid 3D block without overwhelming the color story.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 10px 14px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:9px; left:9px; color:#0B1C6E;">RACING</span>
+          <span style="position:absolute; top:6px; left:6px; color:#12277F;">RACING</span>
+          <span style="position:absolute; top:3px; left:3px; color:#1A3390;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #7B2BFF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="5b">
+      <div class="dv-olabel"><a class="dv-oid" href="#5b">5b</a>Deep extrusion (6 steps), more comic swagger</div>
+      <div class="dv-odesc">6 steps, longer throw — the deep-blue block reads more like a cast shadow the letters are standing in front of, closer to the original comic-title ask.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px; filter:drop-shadow(0 12px 16px rgba(0,0,0,.55));">
+          <span style="position:absolute; top:16px; left:16px; color:#070F4A;">RACING</span>
+          <span style="position:absolute; top:13px; left:13px; color:#0A155A;">RACING</span>
+          <span style="position:absolute; top:10px; left:10px; color:#0D1C6C;">RACING</span>
+          <span style="position:absolute; top:7px; left:7px; color:#11237D;">RACING</span>
+          <span style="position:absolute; top:4px; left:4px; color:#152A8E;">RACING</span>
+          <span style="position:absolute; top:2px; left:2px; color:#1A31A0;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #8A3CFF; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF3B3B 0%,#FF8A3C 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#5b">5b</a>" · "add a little glow back around <a class="dv-oid" href="#5a">5a</a>" · "this is the one, write the implementation spec"</p>
+</section>
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Swap the black ink outline for a bright colored one</span></div>
+  <p class="dv-tsub">Same tilt/glow/gradient-fill structure as <a class="dv-oid" href="#3a">3a</a>/<a class="dv-oid" href="#3b">3b</a> — only the outline stroke color changes, from near-black ink to a bright hue. Trade-off called out per option: color outlines read louder but give up some of the ink line's contrast-anchor job, since letters can now blend into similarly-bright art.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Hot pink outline, sunset fill</div>
+      <div class="dv-odesc">3a's orange→red→purple fill, outline swapped to a saturated magenta — outline and glow now share a family, so the whole word reads as one lit object.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:2px; left:2px; -webkit-text-stroke:11px #E619A8; color:transparent; filter:drop-shadow(0 0 16px rgba(230,25,168,.7)) drop-shadow(0 0 30px rgba(150,60,255,.4));">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF9A3C 0%,#FF3B3B 45%,#9B3BFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Cyan outline, dual-tone fill</div>
+      <div class="dv-odesc">3b's left-hot/right-cool fill, outline in bright cyan — cyan reads clearly against warm art (art tends to be orange/purple in this set), so legibility holds even without black.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:2px; left:2px; -webkit-text-stroke:11px #4CE0FF; color:transparent; filter:drop-shadow(0 0 16px rgba(76,224,255,.65)) drop-shadow(0 0 30px rgba(76,224,255,.35));">RACING</span>
+          <span style="position:relative; background:linear-gradient(90deg,#FF6A3C 0%,#FF3B5C 30%,#B23BFF 62%,#6ABBFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="4c">
+      <div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>Thin black liner kept, colored outline added outside it</div>
+      <div class="dv-odesc">Compromise: keep a thin dark inner line right against the letterform for guaranteed contrast, add the bright color as a second, slightly thicker outline just outside it — best of both, one extra stacked TextBlock layer in Avalonia.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:3px; left:3px; -webkit-text-stroke:13px #FF7A1A; color:transparent; filter:drop-shadow(0 0 16px rgba(255,122,26,.6));">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:8px #14060a; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#B98BFF 0%,#7B3BFF 55%,#3B5CFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#4c">4c</a>" · "make <a class="dv-oid" href="#4a">4a</a>'s outline thinner" · "show all of these over a lighter background image"</p>
+</section>
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Color pass on <a class="dv-oid" href="#2a">2a</a>'s structure — orange/red/purple/light-blue</span></div>
+  <p class="dv-tsub">Keeping the ink outline, background glow and -5° tilt from <a class="dv-oid" href="#2a">2a</a>; swapping the fill to a chromatic gradient and re-tuning the glow colors to match. All still one LinearGradientBrush fill + two DropShadowEffect layers in Avalonia.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Sunset chrome — orange→red→purple fill</div>
+      <div class="dv-odesc">Fill gradient runs top-to-bottom orange → hot red → purple, like a chromatic sunset band. Glow: tight orange, wider purple.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:3px; left:3px; -webkit-text-stroke:11px #0a0a12; color:transparent; filter:drop-shadow(0 0 16px rgba(150,60,255,.7)) drop-shadow(0 0 30px rgba(150,60,255,.4));">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#FF9A3C 0%,#FF3B3B 45%,#9B3BFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 10px rgba(255,120,60,.7));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Dual-tone split — orange/red left, light-blue/purple right</div>
+      <div class="dv-odesc">Fill gradient runs left-to-right instead of top-to-bottom: hot orange-red on the left letters cooling into light blue-purple on the right — one word, two temperatures, very synthwave-poster.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:3px; left:3px; -webkit-text-stroke:11px #0a0a12; color:transparent; filter:drop-shadow(0 0 14px rgba(255,90,60,.6)) drop-shadow(0 0 26px rgba(110,160,255,.55));">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(90deg,#FF6A3C 0%,#FF3B5C 30%,#B23BFF 62%,#6ABBFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="3c">
+      <div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Purple-core with orange rim light</div>
+      <div class="dv-odesc">Base fill is deep purple-to-blue, but a thin bright orange "rim light" line traces the outer edge of the ink outline — like a comic panel lit from one side by a warm source.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:2px; left:-2px; -webkit-text-stroke:10.5px #FF9A3C; color:transparent; filter:drop-shadow(0 0 12px rgba(255,154,60,.6));">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:8.5px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; background:linear-gradient(180deg,#B98BFF 0%,#7B3BFF 55%,#3B5CFF 100%); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 8px rgba(120,90,255,.6));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#3b">3b</a>" · "make <a class="dv-oid" href="#3c">3c</a>'s rim light thinner" · "try the same colors but with the neon-sign glow instead of ink outline"</p>
+</section>
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Blend of <a class="dv-oid" href="#1d">1d</a> + <a class="dv-oid" href="#1e">1e</a> — legible over busy art</span></div>
+  <p class="dv-tsub">Comic italic slant + thick dark ink outline (for contrast on any image) with a colored neon glow layered outside it instead of a flat extrusion — the outline does the legibility work, the glow does the "pop." Shown over a busy photo-style background to prove it holds up.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Ink outline + cyan/magenta neon glow</div>
+      <div class="dv-odesc">Heavy black-ink outline (legibility anchor) + two stacked colored DropShadowEffects (tight cyan, wider magenta) behind it, gold fill, slight -5° italic tilt. One shallow extrusion step for depth, not seven.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.35),rgba(10,10,20,.55)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:3px; left:3px; -webkit-text-stroke:11px #0a0a12; color:transparent; filter:drop-shadow(0 0 14px rgba(255,60,220,.75)) drop-shadow(0 0 26px rgba(255,60,220,.45));">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:9px #0a0a12; color:transparent;">RACING</span>
+          <span style="position:relative; color:#FFE066; filter:drop-shadow(0 0 8px rgba(80,230,255,.9));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Thinner ink line, hotter single-color glow</div>
+      <div class="dv-odesc">Lighter outline (still enough contrast) so more of the letterform reads, single hot-pink glow (simpler DropShadowEffect stack, cheaper to build), white-hot core fill for max pop against dark or light art alike.</div>
+      <div class="dv-card card" style="background-image:linear-gradient(rgba(10,10,20,.4),rgba(10,10,20,.6)), repeating-linear-gradient(45deg,#3a3040 0 40px,#2a2436 40px 80px), radial-gradient(circle at 30% 70%, #5a2f6e, transparent 60%), radial-gradient(circle at 75% 25%, #234a6b, transparent 55%);">
+        <div style="position:relative; transform:rotate(-5deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:54px; letter-spacing:1px;">
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:7px #0a0a12; color:transparent; filter:drop-shadow(0 0 18px rgba(255,50,150,.85)) drop-shadow(0 0 34px rgba(255,50,150,.5));">RACING</span>
+          <span style="position:relative; color:#fff; filter:drop-shadow(0 0 6px rgba(255,255,255,.9));">RACING</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "go with <a class="dv-oid" href="#2a">2a</a>" · "make <a class="dv-oid" href="#2b">2b</a>'s outline even thinner" · "show these on the actual card size at 1920×1080 scale"</p>
+</section>
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Category card title overlay — style directions</span></div>
+  <p class="dv-tsub">Six distinct treatments for the same category ("Racing") — same Avalonia constraints as the comic version (stacked TextBlocks, one DropShadowEffect, LinearGradientBrush fills, no SVG/web fonts). Pick a direction, or ask for a mashup.</p>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Modern minimal</div>
+      <div class="dv-odesc">Clean geometric sans, tight tracking, thin accent underline. No extrusion — just a subtle lift off the art via one soft shadow.</div>
+      <div class="dv-card card" style="background:linear-gradient(160deg,#14161c,#1d2028);">
+        <div style="text-align:left; width:100%; padding:0 28px;">
+          <div style="font-family:Arial,sans-serif; font-weight:700; font-size:40px; letter-spacing:2px; color:#fff; text-transform:uppercase; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));">Racing</div>
+          <div style="width:56px; height:3px; background:#4FD1C5; margin-top:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Synthwave / vaporwave</div>
+      <div class="dv-odesc">Chrome gradient fill (pink→cyan), grid horizon backdrop, sun ellipse, long soft glow instead of hard extrusion.</div>
+      <div class="dv-card card" style="background:linear-gradient(180deg,#1a0b2e 0%,#3b0f5c 55%,#1a0b2e 100%);">
+        <div style="position:absolute; bottom:0; left:0; right:0; height:55%; background-image:linear-gradient(rgba(255,255,255,0) 0%, transparent 100%), repeating-linear-gradient(90deg, rgba(255,90,220,.35) 0 1px, transparent 1px 26px); -webkit-mask-image:linear-gradient(180deg,transparent,#000 40%); perspective:200px;"></div>
+        <div style="position:absolute; width:150px; height:150px; border-radius:50%; background:linear-gradient(180deg,#ffd76a,#ff5aa8); top:36px; box-shadow:0 0 60px 10px rgba(255,90,168,.5); opacity:.85;"></div>
+        <div style="position:relative; font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:52px; letter-spacing:1px; background:linear-gradient(180deg,#8ff5ff 0%,#ff6ad5 55%,#ffe36a 100%); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 0 26px rgba(255,106,213,.6);">RACING</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>80s retro arcade</div>
+      <div class="dv-odesc">Chunky pixel-block letterforms, hard-edged rainbow stripe fill, thick black outline, no rotation — sits flat like a cabinet marquee.</div>
+      <div class="dv-card card" style="background:#0d0d1a; background-image:radial-gradient(circle at 50% 100%, rgba(255,60,60,.15), transparent 60%);">
+        <div style="font-family:'Courier New',monospace; font-weight:900; font-size:46px; letter-spacing:3px; -webkit-text-stroke:5px #000; color:transparent; position:absolute;">RACING</div>
+        <div style="font-family:'Courier New',monospace; font-weight:900; font-size:46px; letter-spacing:3px; background:repeating-linear-gradient(180deg,#ff3c3c 0 8px,#ffb238 8px 16px,#ffe838 16px 24px,#3cff6a 24px 32px,#3cb8ff 32px 40px); -webkit-background-clip:text; background-clip:text; color:transparent; position:relative;">RACING</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Refined comic (toned down from last pass)</div>
+      <div class="dv-odesc">Same stacked-layer trick, but shallower extrusion (3 steps not 7), no burst/sparkle shapes, muted ink outline — dramatic without being busy.</div>
+      <div class="dv-card card" style="background:linear-gradient(135deg,#1c2440,#141a30);">
+        <div style="position:relative; transform:rotate(-4deg); font-family:'Arial Black',Arial,sans-serif; font-weight:900; font-style:italic; font-size:56px; letter-spacing:1px; filter:drop-shadow(0 10px 12px rgba(0,0,0,.5));">
+          <span style="position:absolute; top:6px; left:6px; color:#7a2b0a;">RACING</span>
+          <span style="position:absolute; top:4px; left:4px; color:#9a3a16;">RACING</span>
+          <span style="position:absolute; top:2px; left:2px; color:#ba4a22;">RACING</span>
+          <span style="position:absolute; top:0; left:0; -webkit-text-stroke:6px #1a1005; color:transparent;">RACING</span>
+          <span style="position:relative; color:#FFD700; -webkit-text-stroke:1.5px #1a1005;">RACING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Neon sign</div>
+      <div class="dv-odesc">Thin outlined letterforms with layered colored glows (DropShadowEffect stacked via multiple TextBlocks each with its own blur) — reads as a lit tube sign against dark art.</div>
+      <div class="dv-card card" style="background:#0a0e14;">
+        <div style="font-family:Arial,sans-serif; font-weight:700; font-size:48px; letter-spacing:3px; color:#fff; text-shadow: 0 0 6px #ff2fd6, 0 0 16px #ff2fd6, 0 0 34px #ff2fd6, 0 0 4px #fff;">RACING</div>
+      </div>
+    </div>
+
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Industrial stencil</div>
+      <div class="dv-odesc">Bold condensed stencil-style caps, worn/gritty texture via low-opacity noise gradient, muted steel palette — reads as a garage/workshop stamp, fits Racing/Systems categories especially well.</div>
+      <div class="dv-card card" style="background:linear-gradient(160deg,#2b2b2b,#1a1a1a);">
+        <div style="position:absolute; inset:0; opacity:.5; background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.03) 0 2px, transparent 2px 6px);"></div>
+        <div style="position:relative; font-family:Arial,sans-serif; font-weight:900; font-size:50px; letter-spacing:6px; color:#d8d8d8; -webkit-text-stroke:1px #000; text-transform:uppercase; filter:drop-shadow(0 4px 0 #000);">RACING</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: "more like <a class="dv-oid" href="#1b">1b</a> but less pink" · "combine <a class="dv-oid" href="#1c">1c</a>'s stripes with <a class="dv-oid" href="#1d">1d</a>'s outline" · "show this on all 5 category cards at once"</p>
+</section>
+
+</x-dc>
+</body>
+</html>

@@ -112,6 +112,7 @@ internal static class Program
         services.AddSingleton<UGL.App.ViewModels.Config.AudioConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.ThemeConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.CardHighlightConfigViewModel>();
+        services.AddSingleton<UGL.App.ViewModels.Config.TitleGraphicsConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.PathsConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.PeripheralConfigViewModel>();
         services.AddSingleton<VirtualKeyboardViewModel>();

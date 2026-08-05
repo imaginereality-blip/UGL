@@ -1,0 +1,222 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.CategoryTitleGraphic"
+             x:Name="Root"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center">
+
+    <UserControl.Styles>
+        <!-- Shared look for every layer in the stack — only Foreground/Opacity/
+             RenderTransform differ per layer. See category_card_title_overlay/
+             README.md, direction 28b, for the full design rationale. -->
+        <Style Selector="TextBlock.titleLayer">
+            <Setter Property="FontFamily" Value="Arial Black, Arial"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+            <Setter Property="FontSize" Value="54"/>
+            <Setter Property="LetterSpacing" Value="1"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Avalonia has no text-stroke. The CSS mock applies the same stroke to every
+         extrusion/outline layer (magenta, cyan x3, purple) — all five are thin
+         stroke rings around the glyph silhouette, not solid fills, plus a smaller
+         black ring on top and a solid gradient fill last. Each stroke ring is
+         approximated here with 8 solid copies of the text offset in a small circle
+         around its own center point (see the README's "Building the outline"
+         section) — the frontmost layers (black ring, fill) are un-dilated and sit
+         exactly over each ring's center, masking everything but the ring's own
+         radius of "excess" around the edges, which is what reads as an outline.
+
+         Every layer is positioned via RenderTransform (a render-time-only effect
+         that layout/measure never sees), so without help the surrounding Viewbox
+         would size itself to the bounds of a single centered, unshifted TextBlock
+         and then clip everything the rings/extrusion/rotation push beyond that.
+         The Margin below on the rotated Border is a deliberate layout-time
+         reservation of that same overflow, generous enough to cover the ring
+         radius, the extrusion's downward reach, and the bounding-box growth from
+         the -5 degree rotation for a typical (not extremely long) category title. -->
+    <Border Margin="24,20,24,36" RenderTransformOrigin="50%,50%">
+        <Border.RenderTransform>
+            <RotateTransform Angle="-5"/>
+        </Border.RenderTransform>
+        <!-- Drop shadow is applied by the caller (on the Viewbox that scales this
+             control), not here — an Effect on content that's itself inside an
+             actively-scaling Viewbox is a known-flaky combination in Avalonia's
+             render pipeline; applying it post-scale, on the Viewbox instead, is the
+             safe order. -->
+        <Grid>
+
+            <!-- 1. Magenta extrusion ring (radius halved per feedback: 12 -> 6) -->
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="8"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="20"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="6" Y="14"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-6" Y="14"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="9.76"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="9.76"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="18.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#6E1B57" Opacity="0.5" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="18.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+
+            <!-- 2. Cyan extrusion ring, step 1 -->
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="4.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="16.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="6" Y="10.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-6" Y="10.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="6.26"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="6.26"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="14.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0C6874" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="14.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+
+            <!-- 3. Cyan extrusion ring, step 2 -->
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="1"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="13"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="6" Y="7"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-6" Y="7"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="2.76"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="2.76"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="11.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0F7784" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="11.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+
+            <!-- 4. Cyan extrusion ring, step 3 -->
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="-2.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="9.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="6" Y="3.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-6" Y="3.5"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="-0.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="-0.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="7.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#1596A6" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="7.74"/></TextBlock.RenderTransform>
+            </TextBlock>
+
+            <!-- 5. Purple outline ring (radius halved per feedback: 12 -> 6) -->
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="-6"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="6"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="6" Y="0"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-6" Y="0"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="-4.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="-4.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="4.24" Y="4.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#A855FF" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-4.24" Y="4.24"/></TextBlock.RenderTransform>
+            </TextBlock>
+
+            <!-- 6. Black inner outline ring (radius halved per feedback: 4 -> 2) -->
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="-2"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="0" Y="2"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="2" Y="0"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-2" Y="0"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="1.41" Y="-1.41"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-1.41" Y="-1.41"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="1.41" Y="1.41"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <TextBlock Classes="titleLayer" Foreground="#0A0A12" Text="{Binding #Root.TitleText}">
+                <TextBlock.RenderTransform><TranslateTransform X="-1.41" Y="1.41"/></TextBlock.RenderTransform>
+            </TextBlock>
+            <!-- 7. Fill text (front) — yellow/orange vertical gradient -->
+            <TextBlock Classes="titleLayer" Text="{Binding #Root.TitleText}">
+                <TextBlock.Foreground>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                        <GradientStop Color="#FF3333" Offset="0.0"/>
+                        <GradientStop Color="#FFA23C" Offset="0.15"/>
+                        <GradientStop Color="#FFA23C" Offset="0.85"/>
+                        <GradientStop Color="#FF3333" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </TextBlock.Foreground>
+            </TextBlock>
+
+        </Grid>
+    </Border>
+</UserControl>
