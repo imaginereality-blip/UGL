@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>UGL Title Graphic Bake</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js",
+    "three/addons/loaders/FontLoader.js": "https://unpkg.com/three@0.184.0/examples/jsm/loaders/FontLoader.js",
+    "three/addons/geometries/TextGeometry.js": "https://unpkg.com/three@0.184.0/examples/jsm/geometries/TextGeometry.js"
+  }
+}
+</script>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; }
+  three-d-stage:not(:defined) { visibility: hidden; }
+  three-d-stage { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<three-d-stage name="title" background="transparent"></three-d-stage>
+<script src="./three-d-stage.js"></script>
+<script type="module">
+import * as THREE from "three";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+
+function signalFailure(message) {
+  try { window.chrome.webview.postMessage('error:' + message); } catch (e) {}
+}
+
+function darken(hex, factor) {
+  const c = new THREE.Color(hex);
+  c.multiplyScalar(factor);
+  return c;
+}
+
+try {
+  const stage = document.querySelector('three-d-stage');
+
+  // The <three-d-stage> starter component (see three-d-stage.js) ships a "Download
+  // OBJ/GLB" toolbar and an orbit-hint note meant for interactive use — neither
+  // belongs in a baked title-card PNG, so hide both before anything renders.
+  const toolbar = stage.shadowRoot.querySelector('.toolbar');
+  if (toolbar) toolbar.style.display = 'none';
+  const note = stage.shadowRoot.querySelector('.note');
+  if (note) note.style.display = 'none';
+
+  const { THREE: stageThree } = await stage.ready;
+
+  const loader = new FontLoader();
+  const font = await new Promise((resolve, reject) => {
+    loader.load('https://unpkg.com/three@0.184.0/examples/fonts/helvetiker_bold.typeface.json', resolve, undefined, reject);
+  });
+
+  const group = new THREE.Group();
+  group.name = 'UGLTitle';
+
+  const titleText = __TITLE_JSON__;
+
+  const textGeo = new TextGeometry(titleText, {
+    font,
+    size: 1,
+    depth: 0.12,
+    curveSegments: 12,
+    bevelEnabled: true,
+    bevelThickness: 0.04,
+    bevelSize: 0.03,
+    bevelSegments: 16
+  });
+  textGeo.computeBoundingBox();
+  textGeo.computeVertexNormals();
+  const bbox = textGeo.boundingBox;
+  const cx = (bbox.max.x + bbox.min.x) / 2;
+  const cy = (bbox.max.y + bbox.min.y) / 2;
+  const cz = (bbox.max.z + bbox.min.z) / 2;
+  textGeo.translate(-cx, -cy, -cz);
+
+  // Fill gradient (top -> mid -> bottom) as PER-VERTEX colors computed directly from
+  // each vertex's world Y position, not a UV-mapped canvas texture. TextGeometry (built
+  // on ExtrudeGeometry from per-glyph shapes) generates UVs independently per glyph —
+  // each letter gets its own local 0-1 UV space rather than one continuous span across
+  // the whole title — so a texture-mapped gradient repeats/breaks per letter instead of
+  // reading as one smooth sweep across the word. Vertex colors sidestep UV entirely and
+  // interpolate correctly across the whole mesh regardless of how it's triangulated.
+  {
+    // BufferGeometry.translate() shifts vertex positions in place but does NOT update
+    // the already-computed boundingBox — it has to be recomputed here or minY/maxY
+    // below would be the stale pre-translate values.
+    textGeo.computeBoundingBox();
+    const bb = textGeo.boundingBox;
+    const minY = bb.min.y, maxY = bb.max.y;
+    const range = Math.max(maxY - minY, 1e-6);
+    const pos = textGeo.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const cTop = new THREE.Color('__FILL_TOP__');
+    const cMid = new THREE.Color('__FILL_MID__');
+    const cBottom = new THREE.Color('__FILL_BOTTOM__');
+    const tmp = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const t = (pos.getY(i) - minY) / range; // 0 at bottom, 1 at top
+      if (t < 0.5) tmp.copy(cBottom).lerp(cMid, t / 0.5);
+      else tmp.copy(cMid).lerp(cTop, (t - 0.5) / 0.5);
+      colors[i * 3] = tmp.r;
+      colors[i * 3 + 1] = tmp.g;
+      colors[i * 3 + 2] = tmp.b;
+    }
+    textGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  }
+
+  // Unlit on purpose: two rounds of adjusting scene lighting (zeroing/reducing the
+  // stage's default lights so the custom point lights would matter) left this face
+  // still not visibly showing its gradient — bevel/outline stayed visible throughout
+  // because they have their own `emissive` self-glow, independent of scene lighting,
+  // and this doesn't. Rather than keep tuning light intensities blind, make the fill
+  // face ITSELF light-independent: MeshBasicMaterial always renders exactly the vertex
+  // colors computed above, with zero dependency on however the scene happens to be lit.
+  const faceMat = new THREE.MeshBasicMaterial({
+    name: 'fillGradient',
+    vertexColors: true
+  });
+
+  const bevelMat = new THREE.MeshStandardMaterial({
+    name: 'bevel',
+    color: '__BEVEL_COLOR__',
+    emissive: darken('__BEVEL_COLOR__', 0.55),
+    emissiveIntensity: 0.4,
+    roughness: 0.35,
+    metalness: 0.2
+  });
+
+  const textMesh = new THREE.Mesh(textGeo, [faceMat, bevelMat]);
+  textMesh.name = 'UGLTitle_Fill';
+  textMesh.castShadow = false;
+  textMesh.receiveShadow = false;
+  group.add(textMesh);
+
+  // outline/depth trace: a slightly larger silhouette sitting just behind the fill,
+  // peeking out evenly on every edge.
+  const outlineGeo = new TextGeometry(titleText, {
+    font,
+    size: 1,
+    depth: 0.08,
+    curveSegments: 12,
+    bevelEnabled: true,
+    bevelThickness: 0.05,
+    bevelSize: 0.05,
+    bevelSegments: 8,
+    bevelOffset: 0.015
+  });
+  outlineGeo.computeBoundingBox();
+  const obb = outlineGeo.boundingBox;
+  outlineGeo.translate(-(obb.max.x+obb.min.x)/2, -(obb.max.y+obb.min.y)/2, -(obb.max.z+obb.min.z)/2);
+  const outlineMat = new THREE.MeshStandardMaterial({
+    name: 'outline',
+    color: '__OUTLINE_COLOR__',
+    emissive: darken('__OUTLINE_COLOR__', 0.55),
+    emissiveIntensity: 0.7,
+    roughness: 0.3,
+    metalness: 0.1
+  });
+  const outlineMesh = new THREE.Mesh(outlineGeo, outlineMat);
+  outlineMesh.name = 'UGLTitle_Outline';
+  outlineMesh.position.z = -0.05;
+  outlineMesh.castShadow = false;
+  group.add(outlineMesh);
+
+  // Up to 3 colored point lights close to the object, so the scene lighting itself
+  // carries the accent colors rather than just the emissive material color. Main is
+  // always on; Key 1/Key 2 are added only when the light count calls for them —
+  // standard main+key(+key) accent lighting, not a full 3-point key/fill/rim setup.
+  const lightCount = __LIGHT_COUNT__;
+
+  const mainLight = new THREE.PointLight('__LIGHT_MAIN_COLOR__', 8, 6, 2);
+  mainLight.name = 'MainLight';
+  mainLight.position.set(-1.5, 1, 2.2);
+  group.add(mainLight);
+
+  if (lightCount >= 2) {
+    const key1Light = new THREE.PointLight('__LIGHT_KEY1_COLOR__', 6, 6, 2);
+    key1Light.name = 'KeyLight1';
+    key1Light.position.set(2, -0.5, 1.5);
+    group.add(key1Light);
+  }
+
+  if (lightCount >= 3) {
+    const key2Light = new THREE.PointLight('__LIGHT_KEY2_COLOR__', 6, 6, 2);
+    key2Light.name = 'KeyLight2';
+    key2Light.position.set(0, 2, -1.8);
+    group.add(key2Light);
+  }
+
+  group.rotation.x = (__ROTATION_X__ * Math.PI) / 180;
+  group.rotation.y = (__ROTATION_Y__ * Math.PI) / 180;
+  group.rotation.z = (__ROTATION_Z__ * Math.PI) / 180;
+
+  stage.setObject(group);
+
+  // No baked-in drop shadow — CategoryCard applies its own DropShadowEffect on the
+  // baked PNG at display time, consistent with the placement-based approach already
+  // used for the live 2D fallback (CategoryTitleGraphic).
+  stage._ground.visible = false;
+
+  // three-d-stage's own _boot() adds a neutral white HemisphereLight + two
+  // DirectionalLights (a strong intensity-2.2 "key" and a dim "fill") directly to the
+  // scene, meant for its generic object-viewer use case. Against our MeshStandardMaterial
+  // faces, the strong white DirectionalLights (intensity 2.2 key + 0.5 fill) dominated
+  // and made the user's colored Main/Key1/Key2 point lights barely register — those get
+  // zeroed. But the bevel/outline materials have their own emissive glow (self-lit,
+  // independent of scene lighting) while the FILL face has none — it relies entirely on
+  // scene light to be visible at all. Fully zeroing every light (including the soft,
+  // non-directional Hemisphere) left the fill face with nothing to reflect once outside
+  // a point light's falloff radius, reading as black/invisible. Keep a reduced Hemisphere
+  // as a soft neutral floor so the fill stays legible everywhere, while the point lights
+  // above still provide the dominant color tint. Those point lights live inside `group`,
+  // not as direct scene children, so this loop never touches them.
+  for (const child of stage._scene.children) {
+    if (child.isDirectionalLight) child.intensity = 0;
+    else if (child.isHemisphereLight) child.intensity *= 0.35;
+  }
+
+  // Frame the camera front-on (stage defaults to a 3/4 angled shot). Fit distance is
+  // computed per-corner of the group's rotated bounding box rather than from its
+  // overall width/height, because X/Y rotation tilts the extruded text in depth —
+  // the corner nearest the camera sits closer than the box's center, so it projects
+  // larger than a simple width/height-at-center calculation accounts for. Using only
+  // the center-depth estimate (the previous approach) clips exactly that near corner
+  // once any X/Y tilt is applied. For every corner, solve for the distance a
+  // perspective camera at (center + dist·Z) would need so that corner's own
+  // depth-adjusted projection still fits inside the frustum, and take the largest
+  // requirement across all 8 corners and both axes.
+  {
+    const box = new THREE.Box3().setFromObject(group);
+    const center = box.getCenter(new THREE.Vector3());
+    const cam = stage._camera;
+    const controls = stage._controls;
+
+    const vFov = (cam.fov * Math.PI) / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * cam.aspect);
+    const tanV = Math.tan(vFov / 2);
+    const tanH = Math.tan(hFov / 2);
+
+    let dist = 0;
+    for (const dx of [box.min.x - center.x, box.max.x - center.x]) {
+      for (const dy of [box.min.y - center.y, box.max.y - center.y]) {
+        for (const dz of [box.min.z - center.z, box.max.z - center.z]) {
+          // Camera sits at center + dist along +Z, so this corner's distance from
+          // the camera along the view axis is (dist - dz) — a corner with a larger
+          // dz (closer to +Z, i.e. closer to the camera) needs a larger dist to keep
+          // that same margin.
+          const neededForV = dz + Math.abs(dy) / tanV;
+          const neededForH = dz + Math.abs(dx) / tanH;
+          dist = Math.max(dist, neededForV, neededForH);
+        }
+      }
+    }
+
+    const margin = 1.06; // small breathing room so the outline/extrusion never clips
+    dist *= margin;
+
+    cam.position.copy(center).add(new THREE.Vector3(0, 0, 1).multiplyScalar(dist));
+    controls.target.copy(center);
+    controls.update();
+  }
+
+  // Two rAFs so the stage's own render loop has produced at least one real frame
+  // (with preserveDrawingBuffer: true) before the host captures it.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { window.chrome.webview.postMessage('rendered'); }
+    catch (e) {}
+  }));
+} catch (err) {
+  signalFailure(String(err && err.message ? err.message : err));
+}
+</script>
+</body>
+</html>

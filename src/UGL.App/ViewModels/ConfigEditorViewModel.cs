@@ -266,6 +266,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Tab.Audio => Audio.TryExitSubMode(),
         Tab.Hooks => Hooks.TryExitOverrides(),
         Tab.Systems => Systems.TryExitBiosList(),
+        Tab.TitleGraphics => TitleGraphics.TryExitColorPicker(),
         _ => false,
     };
 
@@ -412,7 +413,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Tab.Audio         => $"IsMusicTabActive={Audio.IsMusicTabActive} SelectedPlaylist={Audio.SelectedPlaylist?.Name ?? "null"} SoundsFocusIndex={Audio.SoundsFocusIndex}",
         Tab.Theme         => $"SelectedTheme={Theme.SelectedTheme?.Name ?? "null"}",
         Tab.CardHighlight => $"FocusIndex={CardHighlight.FocusIndex} Color={CardHighlight.CustomHex} Thickness={CardHighlight.Thickness} Intensity={CardHighlight.Intensity} Pulsing={CardHighlight.IsPulsing}",
-        Tab.TitleGraphics => $"FocusIndex={TitleGraphics.FocusIndex} Enabled={TitleGraphics.IsEnabled} Placement={TitleGraphics.Placement}",
+        Tab.TitleGraphics => $"FocusIndex={TitleGraphics.FocusIndex} Enabled={TitleGraphics.IsEnabled} Scale={TitleGraphics.Scale} X={TitleGraphics.PositionX} Y={TitleGraphics.PositionY} EditingColor={TitleGraphics.EditingColorKey ?? "null"}",
         Tab.Paths         => $"FocusIndex={Paths.FocusIndex}",
         Tab.Peripherals   => $"Devices.Count={Peripherals.Devices.Count} SelectedDevice={Peripherals.SelectedDevice?.FriendlyName ?? "null"}",
         Tab.Hooks         => $"FocusIndex={Hooks.FocusIndex} Enabled={Hooks.EnabledGlobally} Tool={Hooks.ToolType}",

@@ -10,7 +10,11 @@
     <AssemblyName>UGL</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.5.0</Version>
+    <Version>0.6.0</Version>
+    <!-- Only used by TitleGraphicsBaker to host the official WebView2 WinForms control
+         on its own dedicated off-screen thread — no WinForms UI is ever shown to the
+         user, Avalonia remains the app's real UI. -->
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +28,7 @@
     <PackageReference Include="System.Drawing.Common" Version="9.0.0" />
     <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,6 +46,22 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UseWindowsForms auto-adds these two as global usings, which collides with
+         Avalonia's own Size/Color/Image/UserControl/Point/Bitmap types project-wide.
+         TitleGraphicsBaker.cs (the only file that needs them) uses fully-qualified or
+         locally-scoped `using` directives instead. -->
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Plain disk files (not compiled AvaloniaResource) — TitleGraphicsBaker navigates
+         WebView2 to these via a file:// URI, so they must exist as real files next to
+         the exe, not be embedded in the assembly. -->
+    <None Include="TitleGraphicsBakeAssets\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -38,26 +38,35 @@
                  (Settings → Title Graphics), rendered by the reusable
                  CategoryTitleGraphic control (see its own doc comment for the full
                  style rationale — direction 28b in
-                 category_card_title_overlay/README.md). Visibility/placement driven
-                 from code-behind via TitleGraphicsSettings (a static live-settings
-                 bridge, same pattern as the selection glow above). Row split
-                 (top/middle/bottom zones) gives the vertical placement; the 5/90/5
-                 column split plus the enclosing Viewbox gives the 90%-of-width
-                 sizing, scaling the whole graphic (extrusion offsets, outline, drop
-                 shadow included) uniformly regardless of the card's actual rendered
-                 size. Text is always uppercased. -->
-            <Grid Name="TitleGraphicContainer" IsVisible="False"
-                  RowDefinitions="0.3*,0.4*,0.3*">
-                <!-- RenderTransform (below) is set in code-behind: a fixed 1.15x scale
-                     applied after Viewbox's own auto-fit (per feedback — Viewbox
-                     normalizes to fill its box regardless of any scale applied to its
-                     child, so growing the rendered result has to happen post-fit, on
-                     this cell, not inside the Viewbox), plus a Bottom-placement-only
-                     downward nudge computed from the card's actual rendered height. -->
-                <Grid Name="TitleGraphicCell" Grid.Row="1"
-                      ColumnDefinitions="0.05*,0.9*,0.05*"
+                 category_card_title_overlay/README.md). Visibility/scale/position
+                 driven from code-behind via TitleGraphicsSettings (a static
+                 live-settings bridge, same pattern as the selection glow above).
+                 TitleGraphicsSettings.Scale is now the ONLY width control — there is
+                 deliberately no separate fixed-percentage column reservation here
+                 (there used to be a 5/90/5 split plus a fixed 1.15x bump on top of
+                 it, which double-counted and pushed content past the card's own
+                 ClipToBounds edge). The base Viewbox/Image fills the full cell minus
+                 a small fixed margin; Scale/PositionX/PositionY (user-adjustable
+                 sliders) are applied as a post-fit RenderTransform on
+                 TitleGraphicCell. -->
+            <Grid Name="TitleGraphicContainer" IsVisible="False">
+                <Grid Name="TitleGraphicCell"
                       RenderTransformOrigin="50%,50%">
-                    <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,10">
+                    <!-- Preferred: the real 3D bake (TitleGraphicsBaker), a transparent PNG
+                         rendered offscreen via WebView2/three.js — see
+                         category_card_title_overlay/3D Title Graphic Bake - Implementation
+                         Spec.md. Shown/hidden from code-behind once a fresh bake exists for
+                         this category. -->
+                    <Image Name="TitleGraphicBakedImage" Stretch="Uniform"
+                           IsVisible="False" Margin="12">
+                        <Image.Effect>
+                            <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+                        </Image.Effect>
+                    </Image>
+                    <!-- Fallback: the live 2D stacked-TextBlock overlay (see its own doc
+                         comment) — shown until a bake exists or completes for this
+                         category, and if WebView2 isn't available on this machine at all. -->
+                    <Viewbox Name="TitleGraphicLiveFallback" Stretch="Uniform" StretchDirection="Both" Margin="12">
                         <Viewbox.Effect>
                             <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
                         </Viewbox.Effect>

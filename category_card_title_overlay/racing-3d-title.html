@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RACING 3D Title Mockup</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js",
+    "three/addons/loaders/FontLoader.js": "https://unpkg.com/three@0.184.0/examples/jsm/loaders/FontLoader.js",
+    "three/addons/geometries/TextGeometry.js": "https://unpkg.com/three@0.184.0/examples/jsm/geometries/TextGeometry.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>
+  html, body { margin: 0; height: 100%; background: #C9C4CC; }
+  three-d-stage:not(:defined) { visibility: hidden; }
+  three-d-stage { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<three-d-stage name="racing-title" background="#C9C4CC"></three-d-stage>
+<script src="./three-d-stage.js"></script>
+<script type="module">
+import * as THREE from "three";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+
+const stage = document.querySelector('three-d-stage');
+const { THREE: stageThree } = await stage.ready;
+
+const loader = new FontLoader();
+const font = await new Promise((resolve, reject) => {
+  loader.load('https://unpkg.com/three@0.184.0/examples/fonts/helvetiker_bold.typeface.json', resolve, undefined, reject);
+});
+
+const group = new THREE.Group();
+group.name = 'RacingTitle';
+
+const textGeo = new TextGeometry('RACING', {
+  font,
+  size: 1,
+  depth: 0.12,
+  curveSegments: 12,
+  bevelEnabled: true,
+  bevelThickness: 0.04,
+  bevelSize: 0.03,
+  bevelSegments: 16
+});
+textGeo.computeBoundingBox();
+textGeo.computeVertexNormals();
+const bbox = textGeo.boundingBox;
+const cx = (bbox.max.x + bbox.min.x) / 2;
+const cy = (bbox.max.y + bbox.min.y) / 2;
+const cz = (bbox.max.z + bbox.min.z) / 2;
+textGeo.translate(-cx, -cy, -cz);
+
+// canvas-based gradient texture: red-orange top -> light orange bottom
+const gradCanvas = document.createElement('canvas');
+gradCanvas.width = 4; gradCanvas.height = 256;
+const gctx = gradCanvas.getContext('2d');
+const grad = gctx.createLinearGradient(0, 0, 0, 256);
+grad.addColorStop(0, '#B8860B');
+grad.addColorStop(0.5, '#E8C848');
+grad.addColorStop(1, '#FFF3C4');
+gctx.fillStyle = grad;
+gctx.fillRect(0, 0, 4, 256);
+const gradTexture = new THREE.CanvasTexture(gradCanvas);
+gradTexture.needsUpdate = true;
+
+const faceMat = new THREE.MeshStandardMaterial({
+  name: 'fillGradient',
+  map: gradTexture,
+  roughness: 0.35,
+  metalness: 0.15
+});
+
+const bevelMat = new THREE.MeshStandardMaterial({
+  name: 'bevelPurple',
+  color: '#A855FF',
+  emissive: '#5B1E8A',
+  emissiveIntensity: 0.4,
+  roughness: 0.35,
+  metalness: 0.2
+});
+
+const textMesh = new THREE.Mesh(textGeo, [faceMat, bevelMat]);
+textMesh.name = 'RacingTitle_Fill';
+textMesh.castShadow = true;
+textMesh.receiveShadow = true;
+group.add(textMesh);
+
+// bright purple outline trace: a slightly larger silhouette (via bevelOffset)
+// sitting just behind the fill, peeking out evenly on every edge.
+const outlineGeo = new TextGeometry('RACING', {
+  font,
+  size: 1,
+  depth: 0.08,
+  curveSegments: 12,
+  bevelEnabled: true,
+  bevelThickness: 0.05,
+  bevelSize: 0.05,
+  bevelSegments: 8,
+  bevelOffset: 0.015
+});
+outlineGeo.computeBoundingBox();
+const obb = outlineGeo.boundingBox;
+outlineGeo.translate(-(obb.max.x+obb.min.x)/2, -(obb.max.y+obb.min.y)/2, -(obb.max.z+obb.min.z)/2);
+const outlineMat = new THREE.MeshStandardMaterial({
+  name: 'redDepth',
+  color: '#C41E1E',
+  emissive: '#6E0A0A',
+  emissiveIntensity: 0.7,
+  roughness: 0.3,
+  metalness: 0.1
+});
+const outlineMesh = new THREE.Mesh(outlineGeo, outlineMat);
+outlineMesh.name = 'RacingTitle_Outline';
+outlineMesh.position.z = -0.05;
+outlineMesh.castShadow = true;
+group.add(outlineMesh);
+
+// yellow + purple accent lights, close to the object, to color the scene lighting itself
+const purpleLight1 = new THREE.PointLight('#F5C518', 8, 6, 2);
+purpleLight1.name = 'YellowAccentLight_Front';
+purpleLight1.position.set(-1.5, 1, 2.2);
+group.add(purpleLight1);
+
+const purpleLight2 = new THREE.PointLight('#3D1466', 6, 6, 2);
+purpleLight2.name = 'PurpleAccentLight_Side';
+purpleLight2.position.set(2, -0.5, 1.5);
+group.add(purpleLight2);
+
+group.rotation.z = 0;
+
+stage.setObject(group);
+
+// straighten the camera to a front-on view (stage defaults to a 3/4 angled shot)
+{
+  const box = new THREE.Box3().setFromObject(group);
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const cam = stage._camera;
+  const controls = stage._controls;
+  const dist = (sphere.radius / Math.tan((cam.fov * Math.PI) / 360)) * 1.35;
+  cam.position.copy(sphere.center).add(new THREE.Vector3(0, 0, 1).multiplyScalar(dist));
+  controls.target.copy(sphere.center);
+  controls.update();
+}
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using UGL.App.Services;
 using UGL.Core.Interfaces;
 using UGL.Core.Models;
 
@@ -13,6 +14,7 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
 {
     private readonly IConfigurationService _config;
     private readonly UGL.Media.SkiaMediaCache _mediaCache;
+    private readonly TitleGraphicsBaker _baker;
     private readonly VirtualKeyboardViewModel _virtualKeyboard;
     private readonly ConfirmDialogViewModel _confirmDialog;
     private readonly ILogger<CategoriesConfigViewModel> _logger;
@@ -38,12 +40,14 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
     public CategoriesConfigViewModel(
         IConfigurationService config,
         UGL.Media.SkiaMediaCache mediaCache,
+        TitleGraphicsBaker baker,
         VirtualKeyboardViewModel virtualKeyboard,
         ConfirmDialogViewModel confirmDialog,
         ILogger<CategoriesConfigViewModel> logger)
     {
         _config = config;
         _mediaCache = mediaCache;
+        _baker = baker;
         _virtualKeyboard = virtualKeyboard;
         _confirmDialog = confirmDialog;
         _logger = logger;
@@ -376,6 +380,23 @@ public sealed partial class CategoriesConfigViewModel : ObservableObject
         {
             _mediaCache.EvictImage(updatedCategory.BackgroundPath);
             _mediaCache.RaiseImageChanged(updatedCategory.BackgroundPath);
+        }
+
+        // Fire-and-forget: bakes (or re-bakes, if the label changed) this category's 3D
+        // title graphic in the background. CategoryCard keeps showing the live 2D
+        // fallback until the new PNG lands — see TitleGraphicsSettings.Changed.
+        _ = BakeTitleGraphicAsync(updatedCategory.Id, updatedCategory.Label);
+    }
+
+    private async Task BakeTitleGraphicAsync(string categoryId, string label)
+    {
+        try
+        {
+            await _baker.BakeCategoryAsync(categoryId, label);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Title graphic bake failed for category {CategoryId}.", categoryId);
         }
     }
 

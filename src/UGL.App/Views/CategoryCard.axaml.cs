@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using UGL.App.Services;
 using UGL.App.ViewModels;
 
 namespace UGL.App.Views;
@@ -15,6 +17,15 @@ public sealed partial class CategoryCard : UserControl
     private TextBlock? _placeholder;
     private Grid?       _titleGraphicContainer;
     private Grid?       _titleGraphicCell;
+    private Image?       _titleGraphicBakedImage;
+    private Viewbox?     _titleGraphicLiveFallback;
+
+    // CategoryCard is instantiated by Avalonia's DataTemplate system, not the DI
+    // container (same reasoning as TitleGraphicsSettings' own doc comment), so the
+    // baker is resolved lazily from the app-wide service locator instead of being
+    // constructor-injected.
+    private static TitleGraphicsBaker? Baker =>
+        App.Services?.GetService<TitleGraphicsBaker>();
 
     private CategoryCardViewModel? _vm;
     private System.ComponentModel.PropertyChangedEventHandler? _handler;
@@ -32,6 +43,8 @@ public sealed partial class CategoryCard : UserControl
         _placeholder  = this.FindControl<TextBlock>("PlaceholderText");
         _titleGraphicContainer = this.FindControl<Grid>("TitleGraphicContainer");
         _titleGraphicCell      = this.FindControl<Grid>("TitleGraphicCell");
+        _titleGraphicBakedImage   = this.FindControl<Image>("TitleGraphicBakedImage");
+        _titleGraphicLiveFallback = this.FindControl<Viewbox>("TitleGraphicLiveFallback");
 
         DataContextChanged += OnDataContextChanged;
 
@@ -40,6 +53,7 @@ public sealed partial class CategoryCard : UserControl
         // is safe and avoids stacking duplicate handlers on every VM reassignment.
         CardHighlightSettings.Changed += OnHighlightSettingsChanged;
         TitleGraphicsSettings.Changed += OnTitleGraphicsSettingsChanged;
+        if (Baker is { } baker) baker.CategoryBaked += OnCategoryBaked;
 
         if (_cardBorder is not null)
             _cardBorder.SizeChanged += OnCardSizeChanged;
@@ -64,9 +78,17 @@ public sealed partial class CategoryCard : UserControl
 
     private void OnTitleGraphicsSettingsChanged() => ApplyTitleGraphic();
 
+    /// <summary>Fires on TitleGraphicsBaker's own pump thread — marshal back to the UI
+    /// thread before touching any Avalonia control.</summary>
+    private void OnCategoryBaked(string categoryId)
+    {
+        if (_vm?.Category?.Id != categoryId) return;
+        Dispatcher.UIThread.Post(UpdateTitleGraphicSource);
+    }
+
     /// <summary>
     /// Shows/hides and repositions the category-title text overlay per Settings →
-    /// Title Graphics. Only visibility and vertical placement are handled here —
+    /// Title Graphics. Only visibility/scale/position are handled here —
     /// TitleGraphicsSettings is a static live-settings bridge (see its own doc
     /// comment), same reasoning as CardHighlightSettings/ApplySelectionStyle above.
     /// The text itself is a plain XAML binding (Category.Label, uppercased), not set
@@ -79,30 +101,76 @@ public sealed partial class CategoryCard : UserControl
         _titleGraphicContainer.IsVisible = TitleGraphicsSettings.Enabled;
         if (!TitleGraphicsSettings.Enabled) return;
 
-        int row = TitleGraphicsSettings.Placement switch
-        {
-            "Top" => 0,
-            "Bottom" => 2,
-            _ => 1, // "Middle" and any unrecognized value
-        };
-        Grid.SetRow(_titleGraphicCell, row);
-
-        // 1.15x size bump (per feedback) applied here, after Viewbox's own auto-fit
-        // — a scale set *inside* the Viewbox would just get normalized back out, since
-        // Viewbox always fits its child to the same box regardless of the child's own
-        // scale. Bottom placement additionally gets pushed down another 10% of the
-        // card's actual rendered height (per feedback), computed here rather than as a
-        // fixed pixel value so it stays proportional across different card sizes.
+        // Scale applied here, after Viewbox's own auto-fit — a scale set *inside* the
+        // Viewbox would just get normalized back out, since Viewbox always fits its
+        // child to the same box regardless of the child's own scale. PositionX/Y are
+        // percentages of the card's actual rendered size (not fixed pixels), replacing
+        // the old fixed Top/Middle/Bottom placement with continuous, user-adjustable
+        // sliders (Settings → Title Graphics).
+        var cardWidth = _cardBorder?.Bounds.Width ?? 0;
         var cardHeight = _cardBorder?.Bounds.Height ?? 0;
-        var extraDownShift = row == 2 ? cardHeight * 0.08 : 0; // 10% - 2% per feedback
+        var translateX = TitleGraphicsSettings.PositionX / 100.0 * cardWidth;
+        var translateY = TitleGraphicsSettings.PositionY / 100.0 * cardHeight;
         _titleGraphicCell.RenderTransform = new TransformGroup
         {
             Children =
             {
-                new ScaleTransform(1.15, 1.15),
-                new TranslateTransform(0, extraDownShift),
+                new ScaleTransform(TitleGraphicsSettings.Scale, TitleGraphicsSettings.Scale),
+                new TranslateTransform(translateX, translateY),
             },
         };
+
+        UpdateTitleGraphicSource();
+    }
+
+    /// <summary>
+    /// Prefers the real 3D bake (TitleGraphicsBaker — see its own doc comment) when a
+    /// fresh PNG exists for this category; otherwise shows the live 2D fallback
+    /// (CategoryTitleGraphic). "Fresh" means the cached PNG's label and style hash both
+    /// still match current settings — a stale one is treated the same as missing, since
+    /// a re-bake for it may already be running in the background.
+    /// </summary>
+    private void UpdateTitleGraphicSource()
+    {
+        if (_titleGraphicBakedImage is null || _titleGraphicLiveFallback is null) return;
+
+        var categoryId = _vm?.Category?.Id;
+        var label = _vm?.Category?.Label;
+        var baker = Baker;
+
+        if (baker is null || string.IsNullOrWhiteSpace(categoryId) || string.IsNullOrWhiteSpace(label))
+        {
+            _titleGraphicBakedImage.IsVisible = false;
+            _titleGraphicLiveFallback.IsVisible = true;
+            return;
+        }
+
+        var cachedPath = baker.GetCachedImageIfFresh(categoryId, label);
+        if (cachedPath is null)
+        {
+            _titleGraphicBakedImage.IsVisible = false;
+            _titleGraphicLiveFallback.IsVisible = true;
+            return;
+        }
+
+        try
+        {
+            // Loaded fresh each time rather than cached on the VM — bake files change
+            // rarely (only on category save or a global style re-bake) and this control
+            // pool is small (five instances), so re-decoding on each ApplyTitleGraphic
+            // call is cheap and avoids holding a stale Bitmap across re-bakes.
+            using var stream = File.OpenRead(cachedPath);
+            _titleGraphicBakedImage.Source = new Bitmap(stream);
+            _titleGraphicBakedImage.IsVisible = true;
+            _titleGraphicLiveFallback.IsVisible = false;
+        }
+        catch
+        {
+            // Corrupt/partially-written PNG (e.g. read mid-bake) — fall back safely
+            // rather than showing a broken image.
+            _titleGraphicBakedImage.IsVisible = false;
+            _titleGraphicLiveFallback.IsVisible = true;
+        }
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)

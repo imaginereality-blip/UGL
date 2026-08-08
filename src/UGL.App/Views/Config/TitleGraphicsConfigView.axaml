@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
              xmlns:controls="clr-namespace:UGL.App.Views.Controls"
+             xmlns:views="clr-namespace:UGL.App.Views"
              x:Class="UGL.App.Views.Config.TitleGraphicsConfigView"
              x:DataType="vm:TitleGraphicsConfigViewModel">
 
@@ -10,103 +11,291 @@
       <Setter Property="Background" Value="{DynamicResource UGL.AccentColor}"/>
       <Setter Property="Foreground" Value="White"/>
     </Style>
+    <!-- Square color swatch buttons — Content is left empty, the button's own
+         Background carries the color, same idea as CardHighlightConfigView's preview
+         border but clickable, since this is how each field opens the picker panel. -->
+    <Style Selector="Button.swatch">
+      <Setter Property="Width" Value="36"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="BorderBrush" Value="#33FFFFFF"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="0"/>
+    </Style>
   </UserControl.Styles>
 
-  <ScrollViewer Classes="contentScroll" VerticalScrollBarVisibility="Auto">
-    <StackPanel Spacing="16" Margin="0,0,0,16">
+  <!-- Left: scrollable field list, swapped between the main fields and the
+       collapsible color-wheel sub-panel. Right: a STATIC preview pane, always
+       visible and never scrolled away — so a change (including one made mid-edit in
+       the color picker) is visible immediately, without needing to Save/re-bake or
+       scroll back up to see it. -->
+  <Grid ColumnDefinitions="*,16,220">
 
-      <TextBlock Text="Title Graphics" FontSize="18" FontWeight="Bold" Foreground="White"/>
-      <TextBlock Text="Overlays each category's own title text on its card — useful for categories that don't have logo art of their own. Always shows the category's Label, filling 90% of the card width."
-                 Foreground="#88FFFFFF" FontSize="13" TextWrapping="Wrap"/>
+    <ScrollViewer Grid.Column="0" Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+      <Grid>
 
-      <!-- On/off -->
-      <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnabledFocused}" Padding="8">
-        <CheckBox IsChecked="{Binding IsEnabled}" Content="Show title text on category cards"/>
-      </Border>
+        <!-- ── Main field list ───────────────────────────────────────────── -->
+        <StackPanel Spacing="16" Margin="0,0,0,16" IsVisible="{Binding !IsEditingColor}">
 
-      <!-- Placement -->
-      <StackPanel Spacing="6" IsVisible="{Binding IsEnabled}">
-        <TextBlock Text="Placement" Foreground="#88FFFFFF" FontSize="12"/>
-        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPlacementFocused}" Padding="4">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="Top" Command="{Binding SetPlacementCommand}" CommandParameter="Top"
-                    Classes.tabActive="{Binding IsTopSelected}" Padding="16,6"/>
-            <Button Content="Middle" Command="{Binding SetPlacementCommand}" CommandParameter="Middle"
-                    Classes.tabActive="{Binding IsMiddleSelected}" Padding="16,6"/>
-            <Button Content="Bottom" Command="{Binding SetPlacementCommand}" CommandParameter="Bottom"
-                    Classes.tabActive="{Binding IsBottomSelected}" Padding="16,6"/>
+          <TextBlock Text="Title Graphics" FontSize="18" FontWeight="Bold" Foreground="White"/>
+          <TextBlock Text="Overlays each category's own title text on its card — useful for categories that don't have logo art of their own. Always shows the category's Label. A real 3D-rendered version (gradient fill, bevel, colored lights) is baked to an image per category in the background; until a category's bake finishes, this flat preview style is shown instead."
+                     Foreground="#88FFFFFF" FontSize="13" TextWrapping="Wrap"/>
+
+          <!-- On/off -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnabledFocused}" Padding="8">
+            <CheckBox IsChecked="{Binding IsEnabled}" Content="Show title text on category cards"/>
+          </Border>
+
+          <StackPanel Spacing="16" IsVisible="{Binding IsEnabled}">
+
+            <!-- Fill / bevel / outline color swatches -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Colors" Foreground="#88FFFFFF" FontSize="12"/>
+              <UniformGrid Columns="5" Rows="1">
+                <StackPanel Spacing="4" HorizontalAlignment="Center" Margin="0,0,4,0">
+                  <TextBlock Text="Fill Top" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsFillTopFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="FillTop"
+                            Background="{Binding FillTopColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" Margin="4,0">
+                  <TextBlock Text="Fill Mid" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsFillMidFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="FillMid"
+                            Background="{Binding FillMidColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" Margin="4,0">
+                  <TextBlock Text="Fill Bottom" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsFillBottomFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="FillBottom"
+                            Background="{Binding FillBottomColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" Margin="4,0">
+                  <TextBlock Text="Bevel" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsBevelFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="Bevel"
+                            Background="{Binding BevelColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" Margin="4,0,0,0">
+                  <TextBlock Text="Outline" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsOutlineFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="Outline"
+                            Background="{Binding OutlineColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+              </UniformGrid>
+            </StackPanel>
+
+            <!-- Light count + per-light color swatches. Main is always on; Key 1/Key 2
+                 switch on as the count increases. -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Lights" Foreground="#88FFFFFF" FontSize="12"/>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLightCountFocused}" Padding="4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="1 (Main only)" Command="{Binding SetLightCountCommand}" CommandParameter="1"
+                          Classes.tabActive="{Binding LightCount, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=1}" Padding="16,6"/>
+                  <Button Content="2 (Main + Key 1)" Command="{Binding SetLightCountCommand}" CommandParameter="2"
+                          Classes.tabActive="{Binding LightCount, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=2}" Padding="16,6"/>
+                  <Button Content="3 (Main + Key 1 + Key 2)" Command="{Binding SetLightCountCommand}" CommandParameter="3"
+                          Classes.tabActive="{Binding LightCount, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3}" Padding="16,6"/>
+                </StackPanel>
+              </Border>
+
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                  <TextBlock Text="Main" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLightMainFocused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="LightMain"
+                            Background="{Binding LightMainColor, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" IsVisible="{Binding IsKey1LightUsed}">
+                  <TextBlock Text="Key 1" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLightKey1Focused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="LightKey1"
+                            Background="{Binding LightKey1Color, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+                <StackPanel Spacing="4" HorizontalAlignment="Center" IsVisible="{Binding IsKey2LightUsed}">
+                  <TextBlock Text="Key 2" Foreground="#88FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+                  <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLightKey2Focused}" Padding="2" CornerRadius="4">
+                    <Button Classes="swatch" Command="{Binding SelectColorCommand}" CommandParameter="LightKey2"
+                            Background="{Binding LightKey2Color, Converter={x:Static views:HexToBrushConverter.Instance}}"/>
+                  </Border>
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+
+            <!-- Scale + position (replaces the old fixed Top/Middle/Bottom placement). -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Scale &amp; Position" Foreground="#88FFFFFF" FontSize="12"/>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScaleFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="Scale" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="0.5" Maximum="2.5" Value="{Binding Scale}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding Scale, StringFormat={}{0:P0}}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPositionXFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="Left ↔ Right" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="-50" Maximum="50" Value="{Binding PositionX}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding PositionX, StringFormat={}{0:F0}%}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPositionYFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="Top ↕ Bottom" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="-50" Maximum="50" Value="{Binding PositionY}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding PositionY, StringFormat={}{0:F0}%}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+            </StackPanel>
+
+            <!-- Rotation, all 3 axes. -->
+            <StackPanel Spacing="6">
+              <TextBlock Text="Rotation" Foreground="#88FFFFFF" FontSize="12"/>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRotationXFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="X (tilt)" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="-45" Maximum="45" Value="{Binding RotationXDegrees}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding RotationXDegrees, StringFormat={}{0:F0}°}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRotationYFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="Y (turn)" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="-45" Maximum="45" Value="{Binding RotationYDegrees}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding RotationYDegrees, StringFormat={}{0:F0}°}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+              <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRotationZFocused}" Padding="8,4">
+                <Grid ColumnDefinitions="90,*,50">
+                  <TextBlock Grid.Column="0" Text="Z (spin)" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                  <Slider Grid.Column="1" Minimum="-15" Maximum="15" Value="{Binding RotationZDegrees}" Height="24"/>
+                  <TextBlock Grid.Column="2" Text="{Binding RotationZDegrees, StringFormat={}{0:F0}°}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+              </Border>
+            </StackPanel>
+
           </StackPanel>
-        </Border>
-      </StackPanel>
 
-      <!-- Live preview — same CategoryTitleGraphic control CategoryCard uses (see
-           its own doc comment), inside the same 90%-width/row-zoned layout, so this
-           renders byte-for-byte what the Home Menu will show. -->
-      <StackPanel Spacing="6">
-        <TextBlock Text="Preview" Foreground="#88FFFFFF" FontSize="12"/>
-        <Border Width="220" Height="140" Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" ClipToBounds="True">
-          <Grid>
-            <TextBlock Text="C" HorizontalAlignment="Center" VerticalAlignment="Center"
-                       FontSize="72" FontWeight="Black" Opacity="0.15"
-                       Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
-            <Grid RowDefinitions="0.3*,0.4*,0.3*" IsVisible="{Binding IsEnabled}">
-              <!-- 1.15x scale matches CategoryCard's post-fit size bump; Bottom gets
-                   the same extra downward nudge, here as a fixed 14px (10% of this
-                   preview's fixed 140px height) since the preview card size never
-                   changes at runtime the way a real card's does. -->
-              <Grid Grid.Row="0" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsTopSelected}">
-                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
-                         RenderTransformOrigin="50%,50%">
-                  <Viewbox.RenderTransform>
-                    <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
-                  </Viewbox.RenderTransform>
-                  <Viewbox.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
-                  </Viewbox.Effect>
-                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
-                </Viewbox>
-              </Grid>
-              <Grid Grid.Row="1" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsMiddleSelected}">
-                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
-                         RenderTransformOrigin="50%,50%">
-                  <Viewbox.RenderTransform>
-                    <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
-                  </Viewbox.RenderTransform>
-                  <Viewbox.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
-                  </Viewbox.Effect>
-                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
-                </Viewbox>
-              </Grid>
-              <Grid Grid.Row="2" ColumnDefinitions="0.05*,0.9*,0.05*" IsVisible="{Binding IsBottomSelected}">
-                <Viewbox Grid.Column="1" Stretch="Uniform" StretchDirection="Both" Margin="0,6"
-                         RenderTransformOrigin="50%,50%">
-                  <Viewbox.RenderTransform>
-                    <TransformGroup>
-                      <ScaleTransform ScaleX="1.15" ScaleY="1.15"/>
-                      <TranslateTransform Y="11.2"/>
-                    </TransformGroup>
-                  </Viewbox.RenderTransform>
-                  <Viewbox.Effect>
-                    <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
-                  </Viewbox.Effect>
-                  <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
-                </Viewbox>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Border>
-      </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="12">
+            <Button Content="💾 Save" Command="{Binding SaveCommand}"
+                    Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}"
+                    Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
+            <TextBlock Text="{Binding StatusMessage}"
+                       Foreground="{DynamicResource UGL.SuccessColor}" VerticalAlignment="Center"
+                       IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+          </StackPanel>
 
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <Button Content="💾 Save" Command="{Binding SaveCommand}"
-                Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}"
-                Background="{DynamicResource UGL.AccentColor}" Foreground="White" Padding="16,8"/>
-        <TextBlock Text="{Binding StatusMessage}"
-                   Foreground="{DynamicResource UGL.SuccessColor}" VerticalAlignment="Center"
-                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-      </StackPanel>
+        </StackPanel>
 
+        <!-- ── Collapsible color-wheel sub-panel ─────────────────────────── -->
+        <StackPanel Spacing="16" Margin="0,0,0,16" IsVisible="{Binding IsEditingColor}">
+          <TextBlock Text="{Binding EditingColorLabel}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+
+          <StackPanel Spacing="8" Width="220">
+            <controls:ColorWheelPicker Hue="{Binding PickerHue}" Saturation="{Binding PickerSaturation}"/>
+            <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" Height="60"
+                    BorderBrush="{DynamicResource UGL.Divider}" BorderThickness="1">
+              <Border Margin="8" CornerRadius="4" Background="{Binding PickerPreviewBrush}"/>
+            </Border>
+            <Border Background="#1AFFFFFF" CornerRadius="4" Padding="6,4">
+              <TextBlock Text="{Binding PickerHex}" Foreground="White" FontSize="12" FontFamily="Consolas,monospace" HorizontalAlignment="Center"/>
+            </Border>
+          </StackPanel>
+
+          <StackPanel Spacing="6">
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPickerHueFocused}" Padding="6,2">
+              <Grid ColumnDefinitions="70,*,40">
+                <TextBlock Grid.Column="0" Text="Hue" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0" Maximum="360" Value="{Binding PickerHue}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding PickerHue, StringFormat={}{0:F0}°}" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPickerSaturationFocused}" Padding="6,2">
+              <Grid ColumnDefinitions="70,*,40">
+                <TextBlock Grid.Column="0" Text="Saturation" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding PickerSaturation}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding PickerSaturation, StringFormat={}{0:P0}}" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPickerValueFocused}" Padding="6,2">
+              <Grid ColumnDefinitions="70,*,40">
+                <TextBlock Grid.Column="0" Text="Brightness" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding PickerValue}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding PickerValue, StringFormat={}{0:P0}}" Foreground="#88FFFFFF" FontSize="11" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+          </StackPanel>
+
+          <Button Content="✓ Done" Command="{Binding CloseColorPickerCommand}"
+                   Classes="cfgField" Classes.fieldFocused="{Binding IsPickerDoneFocused}"
+                   Background="{DynamicResource UGL.AccentColor}" Foreground="White"
+                   HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,8" Width="220"/>
+        </StackPanel>
+
+      </Grid>
+    </ScrollViewer>
+
+    <!-- ── Static preview pane — always visible, never scrolls away, reflects every
+         change (including mid-edit in the color picker) immediately. Shows the REAL
+         3D bake — see TitleGraphicsConfigViewModel's SchedulePreviewBake/PreviewBitmap
+         — debounced ~400ms after the last change, baked to a synthetic "preview"
+         category id via the same TitleGraphicsBaker every real category uses. The
+         flat CategoryTitleGraphic control (hardcoded colors, no lighting) only shows
+         before the very first bake completes — it does NOT reflect color/light
+         changes, so it must never be the steady-state view once a bake exists.
+         Portrait aspect to match the actual Home Menu category cards. ── -->
+    <StackPanel Grid.Column="2" Spacing="6" VerticalAlignment="Top">
+      <TextBlock Text="Preview" Foreground="#88FFFFFF" FontSize="12"/>
+      <Border Width="{Binding PreviewPaneWidth}" Height="{Binding PreviewPaneHeight}" Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="4" ClipToBounds="True">
+        <Grid>
+          <TextBlock Text="C" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     FontSize="96" FontWeight="Black" Opacity="0.15"
+                     Foreground="{DynamicResource UGL.TextPrimaryColor}"/>
+
+          <!-- Real bake, once one exists. -->
+          <Image Source="{Binding PreviewBitmap}" Stretch="Uniform" Margin="12"
+                 IsVisible="{Binding IsEnabled}">
+            <Image.Effect>
+              <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+            </Image.Effect>
+          </Image>
+
+          <!-- Fallback shown only until the first bake completes (PreviewBitmap still
+               null) — NOT color/light-accurate, since it's the flat 2D approximation. -->
+          <Viewbox Stretch="Uniform" StretchDirection="Both" Margin="12"
+                   RenderTransformOrigin="50%,50%">
+            <Viewbox.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="IsEnabled"/>
+                <Binding Path="PreviewBitmap" Converter="{x:Static ObjectConverters.IsNull}"/>
+              </MultiBinding>
+            </Viewbox.IsVisible>
+            <Viewbox.RenderTransform>
+              <TransformGroup>
+                <ScaleTransform ScaleX="{Binding Scale}" ScaleY="{Binding Scale}"/>
+                <TranslateTransform X="{Binding PreviewTranslateX}" Y="{Binding PreviewTranslateY}"/>
+              </TransformGroup>
+            </Viewbox.RenderTransform>
+            <Viewbox.Effect>
+              <DropShadowEffect Color="#000000" BlurRadius="14" OffsetX="0" OffsetY="10" Opacity="0.5"/>
+            </Viewbox.Effect>
+            <controls:CategoryTitleGraphic TitleText="CATEGORY TITLE"/>
+          </Viewbox>
+
+          <TextBlock Text="Rendering…" Foreground="White" FontSize="12" FontWeight="Bold"
+                     HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10"
+                     IsVisible="{Binding IsPreviewRendering}"/>
+        </Grid>
+      </Border>
     </StackPanel>
-  </ScrollViewer>
+
+  </Grid>
 </UserControl>

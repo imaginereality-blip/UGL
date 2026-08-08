@@ -64,7 +64,35 @@ public sealed class AppSettings
     // for categories with no logo art of their own. Configured in Settings → Title
     // Graphics.
     public bool   TitleGraphicsEnabled   { get; set; } = false;
-    public string TitleGraphicsPlacement { get; set; } = "Middle"; // "Top" | "Middle" | "Bottom"
+
+    // Scale/position replaced the old Top/Middle/Bottom placement buttons — a
+    // continuous slider covers every position those three buttons could reach, and
+    // then some, so the discrete placement concept was dropped rather than kept
+    // alongside it. Scale is the ONLY width control now (CategoryCard no longer
+    // reserves a fixed 90% column on top of it — that double-counted and pushed
+    // content past the card's clipped edge), so the default is under 100% to leave
+    // headroom before the user pushes it higher.
+    public double TitleGraphicsScale     { get; set; } = 0.9;
+    public double TitleGraphicsPositionX { get; set; } = 0.0; // -50..50, % of card width
+    public double TitleGraphicsPositionY { get; set; } = 0.0; // -50..50, % of card height
+
+    // 3D bake style — extruded block-letter look baked offscreen via WebView2/three.js
+    // (see TitleGraphicsBaker). Defaults match racing-3d-title.html's reference scene.
+    public string TitleGraphicsFillTopColor    { get; set; } = "#B8860B";
+    public string TitleGraphicsFillMidColor    { get; set; } = "#E8C848";
+    public string TitleGraphicsFillBottomColor { get; set; } = "#FFF3C4";
+    public string TitleGraphicsBevelColor      { get; set; } = "#A855FF";
+    public string TitleGraphicsOutlineColor    { get; set; } = "#C41E1E";
+    // 1-3 accent point lights: Main is always on, Key1/Key2 switch on as the count
+    // increases (see TitleGraphicsBaker's template.html for exact positions).
+    public int    TitleGraphicsLightCount      { get; set; } = 2; // 1-3
+    public string TitleGraphicsLightMainColor  { get; set; } = "#F5C518";
+    public string TitleGraphicsLightKey1Color  { get; set; } = "#3D1466";
+    public string TitleGraphicsLightKey2Color  { get; set; } = "#FFFFFF";
+
+    public double TitleGraphicsRotationXDegrees { get; set; } = 0.0; // -45..45
+    public double TitleGraphicsRotationYDegrees { get; set; } = 0.0; // -45..45
+    public double TitleGraphicsRotationZDegrees { get; set; } = 0.0; // -15..15
 
     // ── Peripheral firewall (HidHide) ────────────────────────────────────────
     // Backs the real (OS-level) version of Game.DisabledDeviceTypes — without this,
