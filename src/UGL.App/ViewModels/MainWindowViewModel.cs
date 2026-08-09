@@ -330,9 +330,25 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // Quit-to-launcher (LB+RB+Start+Back) takes priority over everything, including
         // the virtual keyboard/Settings checks below — it's meaningful only while a game
         // is actually running, at which point none of that other UI state matters anyway.
+        //
+        // Gated on THIS ViewModel's own IsEmulatorRunning, not _launcher.IsEmulatorRunning
+        // (ProcessEmulatorLauncher's _currentProcess.HasExited check) — those two flags can
+        // disagree for a Steam/Epic/GOG hand-off game (Game.ProcessNameOverride set). The
+        // launcher's wrapper process is expected to exit within a second or two of handing
+        // off to the real client, and _currentProcess isn't swapped to the real game process
+        // until TrackProcessNameOverrideAsync finds it (up to ~60s later) — during that gap
+        // _launcher.IsEmulatorRunning reports false even though the real game is genuinely
+        // still running. Using that flag here meant the quit combo silently did nothing
+        // during the gap (this branch's condition was false, so KillCurrentEmulatorAsync was
+        // never even called) AND the guard below let normal navigation input start being
+        // processed against UGL's own UI again — exactly the reported "won't quit, but I
+        // can somehow navigate the app in the background" symptom. This ViewModel's own
+        // IsEmulatorRunning is set once at launch and only cleared by OnEmulatorExited
+        // (which fires for whichever process ends up tracked, wrapper or swapped-in real
+        // game), so it stays correct across the whole hand-off gap.
         if (e.Action == ControllerAction.QuitToLauncher)
         {
-            if (_launcher.IsEmulatorRunning)
+            if (IsEmulatorRunning)
             {
                 _logger.LogInformation("Quit-to-launcher combo detected — killing emulator.");
                 await _launcher.KillCurrentEmulatorAsync();
@@ -344,8 +360,9 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // MainWindow.axaml.cs) and shouldn't act on any other input — polling continues
         // in the background purely so the quit combo above can be detected regardless of
         // which window has focus. Without this guard, held navigation/Settings/etc. input
-        // would still be processed against a hidden UI.
-        if (_launcher.IsEmulatorRunning) return;
+        // would still be processed against a hidden UI. Same IsEmulatorRunning as above,
+        // for the same reason.
+        if (IsEmulatorRunning) return;
 
         // The delete-confirmation dialog, when open, takes top priority over
         // everything else — same reasoning as the virtual keyboard below, and

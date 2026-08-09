@@ -189,8 +189,8 @@ public sealed class AvaloniaThemeService : IThemeService
     private static Theme BuiltInDefault() => new()
     {
         Id = "default", Name = "Default Dark",
-        AccentColor = "#FF0078D4", BackgroundColor = "#FF1A1A2E",
-        SurfaceColor = "#FF16213E", TextPrimaryColor = "#FFFFFFFF",
+        AccentColor = "#FF0078D4", BackgroundColor = "#FF000000",
+        SurfaceColor = "#FF141414", TextPrimaryColor = "#FFFFFFFF",
         TextSecondaryColor = "#FFB0B0C0", SelectionColor = "#FF0F3460",
         FontFamily = "Segoe UI", TitleFontSize = 28, BodyFontSize = 16,
         CardCornerRadius = 0, CardSpacing = 4,

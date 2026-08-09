@@ -87,12 +87,24 @@ public sealed partial class MainWindow : Window
                             // rules out a display-mode cause and points here instead.
                             WindowState = WindowState.Normal;
                             WindowState = WindowState.FullScreen;
+
+                            // Plain Activate()/Focus() was confirmed unreliable here — the
+                            // same Windows foreground-lock restriction that made
+                            // ProcessEmulatorLauncher build a dedicated AttachThreadInput
+                            // helper for launch-time activation applies just as much in
+                            // reverse: whatever still owns the foreground at the exact
+                            // moment the emulator process/window tears down can cause a
+                            // plain SetForegroundWindow-based call to silently fail, leaving
+                            // UGL sized correctly but not actually focused/foreground. See
+                            // WindowRestoreNative's doc comment for the full rationale.
+                            var hwnd = TryGetPlatformHandle()?.Handle ?? 0;
+                            bool activated = WindowRestoreNative.ForceForegroundWindow(hwnd);
                             Activate();
                             Focus();
 
                             _logger?.LogInformation(
-                                "Restored fullscreen after emulator exit in {Ms}ms (WindowState={State}, ClientSize={Width}x{Height}).",
-                                sw.ElapsedMilliseconds, WindowState, ClientSize.Width, ClientSize.Height);
+                                "Restored fullscreen after emulator exit in {Ms}ms (WindowState={State}, ClientSize={Width}x{Height}, ForceForeground={Activated}).",
+                                sw.ElapsedMilliseconds, WindowState, ClientSize.Width, ClientSize.Height, activated);
                         });
                         break;
                 }
