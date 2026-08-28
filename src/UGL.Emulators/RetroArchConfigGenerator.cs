@@ -33,6 +33,7 @@ public sealed class RetroArchConfigGenerator : IRetroArchConfigGenerator
         Game game,
         Emulator emulator,
         GameSystem system,
+        ControllerProfile? analogProfile = null,
         CancellationToken ct = default)
     {
         var ra = emulator.RetroArch
@@ -121,6 +122,19 @@ public sealed class RetroArchConfigGenerator : IRetroArchConfigGenerator
             {
                 _logger.LogWarning("Bezel image not found, skipping: {Path}", resolvedBezel);
             }
+        }
+
+        // Analog dead zone/sensitivity from the configured controller profile (Settings
+        // → Controllers) — see IRetroArchConfigGenerator.GenerateAsync's doc comment
+        // for why this is limited to dead zone/sensitivity rather than a full button
+        // remap. These are global RetroArch binds (not per-player), so only one
+        // profile's values are used even if multiple players have profiles.
+        if (analogProfile is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("# Controller profile (Settings → Controllers):");
+            sb.AppendLine(FormattableString.Invariant($"input_analog_deadzone = \"{analogProfile.AxisDeadZone:F6}\""));
+            sb.AppendLine(FormattableString.Invariant($"input_analog_sensitivity = \"{analogProfile.AxisSensitivity:F6}\""));
         }
 
         // Additional raw config lines

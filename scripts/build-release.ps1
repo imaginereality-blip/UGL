@@ -34,6 +34,19 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+Write-Host "== Publishing UGLGuideWatcher.exe (self-contained, single-file, win-x64) ==" -ForegroundColor Cyan
+dotnet publish src\UGL.GuideWatcher\UGL.GuideWatcher.csproj `
+    -c Release `
+    -r win-x64 `
+    --self-contained true `
+    -p:PublishSingleFile=true `
+    -o $publishDir
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "UGLGuideWatcher publish failed - aborting before packaging anything." -ForegroundColor Red
+    exit 1
+}
+
 # Strip anything that shouldn't ship in a public release. This covers two distinct
 # risks in one pass: UGL.App.csproj currently copies a personal dev/test config\
 # folder (..\..\config\, i.e. the repo root) into every build output via a

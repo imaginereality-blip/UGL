@@ -23,8 +23,16 @@ public sealed partial class VirtualKeyViewModel : ObservableObject
 /// Settings — until Done or Cancel closes it. Callers open it via Open(label, currentValue,
 /// onCommit); onCommit only fires on Done, never on Cancel, so cancelling discards edits.
 ///
-/// Scope note: only plain text entry is supported (letters, digits, space, shift/case,
-/// backspace). No symbols/punctuation keys yet — add rows here if a field needs them.
+/// Scope note: letters, digits, space, shift/case, backspace, and a symbols row
+/// covering the punctuation actually needed elsewhere in the app — path separators
+/// and ':' for launcher-protocol URIs like "steam://rungameid/12345" (Game.RomPath
+/// for a direct-launch Emulator; see its own doc comment), and '.'/'-'/'_' for file
+/// names and extensions. Confirmed real gap, not hypothetical: without a way to type
+/// '/' or ':' at all, a Steam/Epic/GOG URI could only ever be entered by editing
+/// games.json directly outside the app — which is exactly how one such URI ended up
+/// stored as "steam:\rungameid\12345" (backslashes swapped in for the unavailable
+/// forward slash), silently breaking that game's launch with no way to fix it from
+/// inside UGL itself.
 /// </summary>
 public sealed partial class VirtualKeyboardViewModel : ObservableObject
 {
@@ -64,7 +72,11 @@ public sealed partial class VirtualKeyboardViewModel : ObservableObject
         new("Shift"), new("z"), new("x"), new("c"), new("v"), new("b"), new("n"), new("m"), new("Back"),
     ];
 
-    public ObservableCollection<VirtualKeyViewModel> Row4Keys { get; } =
+    // Punctuation actually needed by fields in this app — see the class doc comment
+    // for why ':' and '/' specifically matter (launcher-protocol URIs).
+    public ObservableCollection<VirtualKeyViewModel> Row4Keys { get; } = MakeRow(":/\\.-_");
+
+    public ObservableCollection<VirtualKeyViewModel> Row5Keys { get; } =
     [
         new("◀"), new("Space"), new("▶"), new("Done"), new("Cancel"),
     ];
@@ -78,6 +90,8 @@ public sealed partial class VirtualKeyboardViewModel : ObservableObject
         return result;
     }
 
+    private const int RowCount = 6;
+
     private IEnumerable<ObservableCollection<VirtualKeyViewModel>> AllRows()
     {
         yield return Row0Keys;
@@ -85,6 +99,7 @@ public sealed partial class VirtualKeyboardViewModel : ObservableObject
         yield return Row2Keys;
         yield return Row3Keys;
         yield return Row4Keys;
+        yield return Row5Keys;
     }
 
     private ObservableCollection<VirtualKeyViewModel> GetRow(int index) => index switch
@@ -93,7 +108,8 @@ public sealed partial class VirtualKeyboardViewModel : ObservableObject
         1 => Row1Keys,
         2 => Row2Keys,
         3 => Row3Keys,
-        _ => Row4Keys,
+        4 => Row4Keys,
+        _ => Row5Keys,
     };
 
     partial void OnIsShiftedChanged(bool value)
@@ -126,14 +142,14 @@ public sealed partial class VirtualKeyboardViewModel : ObservableObject
 
     public void NavigateUp()
     {
-        RowIndex = (RowIndex - 1 + 5) % 5;
+        RowIndex = (RowIndex - 1 + RowCount) % RowCount;
         KeyIndex = Math.Min(KeyIndex, GetRow(RowIndex).Count - 1);
         RefreshHighlight();
     }
 
     public void NavigateDown()
     {
-        RowIndex = (RowIndex + 1) % 5;
+        RowIndex = (RowIndex + 1) % RowCount;
         KeyIndex = Math.Min(KeyIndex, GetRow(RowIndex).Count - 1);
         RefreshHighlight();
     }

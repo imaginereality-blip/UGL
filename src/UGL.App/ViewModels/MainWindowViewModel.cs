@@ -32,6 +32,29 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty] private string _windowTitle = "UltimateGameLauncher";
     [ObservableProperty] private bool _isLoading = true;
+
+    // ── Startup video — a one-shot cinematic shown over everything else (including
+    // the "Loading…" splash) for the first few seconds after launch. Defaults true so
+    // it's already showing on the very first render, before InitializeAsync even runs;
+    // StartupVideoView (bound to this) plays the file once and calls SkipStartupVideo
+    // itself when playback ends, same as any other input skipping it early. ──────────
+    [ObservableProperty] private bool _isShowingStartupVideo = true;
+
+    private bool _isInitialLoadComplete;
+    private bool _hasStartedBackgroundAudio;
+
+    public void SkipStartupVideo()
+    {
+        IsShowingStartupVideo = false;
+        TryStartBackgroundAudio();
+    }
+
+    private void TryStartBackgroundAudio()
+    {
+        if (_hasStartedBackgroundAudio || IsShowingStartupVideo || !_isInitialLoadComplete) return;
+        _hasStartedBackgroundAudio = true;
+        _ = _audioService.StartAsync();
+    }
     [ObservableProperty] private object _currentView = null!;
     [ObservableProperty] private bool _isFilterOverlayOpen;
     [ObservableProperty] private bool _isSettingsOpen;
@@ -122,7 +145,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
                 s.TitleGraphicsRotationXDegrees, s.TitleGraphicsRotationYDegrees, s.TitleGraphicsRotationZDegrees);
 
             await _homeMenu.InitializeAsync();
-            await _audioService.StartAsync();
+
+            // Background music deliberately does NOT start here — it used to, which
+            // meant it started playing underneath the startup video the instant loading
+            // finished, well before the video itself ends. TryStartBackgroundAudio only
+            // actually starts it once BOTH this load has finished AND the startup video
+            // is done/skipped (see SkipStartupVideo) — whichever finishes second.
+            _isInitialLoadComplete = true;
+            TryStartBackgroundAudio();
 
             // Non-blocking — never delay startup on a network round-trip, and never
             // let a failed check (no internet, GitHub down, etc.) be disruptive.
@@ -284,6 +314,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public void CloseSettings()
     {
+        // The Back/Start gamepad paths above only ever call this once IsContentFocused
+        // is already false (they route through ExitContent() first when it isn't) —
+        // but the mouse close button (ConfigEditorView.axaml.cs's OnCloseClick) calls
+        // straight here, skipping that. Left uncleared, reopening Settings would start
+        // with IsContentFocused still true from before, so the very next stick/D-pad
+        // nudge on the sidebar would be routed as CONTENT navigation instead of MENU
+        // navigation — no A press needed — which read as "stick drift enters a tab
+        // by itself". Always reset it here so every close, whatever triggered it,
+        // reopens fresh at the sidebar.
+        _configEditor.IsContentFocused = false;
         IsSettingsOpen = false;
         _audioService.Resume();
         _logger.LogInformation("Settings closed.");
@@ -326,6 +366,14 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private async Task HandleControllerInputAsync(ControllerInputEvent e)
     {
         _logger.LogDebug("Controller [{Index}] action: {Action}", e.ControllerIndex, e.Action);
+
+        // Startup video takes priority over literally everything else — any input at
+        // all just skips it rather than being interpreted as real navigation.
+        if (IsShowingStartupVideo)
+        {
+            SkipStartupVideo();
+            return;
+        }
 
         // Quit-to-launcher (LB+RB+Start+Back) takes priority over everything, including
         // the virtual keyboard/Settings checks below — it's meaningful only while a game
@@ -462,11 +510,16 @@ public sealed partial class MainWindowViewModel : ObservableObject
                     break;
 
                 case ControllerAction.CategoryLeft:
-                    _configEditor.SwitchSubTabLeft();
+                    // Guarded like every other directional action in this switch —
+                    // LB/RB sub-tab switching only makes sense once a tab's content is
+                    // actually open; unguarded, it fired for whichever tab was last
+                    // ActiveTab even while just browsing the sidebar with nothing
+                    // entered yet.
+                    if (_configEditor.IsContentFocused) _configEditor.SwitchSubTabLeft();
                     break;
 
                 case ControllerAction.CategoryRight:
-                    _configEditor.SwitchSubTabRight();
+                    if (_configEditor.IsContentFocused) _configEditor.SwitchSubTabRight();
                     break;
 
                 case ControllerAction.Secondary:

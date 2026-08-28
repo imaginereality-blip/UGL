@@ -45,4 +45,18 @@ public sealed class RawInputEvent
 
     /// <summary>Wheel rotation delta (positive = forward). Spinner uses this as rotation count.</summary>
     public int WheelDelta { get; init; }
+
+    // ── HID joystick/gamepad button state (RIM_TYPE_HID only) ─────────────────
+    // Devices like the X-Gunner that report numbered buttons/D-pad via a generic
+    // HID joystick collection rather than as mouse buttons — resolved via
+    // HidP_GetUsages against the device's own HID report descriptor. Always empty
+    // for RIM_TYPE_MOUSE events (use ButtonsPressed/ButtonsDown for those instead).
+
+    /// <summary>HID usage IDs newly pressed this event (not held over from the
+    /// previous report).</summary>
+    public IReadOnlyList<ushort> HidUsagesNewlyPressed { get; init; } = [];
+
+    /// <summary>Every HID usage ID currently held, not just the new ones — for a
+    /// live "what's pressed right now" display.</summary>
+    public IReadOnlyList<ushort> HidUsagesHeld { get; init; } = [];
 }

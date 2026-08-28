@@ -46,6 +46,7 @@ public sealed class PeripheralRegistry : IPeripheralRegistry
                 stream, JsonOptions, ct) ?? [];
             _devices.Clear();
             _devices.AddRange(loaded);
+            RecomputeDisplayLabels();
             _logger.LogInformation("Peripheral registry loaded: {Count} devices.", _devices.Count);
         }
         catch (Exception ex)
@@ -103,6 +104,52 @@ public sealed class PeripheralRegistry : IPeripheralRegistry
                     "New peripheral detected: {Name} ({Type})", live.FriendlyName, live.DeviceType);
             }
         }
+
+        RecomputeDisplayLabels();
+    }
+
+    /// <summary>
+    /// Recomputes DisplayLabel for every known device. Two controllers Windows
+    /// reports with the identical FriendlyName (the normal case for two of the same
+    /// model — there's no vendor serial-number-style differentiator surfaced here)
+    /// are otherwise indistinguishable everywhere they're listed: Settings →
+    /// Controllers, the Peripherals tab, and the Games editor's Player Device
+    /// Assignments picker. Prefers the user's own assigned Player index when set
+    /// (e.g. "X-Gunner (P1)"/"X-Gunner (P2)" once assigned in the Peripherals tab —
+    /// matches the label the physical device is already effectively known by for
+    /// game setup), falling back to a stable ordinal ("#1"/"#2", ordered by
+    /// HardwarePath so it doesn't reshuffle between rescans) before that's done. A
+    /// name that's already unique among known devices is left unchanged — no need
+    /// to clutter a single Racing Wheel with "#1".
+    /// </summary>
+    private void RecomputeDisplayLabels()
+    {
+        foreach (var group in _devices.GroupBy(d => (d.DeviceType, Name: d.FriendlyName), NameGroupComparer.Instance))
+        {
+            var siblings = group.OrderBy(d => d.HardwarePath, StringComparer.OrdinalIgnoreCase).ToList();
+            if (siblings.Count <= 1)
+            {
+                if (siblings.Count == 1) siblings[0].DisplayLabel = siblings[0].FriendlyName;
+                continue;
+            }
+
+            for (int i = 0; i < siblings.Count; i++)
+            {
+                var d = siblings[i];
+                d.DisplayLabel = d.PlayerIndex > 0
+                    ? $"{d.FriendlyName} (P{d.PlayerIndex})"
+                    : $"{d.FriendlyName} #{i + 1}";
+            }
+        }
+    }
+
+    private sealed class NameGroupComparer : IEqualityComparer<(RawInputDeviceType DeviceType, string Name)>
+    {
+        public static readonly NameGroupComparer Instance = new();
+        public bool Equals((RawInputDeviceType DeviceType, string Name) x, (RawInputDeviceType DeviceType, string Name) y) =>
+            x.DeviceType == y.DeviceType && string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+        public int GetHashCode((RawInputDeviceType DeviceType, string Name) obj) =>
+            HashCode.Combine(obj.DeviceType, obj.Name.ToUpperInvariant());
     }
 
     public int GetPlayerIndex(string hardwarePath) =>
@@ -117,6 +164,7 @@ public sealed class PeripheralRegistry : IPeripheralRegistry
         if (device is null) return;
 
         device.PlayerIndex = playerIndex;
+        RecomputeDisplayLabels();
         await SaveAsync(ct);
         _logger.LogInformation(
             "Player {Index} assigned to: {Name}", playerIndex, device.FriendlyName);
@@ -126,6 +174,7 @@ public sealed class PeripheralRegistry : IPeripheralRegistry
     {
         _devices.RemoveAll(d =>
             d.HardwarePath.Equals(hardwarePath, StringComparison.OrdinalIgnoreCase));
+        RecomputeDisplayLabels();
         await SaveAsync(ct);
     }
 }

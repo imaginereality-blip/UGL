@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ControllerDiagrams.WheelDiagramArt"
+             Width="360" Height="440">
+
+  <!--
+    Traced directly from design_handoff_controller_config/vector-source/wheel.svg (the
+    user's own Inkscape reference — re-derive from that file if it changes, don't
+    re-approximate with primitive shapes). Canvas is a fixed 360x440 space matching that
+    SVG's viewBox 1:1 — WheelHotspots.cs's hit regions are authored in the SAME
+    coordinate space. Shifter controls (Shift Up/Down, Gear 1-6, Reverse) are
+    deliberately NOT given diagram hotspots — which controls even exist depends on
+    ShifterMode, and the row list already covers remapping them; only the base 15
+    always-present controls get click regions here.
+  -->
+  <UserControl.Styles>
+    <Style Selector="Ellipse.controlHeld">
+      <Setter Property="Stroke" Value="White"/>
+      <Setter Property="StrokeThickness" Value="4"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Border.controlHeld">
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Path.controlHeld">
+      <Setter Property="Stroke" Value="White"/>
+      <Setter Property="StrokeThickness" Value="4"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
+
+  <Canvas Width="360" Height="440">
+
+    <!-- Spokes (decorative, drawn first so the hub covers their centers) -->
+    <Line StartPoint="180,150" EndPoint="180,60"  Stroke="#4A4038" StrokeThickness="7" StrokeLineCap="Round" IsHitTestVisible="False"/>
+    <Line StartPoint="180,150" EndPoint="102,196" Stroke="#4A4038" StrokeThickness="7" StrokeLineCap="Round" IsHitTestVisible="False"/>
+    <Line StartPoint="180,150" EndPoint="258,196" Stroke="#4A4038" StrokeThickness="7" StrokeLineCap="Round" IsHitTestVisible="False"/>
+
+    <!-- Rim — textured grip (stitch-line ticks) -->
+    <Ellipse Canvas.Left="58" Canvas.Top="28" Width="244" Height="244"
+             Stroke="#3A332C" StrokeThickness="18" IsHitTestVisible="False"/>
+    <Ellipse Canvas.Left="58" Canvas.Top="28" Width="244" Height="244"
+             Stroke="#4A4038" StrokeThickness="3" IsHitTestVisible="False"/>
+    <Path IsHitTestVisible="False" Opacity="0.5" Stroke="#221D19" StrokeThickness="1.5"
+          Data="M 180,24 180,40 M 243,41 234,55 M 288,86 274,95 M 305,150 289,150 M 288,214 274,205
+                M 243,259 234,245 M 180,276 180,260 M 117,259 126,245 M 72,214 86,205
+                M 55,150 71,150 M 72,86 86,95 M 117,41 126,55"/>
+
+    <!-- Paddle shifters — thin curved blades behind the rim -->
+    <Path Name="ShapeLeftPaddle" Fill="#5A5049" Stroke="#3A332C" StrokeThickness="1.5"
+          Data="M 38,78 Q 34,52 72,38 Q 96,30 100,46 Q 84,50 66,64 Q 50,76 46,92 Q 40,90 38,78 Z"/>
+    <Path Name="ShapeRightPaddle" Fill="#5A5049" Stroke="#3A332C" StrokeThickness="1.5"
+          Data="M 322,78 Q 326,52 288,38 Q 264,30 260,46 Q 276,50 294,64 Q 310,76 314,92 Q 320,90 322,78 Z"/>
+
+    <!-- Hub -->
+    <Ellipse Canvas.Left="108" Canvas.Top="78" Width="144" Height="144"
+             Fill="#2B2621" Stroke="#4A4038" StrokeThickness="2.5" IsHitTestVisible="False"/>
+
+    <!-- D-pad — left spoke -->
+    <Border Name="ShapeDPadUp" Canvas.Left="122" Canvas.Top="118" Width="16" Height="20" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadDown" Canvas.Left="122" Canvas.Top="154" Width="16" Height="20" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadLeft" Canvas.Left="100" Canvas.Top="138" Width="20" Height="16" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadRight" Canvas.Left="140" Canvas.Top="138" Width="20" Height="16" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Rectangle Canvas.Left="122" Canvas.Top="140" Width="16" Height="16" Fill="#221D19" IsHitTestVisible="False"/>
+
+    <!-- Face buttons — right spoke, Xbox-authentic colors -->
+    <Ellipse Name="ShapeY" Canvas.Left="220" Canvas.Top="110" Width="24" Height="24" Fill="#F2C94C" Stroke="#3A2E00" StrokeThickness="1.25"/>
+    <Ellipse Name="ShapeA" Canvas.Left="220" Canvas.Top="148" Width="24" Height="24" Fill="#5FBB46" Stroke="#0E2E06" StrokeThickness="1.25"/>
+    <Ellipse Name="ShapeX" Canvas.Left="201" Canvas.Top="129" Width="24" Height="24" Fill="#3A7DC9" Stroke="#122A44" StrokeThickness="1.25"/>
+    <Ellipse Name="ShapeB" Canvas.Left="239" Canvas.Top="129" Width="24" Height="24" Fill="#E5493D" Stroke="#4A0E08" StrokeThickness="1.25"/>
+
+    <!-- Back / Start — lower-center hub -->
+    <Border Name="ShapeBack" Canvas.Left="156" Canvas.Top="188" Width="24" Height="14" CornerRadius="4"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeStart" Canvas.Left="192" Canvas.Top="188" Width="24" Height="14" CornerRadius="4"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+
+    <!-- Pedal set -->
+    <Border Name="ShapeClutchPedal" Canvas.Left="98" Canvas.Top="330" Width="34" Height="80" CornerRadius="7"
+            Background="#2B2621" BorderBrush="#4A4038" BorderThickness="2"/>
+    <Rectangle Canvas.Left="104" Canvas.Top="338" Width="22" Height="8" RadiusX="2" RadiusY="2" Fill="#5A5049" IsHitTestVisible="False"/>
+    <Border Name="ShapeBrakePedal" Canvas.Left="163" Canvas.Top="330" Width="34" Height="80" CornerRadius="7"
+            Background="#2B2621" BorderBrush="#4A4038" BorderThickness="2"/>
+    <Rectangle Canvas.Left="169" Canvas.Top="338" Width="22" Height="8" RadiusX="2" RadiusY="2" Fill="#5A5049" IsHitTestVisible="False"/>
+    <Border Name="ShapeGasPedal" Canvas.Left="228" Canvas.Top="330" Width="34" Height="80" CornerRadius="7"
+            Background="#2B2621" BorderBrush="#4A4038" BorderThickness="2"/>
+    <Rectangle Canvas.Left="234" Canvas.Top="338" Width="22" Height="8" RadiusX="2" RadiusY="2" Fill="#5A5049" IsHitTestVisible="False"/>
+
+    <TextBlock Canvas.Left="98" Canvas.Top="412" Width="34" Text="CLUTCH" FontSize="9" TextAlignment="Center" Foreground="#F1EEE788" IsHitTestVisible="False"/>
+    <TextBlock Canvas.Left="163" Canvas.Top="412" Width="34" Text="BRAKE" FontSize="9" TextAlignment="Center" Foreground="#F1EEE788" IsHitTestVisible="False"/>
+    <TextBlock Canvas.Left="228" Canvas.Top="412" Width="34" Text="GAS" FontSize="9" TextAlignment="Center" Foreground="#F1EEE788" IsHitTestVisible="False"/>
+
+  </Canvas>
+</UserControl>

@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.StartupVideoView"
+             Background="Black">
+
+  <!--
+    One-shot cinematic shown over the entire window for the first few seconds after
+    launch — see StartupVideoView.axaml.cs for the LibVLC playback/skip wiring, and
+    MainWindowViewModel.IsShowingStartupVideo/SkipStartupVideo for how it's dismissed
+    (playback ending, or literally any controller/keyboard input).
+  -->
+  <Panel Name="VideoHost" Background="Black">
+    <TextBlock Text="Press any button to skip"
+               Foreground="#88FFFFFF"
+               FontSize="14"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Bottom"
+               Margin="0,0,0,32"
+               IsHitTestVisible="False"/>
+  </Panel>
+
+</UserControl>

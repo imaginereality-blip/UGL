@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using UGL.App.ViewModels;
 using UGL.App.Views;
 
@@ -39,10 +40,31 @@ public sealed partial class App : Application
             // all of its constructor-injected services.
             var mainViewModel = Services.GetRequiredService<MainWindowViewModel>();
 
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = mainViewModel
-            };
+            var mainWindow = new MainWindow { DataContext = mainViewModel };
+            desktop.MainWindow = mainWindow;
+
+            // Shown explicitly (not left to the framework's own post-callback auto-show
+            // of desktop.MainWindow) so MainWindow's OWN WindowState=FullScreen transition
+            // — which Windows treats as a foreground-stealing event, the same behavior
+            // WindowRestoreNative's doc comment already documents for the emulator-exit
+            // case — happens BEFORE the splash window claims topmost/foreground below,
+            // not after. Showing splash first and letting MainWindow go fullscreen
+            // afterward was the likely reason it never became visible: MainWindow's own
+            // fullscreen transition would win the foreground fight regardless of Topmost.
+            mainWindow.Show();
+
+            var splash = new StartupSplashWindow { DataContext = mainViewModel };
+            splash.Show();
+
+            // Plain Show()/Activate() was already proven unreliable against this exact
+            // "something else owns Windows' foreground lock" class of problem elsewhere
+            // in this app (see WindowRestoreNative) — reuse the same AttachThreadInput
+            // hardening rather than trusting Activate() to actually win here.
+            var hwnd = splash.TryGetPlatformHandle()?.Handle ?? 0;
+            bool foregrounded = WindowRestoreNative.ForceForegroundWindow(hwnd);
+
+            var logger = Services.GetService<ILogger<App>>();
+            logger?.LogInformation("Startup splash: hwnd={Hwnd}, ForceForegroundWindow={Foregrounded}", hwnd, foregrounded);
         }
 
         base.OnFrameworkInitializationCompleted();

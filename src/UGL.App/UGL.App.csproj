@@ -10,16 +10,20 @@
     <AssemblyName>UGL</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.6.1</Version>
+    <Version>0.7.0</Version>
     <!-- Only used by TitleGraphicsBaker to host the official WebView2 WinForms control
          on its own dedicated off-screen thread — no WinForms UI is ever shown to the
          user, Avalonia remains the app's real UI. -->
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Required for Avalonia's NativeControlHost-backed controls (VideoView, WebView2)
+         to create their native Win32 child window — see app.manifest's own comment. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.2" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.2" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.2.0.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.2" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
@@ -62,6 +66,10 @@
          WebView2 to these via a file:// URI, so they must exist as real files next to
          the exe, not be embedded in the assembly. -->
     <None Include="TitleGraphicsBakeAssets\**" CopyToOutputDirectory="PreserveNewest" />
+
+    <!-- Startup video — StartupVideoView plays this via LibVLC from a real file path
+         next to the exe, same reasoning as TitleGraphicsBakeAssets above. -->
+    <None Include="StartupAssets\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

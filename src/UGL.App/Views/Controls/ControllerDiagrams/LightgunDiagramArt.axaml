@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ControllerDiagrams.LightgunDiagramArt"
+             Width="560" Height="217.1">
+
+  <!--
+    Renders the user's own X-Gunner reference art directly — see
+    design_handoff_controller_config/vector-source/lightgun-fixed.svg (copied into
+    Assets/ControllerDiagrams/lightgun.svg at build time). Earlier attempts hand-traced
+    this file's shapes into primitive Avalonia Border/Ellipse elements, which never
+    matched the real device; rendering the actual SVG (via Avalonia.Svg.Skia) instead
+    means the body/grip/muzzle art is always exactly what's in that file — recolor or
+    reshape the SVG itself and re-copy it, don't hand-edit shapes here.
+
+    Canvas is 560 x 217.1 — the source SVG's own 1715x665 viewBox scaled down by
+    exactly 560/1715 (0.326531) so the highlight-overlay coordinates below are a clean
+    derivation from the source file's real element positions (see the shape-by-shape
+    comments), not eyeballed. Since the real art already draws each button, the overlay
+    shapes are invisible at rest (Fill/Stroke = Transparent) and only become visible
+    via the controlHeld/controlBlink classes.
+  -->
+  <UserControl.Styles>
+    <Style Selector="Ellipse.controlHeld">
+      <Setter Property="Stroke" Value="White"/>
+      <Setter Property="StrokeThickness" Value="3"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Border.controlHeld">
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="BorderThickness" Value="2.5"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
+
+  <Canvas Width="560" Height="217.1">
+
+    <Svg Path="avares://UGL/Assets/ControllerDiagrams/lightgun.svg"
+         Width="560" Height="217.1" Stretch="Fill" IsHitTestVisible="False"/>
+
+    <!-- D-pad — rotated-triangle arrows near the front-left of the barrel, centers
+         solved from the source's per-arrow rotate(angle,cx,cy) transforms. -->
+    <Ellipse Name="ShapeDPadUp" Canvas.Left="24.68" Canvas.Top="21.80" Width="14" Height="14" Fill="Transparent"/>
+    <Ellipse Name="ShapeDPadDown" Canvas.Left="24.91" Canvas.Top="36.87" Width="14" Height="14" Fill="Transparent"/>
+    <Ellipse Name="ShapeDPadLeft" Canvas.Left="17.02" Canvas.Top="28.99" Width="14" Height="14" Fill="Transparent"/>
+    <Ellipse Name="ShapeDPadRight" Canvas.Left="32.35" Canvas.Top="29.04" Width="14" Height="14" Fill="Transparent"/>
+
+    <!-- Numbered buttons — same left-to-right order as the real device: 6,4,5 then
+         7/10/8/9 then 2,1,3. -->
+    <Ellipse Name="ShapeButton6" Canvas.Left="176.87" Canvas.Top="60.86" Width="16" Height="16" Fill="Transparent"/>
+    <Ellipse Name="ShapeButton4" Canvas.Left="192.91" Canvas.Top="61.74" Width="16" Height="16" Fill="Transparent"/>
+    <Ellipse Name="ShapeButton5" Canvas.Left="226.10" Canvas.Top="56.06" Width="16" Height="16" Fill="Transparent"/>
+    <Border Name="ShapeButton7" Canvas.Left="304.51" Canvas.Top="59.09" Width="16" Height="12" Background="Transparent"/>
+    <Border Name="ShapeButton10" Canvas.Left="315.71" Canvas.Top="47.81" Width="12" Height="16" Background="Transparent"/>
+    <Border Name="ShapeButton8" Canvas.Left="315.72" Canvas.Top="66.42" Width="12" Height="16" Background="Transparent"/>
+    <Border Name="ShapeButton9" Canvas.Left="322.75" Canvas.Top="59.45" Width="16" Height="12" Background="Transparent"/>
+    <Ellipse Name="ShapeButton2" Canvas.Left="346.24" Canvas.Top="61.81" Width="16" Height="16" Fill="Transparent"/>
+    <Ellipse Name="ShapeButton1" Canvas.Left="363.90" Canvas.Top="60.78" Width="16" Height="16" Fill="Transparent"/>
+    <Ellipse Name="ShapeButton3" Canvas.Left="384.83" Canvas.Top="58.58" Width="16" Height="16" Fill="Transparent"/>
+
+    <!-- Mouse-click buttons -->
+    <Ellipse Name="ShapeMouseLeft" Canvas.Left="415.58" Canvas.Top="66.32" Width="18" Height="18" Fill="Transparent"/>
+    <Ellipse Name="ShapeMouseRight" Canvas.Left="439.92" Canvas.Top="65.61" Width="16" Height="16" Fill="Transparent"/>
+    <Border Name="ShapeMouseMiddle" Canvas.Left="441.60" Canvas.Top="43.93" Width="22" Height="12" Background="Transparent"/>
+
+  </Canvas>
+</UserControl>

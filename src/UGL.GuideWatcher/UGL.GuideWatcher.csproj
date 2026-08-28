@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe (not Exe) so this runs with no console window — it's meant to sit
+         quietly in the background for as long as Windows is logged in, not print
+         anything. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>13</LangVersion>
+    <RootNamespace>UGL.GuideWatcher</RootNamespace>
+    <AssemblyName>UGLGuideWatcher</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>1.0.0</Version>
+    <!-- Deliberately no ProjectReference to any other UGL.* project — this has to
+         stay a tiny, dependency-free background process that can run for the
+         entire Windows session, not pull in Avalonia or anything else UGL.exe
+         needs. -->
+  </PropertyGroup>
+
+</Project>

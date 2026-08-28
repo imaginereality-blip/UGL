@@ -35,6 +35,7 @@ public sealed partial class ConfigEditorView : UserControl
         vm.Theme.PropertyChanged       += (_, _) => ScrollFocusedFieldIntoView();
         vm.Paths.PropertyChanged       += (_, _) => ScrollFocusedFieldIntoView();
         vm.Peripherals.PropertyChanged += (_, _) => ScrollFocusedFieldIntoView();
+        vm.Controllers.PropertyChanged += (_, _) => ScrollFocusedFieldIntoView();
     }
 
     /// <summary>

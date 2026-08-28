@@ -60,4 +60,19 @@ public sealed class RawInputDevice
     /// </summary>
     [JsonIgnore]
     public nint RuntimeHandle { get; set; } = 0;
+
+    /// <summary>
+    /// A human-distinguishable label for this device, recomputed by
+    /// PeripheralRegistry (see RecomputeDisplayLabels) whenever the known-device
+    /// list changes. Two physically identical controllers report the exact same
+    /// FriendlyName from Windows (there's no vendor-provided serial-number-style
+    /// differentiator for most consumer pads/guns), which made it impossible to
+    /// tell them apart anywhere they were listed — Settings → Controllers, the
+    /// Peripherals tab, and the Games editor's Player Device Assignments picker
+    /// all show this instead of FriendlyName directly. Runtime-only, not
+    /// persisted — always recomputed from the current device set so it can't go
+    /// stale relative to what's actually connected/assigned.
+    /// </summary>
+    [JsonIgnore]
+    public string DisplayLabel { get; set; } = string.Empty;
 }

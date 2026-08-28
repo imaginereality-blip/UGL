@@ -75,7 +75,11 @@
                          Foreground="{DynamicResource UGL.SuccessColor}"/>
 
               <StackPanel Grid.Column="2" Spacing="2">
-                <TextBlock Text="{Binding FriendlyName}"
+                <!-- DisplayLabel, not FriendlyName — two of the same controller model
+                     report an identical FriendlyName from Windows, which made them
+                     impossible to tell apart here. See
+                     PeripheralRegistry.RecomputeDisplayLabels. -->
+                <TextBlock Text="{Binding DisplayLabel}"
                            Foreground="White" FontSize="13" FontWeight="SemiBold"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                   <TextBlock Text="{Binding DeviceType}"
@@ -111,7 +115,7 @@
                           Converter={x:Static ObjectConverters.IsNotNull}}">
         <StackPanel Spacing="12">
 
-          <TextBlock Text="{Binding SelectedDevice.FriendlyName}"
+          <TextBlock Text="{Binding SelectedDevice.DisplayLabel}"
                      FontSize="15" FontWeight="Bold" Foreground="White"
                      TextWrapping="Wrap"/>
 

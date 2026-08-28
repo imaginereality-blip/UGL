@@ -206,8 +206,8 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
         await _registry.AssignPlayerIndexAsync(SelectedDevice.HardwarePath, EditPlayerIndex);
         SelectedDevice.PlayerIndex = EditPlayerIndex;
         StatusMessage = EditPlayerIndex == 0
-            ? $"'{SelectedDevice.FriendlyName}' unassigned."
-            : $"'{SelectedDevice.FriendlyName}' assigned to Player {EditPlayerIndex}.";
+            ? $"'{SelectedDevice.DisplayLabel}' unassigned."
+            : $"'{SelectedDevice.DisplayLabel}' assigned to Player {EditPlayerIndex}.";
         RefreshDeviceList();
     }
 
@@ -216,7 +216,7 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
     {
         if (SelectedDevice is null) return;
         await _registry.RemoveDeviceAsync(SelectedDevice.HardwarePath);
-        StatusMessage = $"'{SelectedDevice.FriendlyName}' removed from registry.";
+        StatusMessage = $"'{SelectedDevice.DisplayLabel}' removed from registry.";
         RefreshDeviceList();
     }
 
@@ -226,7 +226,7 @@ public sealed partial class PeripheralConfigViewModel : ObservableObject
         foreach (var d in _registry.KnownDevices
                      .Where(d => d.DeviceType != RawInputDeviceType.Keyboard)
                      .OrderBy(d => d.PlayerIndex)
-                     .ThenBy(d => d.FriendlyName))
+                     .ThenBy(d => d.DisplayLabel))
         {
             Devices.Add(d);
         }

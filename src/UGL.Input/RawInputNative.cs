@@ -66,6 +66,25 @@ internal static class RawInputNative
     [DllImport("hid.dll")]
     public static extern int HidP_GetCaps(nint preparsedData, out HIDP_CAPS capabilities);
 
+    // ── HID button-state parsing — resolves which usage IDs are currently set in a
+    // raw HID input report. HidP_Input = 0 is the only report type UGL ever reads
+    // (device -> host input reports; UGL never writes output/feature reports).
+    // UsagePage = 0 in HidP_GetUsages means "every usage page in the collection",
+    // which is deliberate: rather than assume the button usages live on the
+    // standard Button page (0x09), this reads whatever pages the device's own
+    // report descriptor actually declares. ─────────────────────────────────────
+
+    public const int HidP_Input = 0;
+
+    [DllImport("hid.dll")]
+    public static extern uint HidP_MaxUsageListLength(int reportType, ushort usagePage, nint preparsedData);
+
+    [DllImport("hid.dll")]
+    public static extern int HidP_GetUsages(
+        int reportType, ushort usagePage, ushort linkCollection,
+        [Out] ushort[] usageList, ref uint usageLength,
+        nint preparsedData, byte[] report, uint reportLength);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct HIDP_CAPS
     {

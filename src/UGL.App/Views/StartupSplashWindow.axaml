@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:UGL.App.Views"
+        xmlns:vm="clr-namespace:UGL.App.ViewModels"
+        x:Class="UGL.App.Views.StartupSplashWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="UGL"
+        WindowState="FullScreen"
+        SystemDecorations="None"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="Black">
+
+  <!--
+    A genuinely separate top-level window, not a layer inside MainWindow's own Panel —
+    that avoids any dependency on MainWindow's own IsVisible/Panel z-order/binding
+    timing during its own construction, which is exactly what silently produced "the
+    video just never appeared" behavior. This window opens immediately at app start,
+    plays fullscreen on top of literally everything (MainWindow loads normally behind
+    it, unblocked — see App.axaml.cs), and closes itself the moment
+    MainWindowViewModel.IsShowingStartupVideo goes false (playback ending, or any
+    controller/keyboard input — both already funnel through that same flag).
+  -->
+  <views:StartupVideoView x:Name="Video"/>
+
+</Window>

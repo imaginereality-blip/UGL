@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="UGL.App"/>
+
+  <!--
+    Required for Avalonia's NativeControlHost-backed controls (LibVLCSharp.Avalonia's
+    VideoView, WebView2) to create their native Win32 child window on Windows. Without
+    a <compatibility> element listing supported OS versions, Win32NativeControlHost's
+    child-window creation throws "Unable to create child window for native control
+    host. Application manifest with supported OS list might be required." — exactly
+    the exception that silently killed the startup video (see StartupVideoView), and
+    would equally affect GameCard's hover-preview VideoView and TitleGraphicsBaker's
+    WebView2 usage, just never surfaced there before.
+  -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+      <!-- Windows 8.1 -->
+      <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"/>
+      <!-- Windows 8 -->
+      <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
+      <!-- Windows 7 -->
+      <supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
+      <!-- Windows Vista -->
+      <supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"/>
+    </application>
+  </compatibility>
+
+  <!-- No <windowsSettings>/DPI block here on purpose: this project has
+       UseWindowsForms=true (for TitleGraphicsBaker's off-screen WebView2 host), and
+       WinForms' SDK build step (WFO0003) refuses to compile if DPI settings appear in
+       the manifest — it insists on ApplicationHighDpiMode/Application.SetHighDpiMode
+       instead. Nothing here needs manifest-level DPI awareness; the <compatibility>
+       block above is the only part actually required for VideoView/WebView2's native
+       child window creation. -->
+</assembly>

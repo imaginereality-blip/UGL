@@ -1,0 +1,371 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:UGL.App.ViewModels.Config"
+             xmlns:models="clr-namespace:UGL.Core.Models;assembly=UGL.Core"
+             xmlns:diagrams="clr-namespace:UGL.App.Views.Controls.ControllerDiagrams"
+             x:Class="UGL.App.Views.Config.ControllersConfigView"
+             x:DataType="vm:ControllersConfigViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.segTab">
+      <Setter Property="Padding" Value="14,6"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+    </Style>
+    <Style Selector="Button.segTab.tabActive">
+      <Setter Property="Foreground" Value="{DynamicResource UGL.AccentColor}"/>
+    </Style>
+    <Style Selector="Button.profileAction">
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="Border.conflictRow">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.DangerColor}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style Selector="Border.shifterModeActive">
+      <Setter Property="BorderBrush" Value="{DynamicResource UGL.AccentColor}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+    <!-- ── Header ────────────────────────────────────────────────────────────── -->
+    <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,10">
+      <TextBlock Text="Control Center" FontSize="18" FontWeight="Bold" Foreground="White"/>
+      <TextBlock Text="XINPUT DEVICE CONFIGURATION" FontSize="10" Foreground="#88FFFFFF"
+                 FontWeight="SemiBold" Opacity="0.6"/>
+    </StackPanel>
+
+    <!-- ── Segmented device-class tabs ──────────────────────────────────────────── -->
+    <Border Grid.Row="1" Classes="cfgField" Classes.fieldFocused="{Binding IsDeviceClassTabFocused}"
+            CornerRadius="6" Padding="2" Margin="0,0,0,10" HorizontalAlignment="Left">
+      <StackPanel Orientation="Horizontal" Spacing="2">
+        <Button Classes="segTab" Classes.tabActive="{Binding IsGamepadTabSelected}" Content="XInput Gamepad"/>
+        <Button Classes="segTab" Classes.tabActive="{Binding IsLightgunTabSelected}" Content="Light Gun"/>
+        <Button Classes="segTab" Classes.tabActive="{Binding IsWheelTabSelected}" Content="Steering Wheel"/>
+      </StackPanel>
+    </Border>
+
+    <!-- ── Device row + Shifter mode (Wheel) + Profile bar ──────────────────────── -->
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+      <StackPanel Grid.Column="0" Spacing="6">
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDeviceFieldFocused}" Padding="8,4" HorizontalAlignment="Left" MinWidth="280">
+          <StackPanel Spacing="2">
+            <TextBlock Text="Detected device" Foreground="#88FFFFFF" FontSize="11"/>
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <TextBlock Grid.Column="0" Text="◀" Foreground="#55FFFFFF" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+              <TextBlock Grid.Column="1" Text="{Binding SelectedDevice.DisplayLabel, TargetNullValue='No device found'}"
+                         Foreground="White" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="2" Text="▶" Foreground="#55FFFFFF" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+        <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding SelectedDevice, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <Ellipse Width="6" Height="6" Fill="{DynamicResource UGL.AccentColor}" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding SelectedDevice.DisplayLabel, StringFormat='Connected — {0}'}"
+                     Foreground="{DynamicResource UGL.AccentColor}" FontSize="10"/>
+        </StackPanel>
+
+        <!-- Shifter mode — Wheel only -->
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsShifterModeFocused}" CornerRadius="6" Padding="2"
+                HorizontalAlignment="Left" IsVisible="{Binding IsWheelTabSelected}">
+          <StackPanel Spacing="2">
+            <TextBlock Text="Shifter mode" Foreground="#88FFFFFF" FontSize="11" Margin="6,2,0,0"/>
+            <StackPanel Orientation="Horizontal" Spacing="2">
+              <Border Padding="10,4" CornerRadius="4" Classes.shifterModeActive="{Binding IsSequentialShifter}">
+                <TextBlock Text="Sequential" FontSize="12" Foreground="White"/>
+              </Border>
+              <Border Padding="10,4" CornerRadius="4" Classes.shifterModeActive="{Binding IsHPatternShifter}">
+                <TextBlock Text="H-Pattern" FontSize="12" Foreground="White"/>
+              </Border>
+              <Border Padding="10,4" CornerRadius="4" Classes.shifterModeActive="{Binding IsPaddlesOnlyShifter}">
+                <TextBlock Text="Paddles Only" FontSize="12" Foreground="White"/>
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding ShifterModeLabel, StringFormat='Active: {0}  (◀ ▶ to change)'}"
+                       Foreground="{DynamicResource UGL.AccentColor}" FontSize="10" Margin="6,0,0,2"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+
+      <!-- Profile bar -->
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+        <Border CornerRadius="4" Padding="8,4" BorderThickness="1"
+                BorderBrush="{DynamicResource UGL.AccentColor}" IsVisible="{Binding !HasUnsavedChanges}">
+          <TextBlock Text="{Binding ProfileTagText}" Foreground="{DynamicResource UGL.AccentColor}" FontSize="12"/>
+        </Border>
+        <Border CornerRadius="4" Padding="8,4" BorderThickness="1"
+                BorderBrush="{DynamicResource UGL.DangerColor}" IsVisible="{Binding HasUnsavedChanges}">
+          <TextBlock Text="{Binding ProfileTagText}" Foreground="{DynamicResource UGL.DangerColor}" FontSize="12"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSaveFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Save" Command="{Binding SaveCommand}"
+                  Background="{DynamicResource UGL.AccentColor}" Foreground="White"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsSaveAsFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Save As…" Command="{Binding OpenSaveAsDialogCommand}"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsLoadFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Load…" Command="{Binding OpenLoadDialogCommand}"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsResetFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Reset" Command="{Binding ResetToDefaultsCommand}"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsExportFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Export" Command="{Binding ExportCommand}"
+                  Background="Transparent" Foreground="{DynamicResource UGL.AccentColor}"/>
+        </Border>
+        <Border Classes="cfgField" Classes.fieldFocused="{Binding IsImportFocused}" Padding="2" CornerRadius="4">
+          <Button Classes="profileAction" Content="Import" Command="{Binding OpenImportDialogCommand}"
+                  Background="Transparent" Foreground="{DynamicResource UGL.AccentColor}"/>
+        </Border>
+      </StackPanel>
+    </Grid>
+
+    <!-- Status / toast line -->
+    <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Foreground="{DynamicResource UGL.SuccessColor}"
+               FontSize="12" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0,0,0,-16"
+               IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+    <!-- ── Body: diagram card | mapping list ────────────────────────────────────── -->
+    <Grid Grid.Row="3" ColumnDefinitions="1.15*,16,*" Margin="0,14,0,0">
+
+      <!-- Diagram card -->
+      <Border Grid.Column="0" Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="8" Padding="14"
+              VerticalAlignment="Top">
+        <StackPanel Spacing="8">
+          <!-- Viewbox: each device class's *DiagramArt has its own native canvas
+               size (Gamepad 360x230, Lightgun 560x210, Wheel 300x270 — Lightgun's
+               real button layout needed a much wider canvas than the others). A
+               Viewbox scales the whole thing uniformly to a fixed display budget
+               regardless of native size, so the card doesn't grow/overflow when
+               switching tabs, and pointer hit-testing on the overlay still resolves
+               correctly since Avalonia maps pointer coordinates back into the
+               (unscaled) local Canvas space automatically. -->
+          <Viewbox Stretch="Uniform" MaxWidth="420" MaxHeight="260" HorizontalAlignment="Center">
+            <Panel>
+              <diagrams:GamepadDiagramArt IsVisible="{Binding IsGamepadTabSelected}"
+                                           HighlightedControlIds="{Binding HighlightedControlIds}"/>
+              <diagrams:LightgunDiagramArt IsVisible="{Binding IsLightgunTabSelected}"
+                                            HighlightedControlIds="{Binding HighlightedControlIds}"/>
+              <diagrams:WheelDiagramArt IsVisible="{Binding IsWheelTabSelected}"
+                                         HighlightedControlIds="{Binding HighlightedControlIds}"/>
+              <diagrams:ControllerHotspotOverlay Name="HotspotOverlay"
+                                                  Hotspots="{Binding ActiveHotspots}"
+                                                  CanvasSize="{Binding ActiveCanvasSize}"/>
+            </Panel>
+          </Viewbox>
+          <TextBlock Text="Click a control to remap, or use the list — B/Back to close a remap dialog"
+                     Foreground="#55FFFFFF" FontSize="11" TextAlignment="Center" TextWrapping="Wrap"/>
+          <!-- XInput status — Gamepad only, since that's the only device class
+               capture/live-highlight actually depends on XInput for. -->
+          <TextBlock Text="✓ XInput controller detected" Foreground="{DynamicResource UGL.SuccessColor}"
+                     FontSize="11" TextAlignment="Center">
+            <TextBlock.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="IsGamepadTabSelected"/>
+                <Binding Path="IsXInputControllerConnected"/>
+              </MultiBinding>
+            </TextBlock.IsVisible>
+          </TextBlock>
+          <TextBlock Text="⚠ No XInput controller detected — capture and live highlight need an Xbox-compatible controller"
+                     Foreground="{DynamicResource UGL.DangerColor}" FontSize="11" TextAlignment="Center" TextWrapping="Wrap">
+            <TextBlock.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="IsGamepadTabSelected"/>
+                <Binding Path="!IsXInputControllerConnected"/>
+              </MultiBinding>
+            </TextBlock.IsVisible>
+          </TextBlock>
+          <!-- RawInput status — Lightgun only. Mouse-click buttons (Trigger etc.)
+               are always capturable via already-working system mouse parsing;
+               numbered-button/D-pad capture depends on this device's own HID
+               report parsing, which is unverified against real hardware — see
+               RawInputService.ProcessRawInput's own doc comment. -->
+          <TextBlock Text="RawInput capture: mouse-click buttons work now. Numbered buttons/D-pad use HID report parsing that hasn't been verified against your actual X-Gunner yet — try a capture and tell me what happens."
+                     Foreground="{DynamicResource UGL.TextSecondaryColor}" FontSize="11" TextAlignment="Center" TextWrapping="Wrap"
+                     IsVisible="{Binding IsLightgunTabSelected}"/>
+        </StackPanel>
+      </Border>
+
+      <!-- Mapping list + sensitivity fields -->
+      <ScrollViewer Grid.Column="2" Classes="contentScroll" VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="10">
+
+          <!-- Single "current control" panel — replaces an always-visible row list.
+               ◀ ▶ cycles which control is shown, Confirm/A remaps it; the diagram's
+               own hotspots jump straight here too (ControllersConfigViewModel.
+               OnHotspotClicked). One focused control at a time reads far more clearly
+               than a long scrolling list, and cannot run off-screen. -->
+          <Border Classes="cfgField" Classes.fieldFocused="{Binding IsRowsFocused}"
+                  Classes.conflictRow="{Binding CurrentRow.HasConflict}"
+                  CornerRadius="8" Padding="14">
+            <StackPanel Spacing="10" DataContext="{Binding CurrentRow}" x:DataType="vm:ControlRow">
+              <TextBlock Text="Control" Foreground="#66FFFFFF" FontSize="11"/>
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Grid.Column="0" Text="◀" Foreground="#55FFFFFF" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <StackPanel Grid.Column="1" Spacing="4" HorizontalAlignment="Center">
+                  <TextBlock Text="{Binding Label}" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <Border BorderBrush="{DynamicResource UGL.AccentColor}" BorderThickness="1"
+                          CornerRadius="10" Padding="12,3">
+                    <TextBlock Text="{Binding BindingDisplay}" Foreground="{DynamicResource UGL.AccentColor}"
+                               FontSize="12" HorizontalAlignment="Center"/>
+                  </Border>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="▶" Foreground="#55FFFFFF" FontSize="16" VerticalAlignment="Center" Margin="10,0,0,0"/>
+              </Grid>
+              <TextBlock Text="⚠ Also bound elsewhere — both will fire together" Foreground="{DynamicResource UGL.DangerColor}"
+                         FontSize="11" HorizontalAlignment="Center" IsVisible="{Binding HasConflict}"/>
+              <TextBlock Text="◀ ▶ browse controls  •  A remaps  •  click a diagram hotspot"
+                         Foreground="#55FFFFFF" FontSize="11" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Wheel: Paddles Only note -->
+          <TextBlock IsVisible="{Binding IsPaddlesOnlyShifter}"
+                     Text="Shifting is handled entirely by the L/R paddles — no separate shifter mapping needed."
+                     Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+
+          <!-- Sensitivity — Gamepad -->
+          <StackPanel Spacing="10" IsVisible="{Binding IsGamepadTabSelected}">
+            <TextBlock Text="Sensitivity" Foreground="#88FFFFFF" FontSize="11" FontWeight="SemiBold"/>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsThumbDeadZoneFocused}" Padding="8,4">
+              <Grid ColumnDefinitions="130,*,60">
+                <TextBlock Grid.Column="0" Text="Stick Dead Zone" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0" Maximum="30000" Value="{Binding ThumbDeadZone}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding ThumbDeadZone}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMenuRepeatDelayFocused}" Padding="8,4">
+              <Grid ColumnDefinitions="130,*,60">
+                <TextBlock Grid.Column="0" Text="Repeat Delay" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="100" Maximum="1500" Value="{Binding MenuRepeatDelayMs}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding MenuRepeatDelayMs, StringFormat={}{0}ms}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsMenuRepeatIntervalFocused}" Padding="8,4">
+              <Grid ColumnDefinitions="130,*,60">
+                <TextBlock Grid.Column="0" Text="Repeat Interval" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="20" Maximum="500" Value="{Binding MenuRepeatIntervalMs}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding MenuRepeatIntervalMs, StringFormat={}{0}ms}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+          </StackPanel>
+
+          <!-- Sensitivity — Lightgun -->
+          <StackPanel Spacing="10" IsVisible="{Binding IsLightgunTabSelected}">
+            <TextBlock Text="Sensitivity" Foreground="#88FFFFFF" FontSize="11" FontWeight="SemiBold"/>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsDemulShooterTargetFocused}" Padding="8,4">
+              <StackPanel Spacing="4">
+                <TextBlock Text="DemulShooter Target" Foreground="#88FFFFFF" FontSize="12"/>
+                <TextBox Text="{Binding DemulShooterTarget}" Watermark="e.g. mamehooker" IsReadOnly="True"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- Sensitivity — Wheel -->
+          <StackPanel Spacing="10" IsVisible="{Binding IsWheelTabSelected}">
+            <TextBlock Text="Sensitivity" Foreground="#88FFFFFF" FontSize="11" FontWeight="SemiBold"/>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAxisDeadZoneFocused}" Padding="8,4">
+              <Grid ColumnDefinitions="130,*,60">
+                <TextBlock Grid.Column="0" Text="Axis Dead Zone" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0" Maximum="0.9" Value="{Binding AxisDeadZone}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding AxisDeadZone, StringFormat={}{0:P0}}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsAxisSensitivityFocused}" Padding="8,4">
+              <Grid ColumnDefinitions="130,*,60">
+                <TextBlock Grid.Column="0" Text="Axis Sensitivity" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0.1" Maximum="3.0" Value="{Binding AxisSensitivity}" Height="24"/>
+                <TextBlock Grid.Column="2" Text="{Binding AxisSensitivity, StringFormat={}{0:F1}x}" Foreground="#88FFFFFF" FontSize="12" VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Border Classes="cfgField" Classes.fieldFocused="{Binding IsForceFeedbackFocused}" Padding="8,4">
+              <CheckBox IsChecked="{Binding ForceFeedbackEnabled}" Content="Force Feedback Enabled"/>
+            </Border>
+            <TextBlock Text="Applied to RetroArch wheel-compatible cores only — native/Steam racing games manage their own wheel settings."
+                       Foreground="#55FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- ── Capture dialog ────────────────────────────────────────────────────── -->
+      <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource UGL.ScrimHeavy}"
+              IsVisible="{Binding IsCaptureDialogOpen}">
+        <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="8" Padding="24"
+                MaxWidth="360" HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderBrush="{DynamicResource UGL.Divider}" BorderThickness="1">
+          <StackPanel Spacing="10">
+            <TextBlock Text="Press any button" FontSize="16" FontWeight="Bold" Foreground="White"/>
+            <TextBlock TextWrapping="Wrap" Foreground="#CCFFFFFF" FontSize="13">
+              <Run Text="Waiting for input for "/>
+              <Run Text="{Binding CaptureControlLabel}" FontWeight="Bold"/>
+              <Run Text=" on "/>
+              <Run Text="{Binding SelectedDevice.DisplayLabel}" FontWeight="Bold"/>
+              <Run Text="…"/>
+            </TextBlock>
+            <TextBlock Text="Every physical input, including B, is captured as the new binding — nothing is reserved as a shortcut."
+                       Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
+            <Button Content="Cancel" Command="{Binding CancelCaptureCommand}" HorizontalAlignment="Left" Padding="14,6"/>
+          </StackPanel>
+        </Border>
+      </Border>
+
+      <!-- ── Load Profile dialog ───────────────────────────────────────────────── -->
+      <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource UGL.ScrimHeavy}"
+              IsVisible="{Binding IsLoadDialogOpen}">
+        <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="8" Padding="20"
+                MaxWidth="360" MaxHeight="400" HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderBrush="{DynamicResource UGL.Divider}" BorderThickness="1">
+          <Grid RowDefinitions="Auto,*">
+            <TextBlock Grid.Row="0" Text="Load Profile" FontSize="16" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+              <ItemsControl ItemsSource="{Binding SavedProfiles}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Spacing="4"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate DataType="models:ControllerProfile">
+                    <Border Classes="cfgField" Padding="10,8" CornerRadius="4">
+                      <TextBlock Text="{Binding ProfileName}" Foreground="White" FontSize="13" HorizontalAlignment="Center"/>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+      </Border>
+
+      <!-- ── Import Profile dialog ─────────────────────────────────────────────── -->
+      <Border Grid.Column="0" Grid.ColumnSpan="3" Background="{DynamicResource UGL.ScrimHeavy}"
+              IsVisible="{Binding IsImportDialogOpen}">
+        <Border Background="{DynamicResource UGL.SurfaceColor}" CornerRadius="8" Padding="20"
+                MaxWidth="360" MaxHeight="400" HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderBrush="{DynamicResource UGL.Divider}" BorderThickness="1">
+          <Grid RowDefinitions="Auto,*">
+            <TextBlock Grid.Row="0" Text="Import Profile" FontSize="16" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+              <ItemsControl ItemsSource="{Binding ImportableFiles}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Spacing="4"/></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Classes="cfgField" Padding="10,8" CornerRadius="4">
+                      <TextBlock Text="{Binding}" Foreground="White" FontSize="13" HorizontalAlignment="Center"/>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+      </Border>
+
+    </Grid>
+  </Grid>
+</UserControl>

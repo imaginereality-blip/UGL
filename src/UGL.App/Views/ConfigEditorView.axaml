@@ -209,6 +209,9 @@
             <Border IsVisible="{Binding IsPeripheralsTabActive}">
               <views:PeripheralConfigView DataContext="{Binding Peripherals}"/>
             </Border>
+            <Border IsVisible="{Binding IsControllersTabActive}">
+              <views:ControllersConfigView DataContext="{Binding Controllers}"/>
+            </Border>
             <Border IsVisible="{Binding IsHooksTabActive}">
               <views:HookConfigView DataContext="{Binding Hooks}"/>
             </Border>
@@ -317,7 +320,25 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
+        <!-- Symbols — path separators and ':' for launcher-protocol URIs
+             (steam://rungameid/12345 etc., see Game.RomPath), '.'/'-'/'_' for file
+             names. Without this row there was no way to type these at all. -->
         <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row4Keys}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:VirtualKeyViewModel">
+              <Border Width="52" Height="52" CornerRadius="4" Classes="vkKey"
+                      Classes.keyHighlighted="{Binding IsHighlighted}">
+                <TextBlock Text="{Binding Label}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="16" Foreground="White"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <ItemsControl ItemsSource="{Binding VirtualKeyboard.Row5Keys}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center"/></ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>

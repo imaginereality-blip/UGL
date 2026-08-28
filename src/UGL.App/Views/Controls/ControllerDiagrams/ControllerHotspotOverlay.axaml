@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ControllerDiagrams.ControllerHotspotOverlay">
+  <!--
+    Transparent, click-through-free hit regions laid over whichever *DiagramArt is
+    active, built entirely from a ControlHotspot list (Hotspots property) rather than
+    any hand-drawn shape of its own — mouse/touch affordance only; the primary,
+    always-available path is the control list's own Remap button (D-pad+A), since this
+    screen must be fully gamepad-navigable regardless of whether a mouse is present.
+  -->
+  <Canvas Name="RootCanvas"/>
+</UserControl>

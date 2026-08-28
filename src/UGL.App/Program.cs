@@ -116,6 +116,13 @@ internal static class Program
         services.AddSingleton<UGL.App.ViewModels.Config.TitleGraphicsConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.PathsConfigViewModel>();
         services.AddSingleton<UGL.App.ViewModels.Config.PeripheralConfigViewModel>();
+
+        // Global per-controller profiles (button mapping / sensitivity), applied to
+        // UGL's own menu navigation and RetroArch-launched emulation — see
+        // ControllerProfile's own doc comment for scope.
+        services.AddSingleton<UGL.Core.Interfaces.IControllerProfileRepository, UGL.Data.JsonControllerProfileRepository>();
+        services.AddSingleton<UGL.App.ViewModels.Config.ControllersConfigViewModel>();
+
         services.AddSingleton<VirtualKeyboardViewModel>();
         services.AddSingleton<ConfirmDialogViewModel>();
         services.AddSingleton<ConfigEditorViewModel>();

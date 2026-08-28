@@ -40,6 +40,18 @@ public sealed class RawInputService : IRawInputService
     private WndProcDelegate? _wndProcDelegate;
     private delegate nint WndProcDelegate(nint hWnd, uint uMsg, nint wParam, nint lParam);
 
+    // ── HID button-state parsing (RIM_TYPE_HID devices — e.g. the X-Gunner's
+    // numbered-button/D-pad report, distinct from its mouse-emulation buttons) ──
+    // Both dictionaries are only ever touched from the pump thread (ProcessRawInput
+    // runs synchronously inside WndProc, itself only ever called from the pump
+    // thread's message loop), so no locking is needed despite looking like shared
+    // state. HidD_GetPreparsedData's returned buffer stays valid after the file
+    // handle that obtained it is closed (a device handle isn't needed to hold it
+    // open — standard, documented HidP behavior), so it's safe to cache and reuse
+    // across every WM_INPUT tick instead of re-opening the device 60+ times/sec.
+    private readonly Dictionary<string, nint> _preparsedDataCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, HashSet<ushort>> _prevHidUsagesHeld = new(StringComparer.OrdinalIgnoreCase);
+
     private const string WindowClassName = "UGL_RawInput_MessageOnly";
 
     public RawInputService(IPeripheralRegistry registry, ILogger<RawInputService> logger)
@@ -75,6 +87,7 @@ public sealed class RawInputService : IRawInputService
             PostMessage(_messageHwnd, WM_UGL_QUIT, 0, 0);
 
         _pumpThread?.Join(2000);
+        ClearHidCaches();
         IsRunning = false;
         _logger.LogInformation("RawInput service stopped.");
     }
@@ -343,13 +356,79 @@ public sealed class RawInputService : IRawInputService
         }
         else
         {
-            // HID joystick/gamepad — minimal pass-through for now
-            // Full HID report parsing is per-device and handled in Milestone 16
+            // HID joystick/gamepad (e.g. the X-Gunner's numbered-button/D-pad
+            // report, separate from its mouse-emulation buttons) — resolves which
+            // HID usage IDs are currently set via HidP_GetUsages against the
+            // device's own report descriptor. Standard, documented Win32 HID
+            // parsing, but genuinely UNTESTED against real hardware in this
+            // environment (no RawInput HID joystick device available here) — the
+            // X-Gunner's own testing is what actually confirms this works.
+            //
+            // Deliberately button-usages only (HidP_GetUsages), not value/axis
+            // parsing (HidP_GetValueCaps/HidP_GetScaledUsageValue) — every current
+            // Lightgun control (ControllerControlDefinitions.Lightgun) is a
+            // BindingKind.Button, and the D-pad is drawn as 4 discrete buttons in
+            // the source reference, not a single hat-switch axis. If that
+            // assumption is wrong for this device, or once the "alternate joystick
+            // mode" (movement stick + aim axes) needs supporting, value-cap parsing
+            // is the follow-up — deliberately not built blind alongside this.
+            var newlyPressed = new List<ushort>();
+            var held = new List<ushort>();
+
+            if (TryGetOrOpenPreparsedData(hardwarePath, out var preparsedData))
+            {
+                var hid = raw.data.hid;
+                var reportOffset = sizeof(RAWINPUTHEADER) + sizeof(RAWHID);
+                var reportLength = hid.dwSizeHid;
+
+                if (reportLength > 0 && reportOffset + reportLength <= size)
+                {
+                    var report = new byte[reportLength];
+                    Marshal.Copy(ptr + reportOffset, report, 0, (int)reportLength);
+
+                    // UsagePage = 0 reads every usage page the report descriptor
+                    // declares, rather than assuming buttons live on the standard
+                    // Button page (0x09) — see the P/Invoke declaration's own note.
+                    var maxUsages = HidP_MaxUsageListLength(HidP_Input, 0, preparsedData);
+                    if (maxUsages > 0)
+                    {
+                        var usageList = new ushort[maxUsages];
+                        uint usageLength = maxUsages;
+                        var status = HidP_GetUsages(HidP_Input, 0, 0, usageList, ref usageLength,
+                            preparsedData, report, reportLength);
+
+                        if (status == HIDP_STATUS_SUCCESS)
+                        {
+                            held.AddRange(usageList.Take((int)usageLength));
+
+                            if (!_prevHidUsagesHeld.TryGetValue(hardwarePath, out var prevHeld))
+                            {
+                                prevHeld = new HashSet<ushort>();
+                                _prevHidUsagesHeld[hardwarePath] = prevHeld;
+                            }
+
+                            foreach (var usage in held)
+                                if (!prevHeld.Contains(usage))
+                                    newlyPressed.Add(usage);
+
+                            prevHeld.Clear();
+                            foreach (var usage in held) prevHeld.Add(usage);
+                        }
+                        else
+                        {
+                            _logger.LogDebug("HidP_GetUsages failed (status 0x{Status:X8}) for {Path}.", status, hardwarePath);
+                        }
+                    }
+                }
+            }
+
             evt = new RawInputEvent
             {
-                HardwarePath = hardwarePath,
-                PlayerIndex  = playerIndex,
-                DeviceType   = deviceType,
+                HardwarePath           = hardwarePath,
+                PlayerIndex            = playerIndex,
+                DeviceType             = deviceType,
+                HidUsagesNewlyPressed  = newlyPressed,
+                HidUsagesHeld          = held,
             };
         }
 
@@ -417,6 +496,49 @@ public sealed class RawInputService : IRawInputService
             DeviceType    = deviceType,
             RuntimeHandle = entry.hDevice,
         };
+    }
+
+    /// <summary>
+    /// Returns this device's cached preparsed-data handle (from a previous call),
+    /// or opens the device once and caches it — this is called on every HID
+    /// WM_INPUT tick (~60Hz while buttons are moving), so re-opening the device
+    /// and re-parsing its report descriptor every time would be wasteful. The
+    /// handle stays valid after the file handle that obtained it is closed
+    /// (standard, documented HidP behavior), so nothing here keeps the device
+    /// open. Freed in ClearHidCaches (Stop/Dispose).
+    /// </summary>
+    private bool TryGetOrOpenPreparsedData(string hardwarePath, out nint preparsedData)
+    {
+        if (_preparsedDataCache.TryGetValue(hardwarePath, out preparsedData)) return true;
+
+        var handle = CreateFile(hardwarePath, GENERIC_READ_NONE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            0, OPEN_EXISTING, 0, 0);
+        if (handle == 0 || handle == INVALID_HANDLE_VALUE) { preparsedData = 0; return false; }
+
+        try
+        {
+            if (!HidD_GetPreparsedData(handle, out preparsedData) || preparsedData == 0)
+            {
+                preparsedData = 0;
+                return false;
+            }
+            _preparsedDataCache[hardwarePath] = preparsedData;
+            return true;
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
+    }
+
+    /// <summary>Frees every cached preparsed-data handle and clears held-usage
+    /// tracking — called from Stop()/Dispose() so a restart starts clean.</summary>
+    private void ClearHidCaches()
+    {
+        foreach (var preparsedData in _preparsedDataCache.Values)
+            HidD_FreePreparsedData(preparsedData);
+        _preparsedDataCache.Clear();
+        _prevHidUsagesHeld.Clear();
     }
 
     /// <summary>

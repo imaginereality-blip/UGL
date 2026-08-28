@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UGL.App.Views.Controls.ControllerDiagrams.GamepadDiagramArt"
+             Width="440" Height="300">
+
+  <!--
+    Traced directly from design_handoff_controller_config/vector-source/gamepad.svg (the
+    user's own Inkscape-corrected reference — do not re-approximate this with primitive
+    shapes again; if the source SVG changes, re-derive these coordinates from it). Canvas
+    is a fixed 440x300 space matching that SVG's viewBox 1:1 — GamepadHotspots.cs's hit
+    regions are authored in the SAME coordinate space so art and hotspots line up exactly.
+
+    Layout follows the real Xbox controller's signature OFFSET arrangement (not a
+    symmetric layout like a PlayStation pad): left stick sits ABOVE the D-pad on the
+    left side; the face-button diamond sits ABOVE the right stick on the right side.
+  -->
+  <UserControl.Styles>
+    <!-- Toggled from code-behind (ApplyHighlight) per named shape as
+         HighlightedControlIds changes — a ring/border, not a fill swap, so it works
+         uniformly regardless of a shape's own resting color (the face buttons use
+         distinct Xbox-authentic colors). -->
+    <Style Selector="Ellipse.controlHeld">
+      <Setter Property="Stroke" Value="White"/>
+      <Setter Property="StrokeThickness" Value="4"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Border.controlHeld">
+      <Setter Property="BorderBrush" Value="White"/>
+      <Setter Property="BorderThickness" Value="3"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+    <Style Selector="Path.controlHeld">
+      <Setter Property="Stroke" Value="White"/>
+      <Setter Property="StrokeThickness" Value="4"/>
+      <Style.Animations>
+        <Animation Duration="0:0:0.5" IterationCount="INFINITE">
+          <KeyFrame Cue="0%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+          <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.35"/></KeyFrame>
+          <KeyFrame Cue="100%"><Setter Property="Opacity" Value="1"/></KeyFrame>
+        </Animation>
+      </Style.Animations>
+    </Style>
+  </UserControl.Styles>
+
+  <Canvas Width="440" Height="300">
+
+    <!-- Body — single continuous rounded silhouette (shoulder width close to grip
+         width, per the user's own shape correction) -->
+    <Path Data="m 100,55 h 240 c 21.33333,0 34.66667,11 40,33 l 1.32143,15.57143 C 382.65476,120.2381 393.33333,196.66667 396,220 c 2.66667,25.33333 -5.33333,44.66667 -24,58 -18.66667,11.33333 -38.66667,12 -60,2 -18,-9.33333 -33.66667,-24.33333 -47,-45 -10,-12.66667 -25,-19 -45,-19 -20,0 -35,6.33333 -45,19 -13.33333,20.66667 -29,35.66667 -47,45 -21.33333,10 -41.333333,9.33333 -60,-2 -18.666667,-13.33333 -26.666667,-32.66667 -24,-58 2.666667,-23.33333 8.657738,-94.40476 9.991071,-111.07143 L 60,88 C 65.333333,66 78.666667,55 100,55 Z"
+          Stroke="#4A4038" StrokeThickness="2.5">
+      <Path.Fill>
+        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+          <GradientStop Color="#2B2621" Offset="0"/>
+          <GradientStop Color="#171310" Offset="1"/>
+        </LinearGradientBrush>
+      </Path.Fill>
+    </Path>
+
+    <!-- Shoulders -->
+    <Border Name="ShapeLeftBumper" Canvas.Left="88" Canvas.Top="30" Width="80" Height="20" CornerRadius="8"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.5"/>
+    <TextBlock Canvas.Left="121" Canvas.Top="34" Text="LB" FontSize="11" FontWeight="Bold" Foreground="#1E1A16" IsHitTestVisible="False"/>
+    <Border Name="ShapeRightBumper" Canvas.Left="280" Canvas.Top="30" Width="80" Height="20" CornerRadius="8"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.5"/>
+    <TextBlock Canvas.Left="313" Canvas.Top="34" Text="RB" FontSize="11" FontWeight="Bold" Foreground="#1E1A16" IsHitTestVisible="False"/>
+
+    <!-- Triggers -->
+    <Path Name="ShapeLeftTrigger" Data="M 102,28 Q 100,10 118,8 h 40 q 10,0 10,10 v 10 z"
+          Fill="#443C34" Stroke="#3A332C" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="128" Canvas.Top="10" Text="LT" FontSize="10" FontWeight="Bold" Foreground="#C9A250" IsHitTestVisible="False"/>
+    <Path Name="ShapeRightTrigger" Data="M 346,28 Q 348,10 330,8 h -40 q -10,0 -10,10 v 10 z"
+          Fill="#443C34" Stroke="#3A332C" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="306" Canvas.Top="10" Text="RT" FontSize="10" FontWeight="Bold" Foreground="#C9A250" IsHitTestVisible="False"/>
+
+    <!-- Center cluster: View / Guide / Menu -->
+    <Border Name="ShapeView" Canvas.Left="178" Canvas.Top="102" Width="24" Height="15" CornerRadius="5"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <TextBlock Canvas.Left="171" Canvas.Top="88" Text="SELECT" FontSize="8.5" Foreground="#F1EEE788" IsHitTestVisible="False"/>
+    <Ellipse Canvas.Left="205" Canvas.Top="61" Width="30" Height="30" Fill="#3A332C" Stroke="#4A4038" StrokeThickness="1.5" IsHitTestVisible="False"/>
+    <Path Data="m 212,72 h 16 l -4,10 h -8 z" Fill="{DynamicResource UGL.AccentColor}" Opacity="0.85" IsHitTestVisible="False"/>
+    <Border Name="ShapeMenu" Canvas.Left="238" Canvas.Top="102" Width="24" Height="15" CornerRadius="5"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <TextBlock Canvas.Left="233" Canvas.Top="88" Text="START" FontSize="8.5" Foreground="#F1EEE788" IsHitTestVisible="False"/>
+
+    <!-- Left stick — ABOVE the D-pad (the Xbox offset layout) -->
+    <Ellipse Name="ShapeL3" Canvas.Left="86.56" Canvas.Top="77.99" Width="60" Height="60"
+             Fill="#3A332C" Stroke="#4A4038" StrokeThickness="2"/>
+    <Ellipse Canvas.Left="97.56" Canvas.Top="88.99" Width="38" Height="38"
+             Fill="#221D19" Stroke="#4A4038" StrokeThickness="1.5" IsHitTestVisible="False"/>
+
+    <!-- D-pad — below the left stick -->
+    <Border Name="ShapeDPadUp" Canvas.Left="164.93" Canvas.Top="148.91" Width="13.95" Height="20.42" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadDown" Canvas.Left="165.02" Canvas.Top="186.49" Width="13.95" Height="20.42" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadLeft" Canvas.Left="144.66" Canvas.Top="170.33" Width="18.61" Height="15.31" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Border Name="ShapeDPadRight" Canvas.Left="180.75" Canvas.Top="170.33" Width="18.61" Height="15.31" CornerRadius="3"
+            Background="#5A5049" BorderBrush="#3A332C" BorderThickness="1.25"/>
+    <Rectangle Canvas.Left="164.88" Canvas.Top="170.43" Width="13.95" Height="15.31" Fill="#443C34" IsHitTestVisible="False"/>
+
+    <!-- Face buttons — ABOVE the right stick, Xbox-authentic colors + letters -->
+    <Ellipse Name="ShapeY" Canvas.Left="315.82" Canvas.Top="74.88" Width="23.21" Height="23.21" Fill="#F2C94C" Stroke="#3A2E00" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="323.4" Canvas.Top="78.5" Text="Y" FontSize="12" FontWeight="Bold" Foreground="#3A2E00" IsHitTestVisible="False"/>
+    <Ellipse Name="ShapeX" Canvas.Left="292.17" Canvas.Top="97.65" Width="23.21" Height="23.21" Fill="#3A7DC9" Stroke="#122A44" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="299.8" Canvas.Top="101.25" Text="X" FontSize="12" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
+    <Ellipse Name="ShapeB" Canvas.Left="339.48" Canvas.Top="97.65" Width="23.21" Height="23.21" Fill="#E5493D" Stroke="#4A0E08" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="347.1" Canvas.Top="101.25" Text="B" FontSize="12" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
+    <Ellipse Name="ShapeA" Canvas.Left="315.82" Canvas.Top="120.41" Width="23.21" Height="23.21" Fill="#5FBB46" Stroke="#0E2E06" StrokeThickness="1.5"/>
+    <TextBlock Canvas.Left="323.4" Canvas.Top="124.0" Text="A" FontSize="12" FontWeight="Bold" Foreground="#0E2E06" IsHitTestVisible="False"/>
+
+    <!-- Right stick — below the face buttons -->
+    <Ellipse Name="ShapeR3" Canvas.Left="249.84" Canvas.Top="149.47" Width="60" Height="60"
+             Fill="#3A332C" Stroke="#4A4038" StrokeThickness="2"/>
+    <Ellipse Canvas.Left="260.84" Canvas.Top="160.47" Width="38" Height="38"
+             Fill="#221D19" Stroke="#4A4038" StrokeThickness="1.5" IsHitTestVisible="False"/>
+
+  </Canvas>
+</UserControl>

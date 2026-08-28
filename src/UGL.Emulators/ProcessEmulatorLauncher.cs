@@ -29,6 +29,7 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
     private readonly IRawInputService _rawInputService;
     private readonly IDisplayModeService _displayModeService;
     private readonly IHidHideService _hidHideService;
+    private readonly IControllerProfileRepository _controllerProfileRepository;
     private readonly ILogger<ProcessEmulatorLauncher> _logger;
 
     private Process? _currentProcess;
@@ -44,8 +45,28 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
     public event EventHandler<int>? EmulatorExited;
 
-    public bool IsEmulatorRunning =>
-        _currentProcess is not null && !_currentProcess.HasExited;
+    public bool IsEmulatorRunning
+    {
+        get
+        {
+            if (_currentProcess is null) return false;
+            try
+            {
+                return !_currentProcess.HasExited;
+            }
+            catch (InvalidOperationException)
+            {
+                // "No process is associated with this object" — _currentProcess was
+                // assigned but never successfully started (or was already disposed).
+                // This getter is queried from many places, including synchronously
+                // from controller-input handling, that all assume a plain boolean
+                // check can't throw — treat it as "not running" and self-heal the
+                // stuck reference rather than propagating and crashing the caller.
+                _currentProcess = null;
+                return false;
+            }
+        }
+    }
 
     public ProcessEmulatorLauncher(
         IEmulatorRepository emulatorRepo,
@@ -55,6 +76,7 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         IRawInputService rawInputService,
         IDisplayModeService displayModeService,
         IHidHideService hidHideService,
+        IControllerProfileRepository controllerProfileRepository,
         ILogger<ProcessEmulatorLauncher> logger)
     {
         _emulatorRepo = emulatorRepo;
@@ -64,6 +86,7 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         _rawInputService = rawInputService;
         _displayModeService = displayModeService;
         _hidHideService = hidHideService;
+        _controllerProfileRepository = controllerProfileRepository;
         _logger = logger;
     }
 
@@ -107,7 +130,7 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             }
             else if (emulator.IsDirectLaunch)
             {
-                psi = BuildDirectLaunchStartInfo(game, emulator);
+                psi = await BuildDirectLaunchStartInfoAsync(game, emulator, ct);
             }
             else
             {
@@ -233,6 +256,24 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to launch game: {Title}", game.Title);
+
+            // If _currentProcess.Start() itself is what threw (e.g. a malformed
+            // launcher-protocol URI, or the "steam" protocol handler rejecting the
+            // request), _currentProcess is left assigned to a Process object that
+            // was never actually associated with a real OS process. Left in that
+            // state, EVERY subsequent read of IsEmulatorRunning (Process.HasExited
+            // on an unstarted Process throws InvalidOperationException: "No process
+            // is associated with this object") crashes the whole app on the very
+            // next attempt to launch anything — a real, reproduced crash, not a
+            // hypothetical. The `!Start()` branch above already resets this on the
+            // one path that returns false instead of throwing; this covers every
+            // other failure mode the same way.
+            if (_currentProcess is not null)
+            {
+                try { _currentProcess.Dispose(); } catch { /* already in a bad state — nothing more to clean up */ }
+                _currentProcess = null;
+            }
+
             await _hookLauncher.StopAsync(); // safe no-op if it was never started
             return -1;
         }
@@ -295,7 +336,8 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
         var system = await ResolveSystemAsync(game.SystemId)
             ?? new GameSystem { Id = game.SystemId, Name = game.SystemId }; // defensive fallback — no bezel, but never blocks launch
 
-        var overrideCfg   = await _retroArchGenerator.GenerateAsync(game, emulator, system, ct);
+        var analogProfile = await ResolveAnalogProfileAsync(game, ct);
+        var overrideCfg   = await _retroArchGenerator.GenerateAsync(game, emulator, system, analogProfile, ct);
 
         if (!File.Exists(retroArchExe))
             throw new FileNotFoundException($"RetroArch executable not found: {retroArchExe}");
@@ -321,15 +363,71 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
     // ── Direct launch (native Windows game / Steam / Epic / GOG Galaxy) ──────
 
+    // Steam-cold-start handling: how long to wait for steamwebhelper.exe (Steam's own
+    // embedded-browser UI process — only exists once the client has actually finished
+    // logging in and rendering the library, unlike the bare "steam" process which
+    // appears almost instantly and proves nothing) to appear, plus a short settle
+    // delay after it does, before issuing -applaunch.
+    private static readonly TimeSpan SteamReadyPollInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan SteamReadyTimeout      = TimeSpan.FromSeconds(45);
+    private static readonly TimeSpan SteamReadySettleDelay  = TimeSpan.FromSeconds(2);
+
     /// <summary>
     /// Game.RomPath is either an absolute path to the game's own .exe, or a launcher
     /// protocol URI (e.g. "steam://rungameid/12345"). UseShellExecute=true is required
     /// for a protocol URI to resolve to its registered handler, and works fine for a
     /// plain .exe too, so it's used unconditionally here rather than branching on shape.
+    ///
+    /// A "steam://rungameid/..." target is special-cased below rather than handed to
+    /// the OS protocol handler: that hand-off only reaches an already-fully-logged-in
+    /// Steam client, and even Steam.exe's own "-applaunch &lt;id&gt;" switch — normally
+    /// reliable because Steam queues that request internally — can still get dropped
+    /// if it's issued in the same breath as a fully cold Steam start (confirmed: Steam
+    /// opens but the game never follows). So when Steam isn't already running, this
+    /// starts it bare first and actually waits for it to finish initializing
+    /// (steamwebhelper.exe appearing) before issuing -applaunch as a second,
+    /// independent invocation — the same two-phase approach LaunchBox/Playnite use
+    /// instead of a single blind command.
     /// </summary>
-    private static ProcessStartInfo BuildDirectLaunchStartInfo(Game game, Emulator emulator)
+    private async Task<ProcessStartInfo> BuildDirectLaunchStartInfoAsync(Game game, Emulator emulator, CancellationToken ct)
     {
         var target = game.RomPath;
+
+        if (TryParseSteamAppId(target, out var appId) && TryResolveSteamExePath(out var steamExe))
+        {
+            if (!IsSteamClientRunning())
+            {
+                _logger.LogInformation(
+                    "Steam isn't running — starting it and waiting for it to finish initializing before launching App {AppId}.",
+                    appId);
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName         = steamExe,
+                        UseShellExecute  = false,
+                        WorkingDirectory = Path.GetDirectoryName(steamExe) ?? AppContext.BaseDirectory,
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // Not fatal — fall through and try -applaunch anyway, which will
+                    // itself start Steam if the bare launch above somehow didn't.
+                    _logger.LogWarning(ex, "Failed to pre-launch Steam; proceeding directly to -applaunch.");
+                }
+
+                await WaitForSteamReadyAsync(ct);
+            }
+
+            return new ProcessStartInfo
+            {
+                FileName         = steamExe,
+                Arguments        = $"-applaunch {appId}",
+                UseShellExecute  = false,
+                WorkingDirectory = Path.GetDirectoryName(steamExe) ?? AppContext.BaseDirectory,
+            };
+        }
+
         bool isUri = Uri.TryCreate(target, UriKind.Absolute, out var parsed) && !parsed.IsFile;
         var resolvedTarget = isUri ? target : UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(target);
 
@@ -340,6 +438,133 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             UseShellExecute  = true,
             WorkingDirectory = isUri ? string.Empty : (Path.GetDirectoryName(resolvedTarget) ?? AppContext.BaseDirectory),
         };
+    }
+
+    private static bool IsSteamClientRunning() => Process.GetProcessesByName("steam").Length > 0;
+
+    private async Task WaitForSteamReadyAsync(CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow + SteamReadyTimeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (Process.GetProcessesByName("steamwebhelper").Length > 0)
+            {
+                await Task.Delay(SteamReadySettleDelay, ct);
+                return;
+            }
+            await Task.Delay(SteamReadyPollInterval, ct);
+        }
+        _logger.LogWarning("Timed out waiting for Steam to finish starting — attempting -applaunch anyway.");
+    }
+
+    /// <summary>Extracts the numeric App ID from "steam://rungameid/&lt;id&gt;" or
+    /// "steam://run/&lt;id&gt;" (optionally followed by "/..." or "?..."). Any other
+    /// shape (a plain .exe path, a different launcher's protocol) returns false so the
+    /// caller falls back to the generic URI/exe handling.</summary>
+    private static bool TryParseSteamAppId(string target, out string appId)
+    {
+        appId = string.Empty;
+        if (string.IsNullOrWhiteSpace(target)) return false;
+
+        const string rungameidPrefix = "steam://rungameid/";
+        const string runPrefix       = "steam://run/";
+
+        string? remainder = target.StartsWith(rungameidPrefix, StringComparison.OrdinalIgnoreCase)
+            ? target[rungameidPrefix.Length..]
+            : target.StartsWith(runPrefix, StringComparison.OrdinalIgnoreCase)
+                ? target[runPrefix.Length..]
+                : null;
+        if (remainder is null) return false;
+
+        var terminator = remainder.IndexOfAny(['/', '?']);
+        var candidate = terminator >= 0 ? remainder[..terminator] : remainder;
+        if (!uint.TryParse(candidate, out _)) return false;
+
+        appId = candidate;
+        return true;
+    }
+
+    /// <summary>
+    /// Resolves the local Steam client's own steam.exe, trying every source in order
+    /// of authority and logging which one (if any) actually worked — the previous
+    /// single-source version (HKCU\Software\Valve\Steam\SteamExe only) is written by
+    /// steam.exe itself at runtime, so it silently comes up empty on any account where
+    /// Steam happens not to have written it (a real, plausible explanation for
+    /// "Steam opens but the game never follows" persisting even after switching to
+    /// -applaunch: resolution failed and launch silently fell back to the old, known-
+    /// unreliable steam:// protocol hand-off instead).
+    /// </summary>
+    private bool TryResolveSteamExePath(out string steamExe)
+    {
+        // HKCU\Software\Valve\Steam — SteamExe/SteamPath, written by steam.exe itself
+        // at runtime. Most direct when present, but only populated once Steam has
+        // actually run under this specific Windows account.
+        if (TryReadRegistryString(Microsoft.Win32.Registry.CurrentUser, @"Software\Valve\Steam", "SteamExe", out steamExe)
+            && File.Exists(steamExe))
+        {
+            _logger.LogInformation("Resolved steam.exe via HKCU SteamExe: {Path}", steamExe);
+            return true;
+        }
+        if (TryReadRegistryString(Microsoft.Win32.Registry.CurrentUser, @"Software\Valve\Steam", "SteamPath", out var userDir))
+        {
+            var candidate = Path.Combine(userDir, "steam.exe");
+            if (File.Exists(candidate))
+            {
+                _logger.LogInformation("Resolved steam.exe via HKCU SteamPath: {Path}", candidate);
+                steamExe = candidate;
+                return true;
+            }
+        }
+
+        // HKLM\SOFTWARE\WOW6432Node\Valve\Steam\InstallPath (64-bit Windows) and the
+        // non-redirected HKLM\SOFTWARE\Valve\Steam\InstallPath (32-bit Windows) —
+        // written by the Steam installer itself, so present regardless of whether
+        // Steam has ever actually run under this Windows account.
+        foreach (var installKeyPath in new[] { @"SOFTWARE\WOW6432Node\Valve\Steam", @"SOFTWARE\Valve\Steam" })
+        {
+            if (!TryReadRegistryString(Microsoft.Win32.Registry.LocalMachine, installKeyPath, "InstallPath", out var installDir))
+                continue;
+            var candidate = Path.Combine(installDir, "steam.exe");
+            if (File.Exists(candidate))
+            {
+                _logger.LogInformation("Resolved steam.exe via HKLM {Key}: {Path}", installKeyPath, candidate);
+                steamExe = candidate;
+                return true;
+            }
+        }
+
+        // Last resort — the overwhelmingly common default install locations for a
+        // genuinely local (non-cloud-streamed) install, same as the user confirmed.
+        foreach (var fallback in new[] { @"C:\Program Files (x86)\Steam\steam.exe", @"C:\Program Files\Steam\steam.exe" })
+        {
+            if (File.Exists(fallback))
+            {
+                _logger.LogInformation("Resolved steam.exe via default install path: {Path}", fallback);
+                steamExe = fallback;
+                return true;
+            }
+        }
+
+        _logger.LogWarning("Could not resolve steam.exe from any registry key or default install path — falling back to the steam:// protocol handler, which may not survive a cold Steam start.");
+        steamExe = string.Empty;
+        return false;
+    }
+
+    private static bool TryReadRegistryString(Microsoft.Win32.RegistryKey root, string subKey, string valueName, out string value)
+    {
+        value = string.Empty;
+        try
+        {
+            using var key = root.OpenSubKey(subKey);
+            var raw = key?.GetValue(valueName) as string;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            value = raw;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -523,6 +748,38 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
 
         if (idsToHide.Count > 0)
             await _hidHideService.HideAsync(idsToHide, ct);
+    }
+
+    /// <summary>
+    /// Resolves which ControllerProfile (Settings → Controllers) should govern this
+    /// RetroArch session's analog dead zone/sensitivity — see
+    /// IRetroArchConfigGenerator.GenerateAsync's doc comment for why only dead
+    /// zone/sensitivity carry through, not a full button remap. Prefers a Wheel
+    /// device's profile (that's the field's primary use case) among this game's
+    /// connected/assigned devices; falls back to a Gamepad's profile; null if
+    /// neither has one configured, in which case the generator emits nothing extra.
+    /// </summary>
+    private async Task<ControllerProfile?> ResolveAnalogProfileAsync(Game game, CancellationToken ct)
+    {
+        var connected = _rawInputService.EnumerateDevices();
+
+        IEnumerable<string> candidatePaths = game.PlayerDeviceAssignments.Count > 0
+            ? game.PlayerDeviceAssignments
+                .SelectMany(slot => slot.PreferredHardwarePaths)
+                .Where(path => connected.Any(d => string.Equals(d.HardwarePath, path, StringComparison.OrdinalIgnoreCase)))
+            : connected.Select(d => d.HardwarePath);
+
+        var candidateDevices = candidatePaths
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(path => connected.First(d => string.Equals(d.HardwarePath, path, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        var wheel = candidateDevices.FirstOrDefault(d => d.DeviceType == RawInputDeviceType.Wheel);
+        var gamepad = candidateDevices.FirstOrDefault(d => d.DeviceType == RawInputDeviceType.Gamepad);
+        var preferred = wheel ?? gamepad;
+        if (preferred is null) return null;
+
+        return await _controllerProfileRepository.GetByHardwarePathAsync(preferred.HardwarePath, ct);
     }
 
     /// <summary>

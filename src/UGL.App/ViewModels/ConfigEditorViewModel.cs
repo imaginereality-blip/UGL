@@ -30,6 +30,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     public TitleGraphicsConfigViewModel TitleGraphics { get; }
     public PathsConfigViewModel         Paths         { get; }
     public PeripheralConfigViewModel    Peripherals   { get; }
+    public ControllersConfigViewModel   Controllers   { get; }
     public HookConfigViewModel          Hooks         { get; }
     public UpdateConfigViewModel        Updates       { get; }
     public ScraperConfigViewModel       Scraper       { get; }
@@ -38,7 +39,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
 
     private readonly ILogger<ConfigEditorViewModel> _logger;
 
-    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, TitleGraphics, Paths, Peripherals, Hooks, Updates, Scraper }
+    public enum Tab { Categories, Games, Systems, Audio, Theme, CardHighlight, TitleGraphics, Paths, Peripherals, Controllers, Hooks, Updates, Scraper }
 
     [ObservableProperty] private Tab  _activeTab = Tab.Categories;
     [ObservableProperty] private bool _isCategoriesTabActive = true;
@@ -50,6 +51,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     [ObservableProperty] private bool _isTitleGraphicsTabActive;
     [ObservableProperty] private bool _isPathsTabActive;
     [ObservableProperty] private bool _isPeripheralsTabActive;
+    [ObservableProperty] private bool _isControllersTabActive;
     [ObservableProperty] private bool _isHooksTabActive;
     [ObservableProperty] private bool _isUpdatesTabActive;
     [ObservableProperty] private bool _isScraperTabActive;
@@ -76,7 +78,11 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         new("System",               null, IsHeader: true),
         new("Audio",                Tab.Audio,          Icon: "🎵"),
         new("Paths",                Tab.Paths,          Icon: ""),
-        new("Controllers",          Tab.Peripherals,    Icon: "🕹"),
+        // "Controllers" is reserved for the new mapping/sensitivity tab below —
+        // this one is player-index assignment + HidHide, so it's labeled for what
+        // it actually does.
+        new("Peripherals",          Tab.Peripherals,    Icon: "🕹"),
+        new("Controllers",          Tab.Controllers,    Icon: "🎮"),
         new("Output Hooks",         Tab.Hooks,          Icon: "🔌"),
         new("Updates",              Tab.Updates,        Icon: ""),
         new("Scraper",              Tab.Scraper,        Icon: "🖼"),
@@ -121,9 +127,10 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     {
         switch (ActiveTab)
         {
-            case Tab.Audio:   Audio.SwitchSubTabLeft();   break;
-            case Tab.Systems: Systems.SwitchSubTabLeft(); break;
-            case Tab.Games:   Games.SwitchSubTabLeft();   break;
+            case Tab.Audio:       Audio.SwitchSubTabLeft();       break;
+            case Tab.Systems:     Systems.SwitchSubTabLeft();     break;
+            case Tab.Games:       Games.SwitchSubTabLeft();       break;
+            case Tab.Controllers: Controllers.SwitchSubTabLeft(); break;
         }
     }
 
@@ -131,9 +138,10 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
     {
         switch (ActiveTab)
         {
-            case Tab.Audio:   Audio.SwitchSubTabRight();   break;
-            case Tab.Systems: Systems.SwitchSubTabRight(); break;
-            case Tab.Games:   Games.SwitchSubTabRight();   break;
+            case Tab.Audio:       Audio.SwitchSubTabRight();       break;
+            case Tab.Systems:     Systems.SwitchSubTabRight();     break;
+            case Tab.Games:       Games.SwitchSubTabRight();       break;
+            case Tab.Controllers: Controllers.SwitchSubTabRight(); break;
         }
     }
 
@@ -147,6 +155,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         TitleGraphicsConfigViewModel titleGraphics,
         PathsConfigViewModel paths,
         PeripheralConfigViewModel peripherals,
+        ControllersConfigViewModel controllers,
         HookConfigViewModel hooks,
         UpdateConfigViewModel updates,
         ScraperConfigViewModel scraper,
@@ -163,6 +172,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         TitleGraphics = titleGraphics;
         Paths         = paths;
         Peripherals   = peripherals;
+        Controllers   = controllers;
         Hooks         = hooks;
         Updates       = updates;
         Scraper       = scraper;
@@ -267,6 +277,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Tab.Hooks => Hooks.TryExitOverrides(),
         Tab.Systems => Systems.TryExitBiosList(),
         Tab.TitleGraphics => TitleGraphics.TryExitColorPicker(),
+        Tab.Controllers => Controllers.TryExitSubMode(),
         _ => false,
     };
 
@@ -301,6 +312,9 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.Hooks:
                 Hooks.IsOverridesFocused = false;
                 break;
+            case Tab.Controllers:
+                Controllers.ExitToTopLevel();
+                break;
         }
 
         IsContentFocused = false;
@@ -324,6 +338,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.TitleGraphics: TitleGraphics.NavigateUp(); break;
             case Tab.Paths:         Paths.NavigateUp();         break;
             case Tab.Peripherals:   Peripherals.NavigateUp();   break;
+            case Tab.Controllers:   Controllers.NavigateUp();   break;
             case Tab.Hooks:         Hooks.NavigateUp();         break;
             case Tab.Updates:       Updates.NavigateUp();       break;
             case Tab.Scraper:       Scraper.NavigateUp();       break;
@@ -343,6 +358,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.TitleGraphics: TitleGraphics.NavigateDown(); break;
             case Tab.Paths:         Paths.NavigateDown();         break;
             case Tab.Peripherals:   Peripherals.NavigateDown();   break;
+            case Tab.Controllers:   Controllers.NavigateDown();   break;
             case Tab.Hooks:         Hooks.NavigateDown();         break;
             case Tab.Updates:       Updates.NavigateDown();       break;
             case Tab.Scraper:       Scraper.NavigateDown();       break;
@@ -362,6 +378,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.TitleGraphics: TitleGraphics.NavigateLeft(); break;
             case Tab.Paths:         Paths.NavigateLeft();         break;
             case Tab.Peripherals:   Peripherals.NavigateLeft();   break;
+            case Tab.Controllers:   Controllers.NavigateLeft();   break;
             case Tab.Hooks:         Hooks.NavigateLeft();         break;
             case Tab.Scraper:       Scraper.NavigateLeft();       break;
         }
@@ -380,6 +397,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.TitleGraphics: TitleGraphics.NavigateRight(); break;
             case Tab.Paths:         Paths.NavigateRight();         break;
             case Tab.Peripherals:   Peripherals.NavigateRight();   break;
+            case Tab.Controllers:   Controllers.NavigateRight();   break;
             case Tab.Hooks:         Hooks.NavigateRight();         break;
             case Tab.Scraper:       Scraper.NavigateRight();       break;
         }
@@ -398,6 +416,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
             case Tab.TitleGraphics: await TitleGraphics.ConfirmAsync(); break;
             case Tab.Paths:         await Paths.ConfirmAsync();         break;
             case Tab.Peripherals:   await Peripherals.ConfirmAsync();   break;
+            case Tab.Controllers:   await Controllers.ConfirmAsync();   break;
             case Tab.Hooks:         await Hooks.ConfirmAsync();         break;
             case Tab.Updates:       await Updates.ConfirmAsync();       break;
             case Tab.Scraper:       await Scraper.ConfirmAsync();       break;
@@ -416,6 +435,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         Tab.TitleGraphics => $"FocusIndex={TitleGraphics.FocusIndex} Enabled={TitleGraphics.IsEnabled} Scale={TitleGraphics.Scale} X={TitleGraphics.PositionX} Y={TitleGraphics.PositionY} EditingColor={TitleGraphics.EditingColorKey ?? "null"}",
         Tab.Paths         => $"FocusIndex={Paths.FocusIndex}",
         Tab.Peripherals   => $"Devices.Count={Peripherals.Devices.Count} SelectedDevice={Peripherals.SelectedDevice?.FriendlyName ?? "null"}",
+        Tab.Controllers   => $"DeviceClass={Controllers.SelectedDeviceClass} SelectedDevice={Controllers.SelectedDevice?.FriendlyName ?? "null"} FieldFocusIndex={Controllers.FieldFocusIndex} CurrentControlIndex={Controllers.CurrentControlIndex} IsCapturingInput={Controllers.IsCapturingInput}",
         Tab.Hooks         => $"FocusIndex={Hooks.FocusIndex} Enabled={Hooks.EnabledGlobally} Tool={Hooks.ToolType}",
         _ => "unknown",
     };
@@ -431,6 +451,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         await TitleGraphics.InitializeAsync();
         await Paths.InitializeAsync();
         await Peripherals.InitializeAsync();
+        await Controllers.InitializeAsync();
         await Hooks.InitializeAsync();
         await Scraper.InitializeAsync();
     }
@@ -454,6 +475,7 @@ public sealed partial class ConfigEditorViewModel : ObservableObject
         IsTitleGraphicsTabActive  = tab == Tab.TitleGraphics;
         IsPathsTabActive          = tab == Tab.Paths;
         IsPeripheralsTabActive    = tab == Tab.Peripherals;
+        IsControllersTabActive    = tab == Tab.Controllers;
         IsHooksTabActive          = tab == Tab.Hooks;
         IsUpdatesTabActive        = tab == Tab.Updates;
         IsScraperTabActive        = tab == Tab.Scraper;

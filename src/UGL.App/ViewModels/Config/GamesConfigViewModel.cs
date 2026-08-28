@@ -169,8 +169,11 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     public string PendingAssignmentDeviceLabel =>
         AssignableKnownDevices.Count == 0 ? "(no known devices — scan in the Controllers tab first)"
+        // DisplayLabel (PeripheralRegistry.RecomputeDisplayLabels), not FriendlyName —
+        // two of the same controller model report an identical FriendlyName, which
+        // made it impossible to tell which physical device this was about to assign.
         : AssignableKnownDevices[Math.Clamp(PendingAssignmentDeviceIndex, 0, AssignableKnownDevices.Count - 1)] is var d
-            ? $"{d.FriendlyName} ({d.DeviceType})" : string.Empty;
+            ? $"{d.DisplayLabel} ({d.DeviceType})" : string.Empty;
 
     partial void OnIsBrowsingPlayerAssignmentsChanged(bool value) => RefreshPlayerAssignmentHighlight();
     partial void OnSelectedPlayerAssignmentIndexChanged(int value) => RefreshPlayerAssignmentHighlight();
@@ -819,7 +822,11 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [RelayCommand]
     private void AddPendingPlayerDeviceAssignment()
     {
-        if (AssignableKnownDevices.Count == 0) return;
+        if (AssignableKnownDevices.Count == 0)
+        {
+            StatusMessage = "No known controllers yet — configure one in Settings → Controllers first.";
+            return;
+        }
         var device = AssignableKnownDevices[Math.Clamp(PendingAssignmentDeviceIndex, 0, AssignableKnownDevices.Count - 1)];
 
         // Adding the same device to the same player slot twice would just duplicate
@@ -827,10 +834,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         if (Editor.PlayerDeviceAssignmentEntries.Any(e =>
                 e.PlayerIndex == PendingAssignmentPlayerIndex &&
                 string.Equals(e.HardwarePath, device.HardwarePath, StringComparison.OrdinalIgnoreCase)))
+        {
+            StatusMessage = $"{device.DisplayLabel} is already assigned to P{PendingAssignmentPlayerIndex}.";
             return;
+        }
 
         Editor.PlayerDeviceAssignmentEntries.Add(new PlayerDeviceAssignmentEntry(
-            PendingAssignmentPlayerIndex, device.HardwarePath, device.FriendlyName));
+            PendingAssignmentPlayerIndex, device.HardwarePath, device.DisplayLabel));
+        StatusMessage = $"Added {device.DisplayLabel} as P{PendingAssignmentPlayerIndex}.";
     }
 
     // ── Scraper / ComfyUI ─────────────────────────────────────────────────────
