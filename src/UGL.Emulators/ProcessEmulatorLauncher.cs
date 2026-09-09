@@ -819,9 +819,25 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             foreach (var handle in candidates)
             {
                 everFoundWindow = true;
-                // A *failed* attempt is deliberately not remembered, so the same
-                // window keeps getting retried every tick until it succeeds or the
-                // deadline passes, rather than being tried once and abandoned.
+
+                // Maximize on every tick a window isn't already maximized — not
+                // gated on successfullyActivated, since some emulators (RPCS3
+                // observed doing this) swap from an initial library/splash window
+                // to a separate real game-render window partway through boot, and
+                // that new window needs its own maximize the moment it appears.
+                // Without this, the emulator surfaces windowed on top of UGL rather
+                // than filling the screen the way a "switch straight to the game"
+                // launcher should. This is a plain maximize (SW_MAXIMIZE), not the
+                // emulator's own internal exclusive-fullscreen mode — some emulators
+                // (RPCS3 included) have their own "start in fullscreen" setting that
+                // still needs enabling on their side for a true borderless/exclusive
+                // fullscreen render, which UGL has no way to control from outside.
+                if (!WindowActivationNative.IsZoomed(handle))
+                    WindowActivationNative.ShowWindow(handle, WindowActivationNative.SW_MAXIMIZE);
+
+                // A *failed* foreground attempt is deliberately not remembered, so the
+                // same window keeps getting retried every tick until it succeeds or
+                // the deadline passes, rather than being tried once and abandoned.
                 if (successfullyActivated.Contains(handle)) continue;
 
                 bool ok = ForceForegroundWindow(handle);

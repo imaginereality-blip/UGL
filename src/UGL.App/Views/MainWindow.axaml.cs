@@ -67,7 +67,7 @@ public sealed partial class MainWindow : Window
                         // through the same Post keeps this correct regardless of what calls
                         // the setter next.
                         bool running = vm.IsEmulatorRunning;
-                        Dispatcher.UIThread.Post(() =>
+                        Dispatcher.UIThread.Post(async () =>
                         {
                             if (running)
                             {
@@ -85,7 +85,18 @@ public sealed partial class MainWindow : Window
                             // FullScreen. Confirmed in testing that this happens even
                             // when the OS display resolution itself never changed, which
                             // rules out a display-mode cause and points here instead.
+                            //
+                            // The two assignments used to happen back-to-back on the same
+                            // dispatcher tick with nothing between them — reported as
+                            // "sometimes doesn't go back to fullscreen, shows smaller"
+                            // after some games. Most likely cause: Win32 hadn't actually
+                            // finished processing the Normal-state resize before the very
+                            // next line already asked it to jump to FullScreen, so it had
+                            // stale bounds to compute the fullscreen geometry from. A short
+                            // yield between them gives that resize a chance to actually
+                            // land first.
                             WindowState = WindowState.Normal;
+                            await Task.Delay(60);
                             WindowState = WindowState.FullScreen;
 
                             // Plain Activate()/Focus() was confirmed unreliable here — the

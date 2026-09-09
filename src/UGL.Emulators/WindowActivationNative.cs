@@ -54,6 +54,10 @@ internal static class WindowActivationNative
     internal static extern uint GetCurrentThreadId();
 
     internal const int SW_RESTORE = 9;
+    internal const int SW_MAXIMIZE = 3;
+
+    [DllImport(DllName)]
+    internal static extern bool IsZoomed(nint hWnd);
 
     // ── Process-tree + top-level window enumeration ───────────────────────────
     // Process.MainWindowHandle was confirmed unreliable in real testing (zero

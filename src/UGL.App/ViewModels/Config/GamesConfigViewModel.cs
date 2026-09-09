@@ -278,6 +278,27 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     [ObservableProperty] private Game? _selectedGame;
     [ObservableProperty] private string _searchText = string.Empty;
+
+    /// <summary>Empty = "All Systems". SystemFilterOptions' first entry is always that
+    /// synthetic "All Systems" row (Id=""), so binding a ComboBox's SelectedItem to
+    /// SelectedSystemFilter (below) round-trips cleanly through this id.</summary>
+    [ObservableProperty] private string _selectedSystemFilterId = string.Empty;
+    public ObservableCollection<GameSystem> SystemFilterOptions { get; } = [];
+
+    /// <summary>Bind a ComboBox's SelectedItem to this rather than
+    /// SelectedSystemFilterId directly — same reasoning as SelectedSystemComboItem
+    /// below for the editor's own system picker.</summary>
+    public GameSystem? SelectedSystemFilter
+    {
+        get => SystemFilterOptions.FirstOrDefault(s => s.Id == SelectedSystemFilterId);
+        set => SelectedSystemFilterId = value?.Id ?? string.Empty;
+    }
+
+    partial void OnSelectedSystemFilterIdChanged(string value)
+    {
+        OnPropertyChanged(nameof(SelectedSystemFilter));
+        ApplySearch();
+    }
     [ObservableProperty] private bool _isEditorOpen;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -446,6 +467,15 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             var systems = await _config.GetSystemsAsync();
             Systems.Clear();
             foreach (var s in systems) Systems.Add(s);
+
+            var previousFilterId = SelectedSystemFilterId;
+            SystemFilterOptions.Clear();
+            SystemFilterOptions.Add(new GameSystem { Id = string.Empty, Name = "All Systems" });
+            foreach (var s in systems.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)) SystemFilterOptions.Add(s);
+            // Re-apply rather than reset — RefreshCategoriesAsync-style callers may
+            // re-run InitializeAsync while a filter is already selected.
+            SelectedSystemFilterId = SystemFilterOptions.Any(s => s.Id == previousFilterId) ? previousFilterId : string.Empty;
+            OnPropertyChanged(nameof(SelectedSystemFilter));
 
             var categories = await _config.GetCategoriesAsync();
             Categories.Clear();
@@ -1551,10 +1581,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     {
         FilteredGames.Clear();
         var term = SearchText.Trim();
-        var matches = string.IsNullOrWhiteSpace(term)
-            ? AllGames
-            : AllGames.Where(g => g.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
-                                  g.Genre.Contains(term, StringComparison.OrdinalIgnoreCase));
+
+        IEnumerable<Game> matches = AllGames;
+        if (!string.IsNullOrEmpty(SelectedSystemFilterId))
+            matches = matches.Where(g => g.SystemId == SelectedSystemFilterId);
+        if (!string.IsNullOrWhiteSpace(term))
+            matches = matches.Where(g => g.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                                          g.Genre.Contains(term, StringComparison.OrdinalIgnoreCase));
+
         foreach (var g in matches) FilteredGames.Add(g);
     }
 

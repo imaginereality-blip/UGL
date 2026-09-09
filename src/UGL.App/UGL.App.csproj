@@ -10,7 +10,7 @@
     <AssemblyName>UGL</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.7.0</Version>
+    <Version>0.7.1</Version>
     <!-- Only used by TitleGraphicsBaker to host the official WebView2 WinForms control
          on its own dedicated off-screen thread — no WinForms UI is ever shown to the
          user, Avalonia remains the app's real UI. -->

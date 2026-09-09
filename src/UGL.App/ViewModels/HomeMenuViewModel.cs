@@ -66,7 +66,13 @@ public sealed partial class HomeMenuViewModel : ObservableObject
     /// </summary>
     private async Task<List<Category>> BuildCategoryListAsync(CancellationToken ct)
     {
-        var categories = (await _configuration.GetCategoriesAsync(ct)).OrderBy(c => c.Order).ToList();
+        // Alphabetical by label, not the old manual Order field — Favorites is pulled
+        // out and reinserted at index 0 below regardless of where it sorts here, so it
+        // always leads. The Order field in Settings → Categories no longer drives
+        // display order as a result; it's left in place there rather than removed.
+        var categories = (await _configuration.GetCategoriesAsync(ct))
+            .OrderBy(c => c.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
         // Favorites is now a real, persisted row (CategoriesConfigViewModel auto-seeds
         // it once so its art/description can be customized in Settings), but it's only

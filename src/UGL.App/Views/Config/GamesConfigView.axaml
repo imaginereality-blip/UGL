@@ -16,11 +16,20 @@
     <!-- Left panel: game list + search -->
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto" Margin="0,0,8,0">
 
-      <!-- Search -->
-      <TextBox Grid.Row="0"
-               Text="{Binding SearchText}"
-               Watermark="Search games…"
-               Margin="0,0,0,8"/>
+      <!-- Search + system filter -->
+      <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,8">
+        <TextBox Text="{Binding SearchText}"
+                 Watermark="Search games…"/>
+        <ComboBox ItemsSource="{Binding SystemFilterOptions}"
+                  SelectedItem="{Binding SelectedSystemFilter}"
+                  HorizontalAlignment="Stretch">
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding Name}"/>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </StackPanel>
 
       <!-- Game list -->
       <ListBox Grid.Row="1"
