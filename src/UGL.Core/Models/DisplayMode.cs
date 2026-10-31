@@ -14,6 +14,13 @@ public sealed class DisplayMode
     public int? Height { get; set; }
     public int? RefreshHz { get; set; }
 
+    /// <summary>
+    /// Windows display scaling percentage (100, 125, 150, ...). Some Store/UWP games
+    /// only render at full resolution when scaling is 100%. Must be one of the values
+    /// Windows' own Display settings offers; an unsupported value is skipped at apply time.
+    /// </summary>
+    public int? ScalePercent { get; set; }
+
     /// <summary>True when every field is null — equivalent to "no override configured."</summary>
-    public bool IsEmpty => Width is null && Height is null && RefreshHz is null;
+    public bool IsEmpty => Width is null && Height is null && RefreshHz is null && ScalePercent is null;
 }

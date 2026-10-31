@@ -41,6 +41,60 @@ internal static class DisplayModeNative
     internal const uint CDS_FULLSCREEN = 0x4;
 
     internal const int DISP_CHANGE_SUCCESSFUL = 0;
+
+    // ── DPI scaling (undocumented DisplayConfig device-info types) ────────────
+    // Same calls the Settings app's Scale dropdown makes; SetDpi-style tools use them
+    // too. Not part of the public SDK headers, so they can change between Windows builds.
+
+    [DllImport(DllName)]
+    internal static extern int GetDisplayConfigBufferSizes(uint flags, out uint numPathElements, out uint numModeInfoElements);
+
+    [DllImport(DllName)]
+    internal static extern int QueryDisplayConfig(
+        uint flags, ref uint numPathElements, byte[] pathInfoArray,
+        ref uint numModeInfoElements, byte[] modeInfoArray, IntPtr currentTopologyId);
+
+    [DllImport(DllName)]
+    internal static extern int DisplayConfigGetDeviceInfo(ref DpiScaleGet request);
+
+    [DllImport(DllName)]
+    internal static extern int DisplayConfigSetDeviceInfo(ref DpiScaleSet request);
+
+    internal const uint QDC_ONLY_ACTIVE_PATHS = 0x2;
+    internal const int DEVICE_INFO_GET_DPI_SCALE = -3;
+    internal const int DEVICE_INFO_SET_DPI_SCALE = -4;
+
+    /// <summary>The fixed percentages Windows offers, in index order. The API deals in
+    /// offsets from the monitor's "recommended" entry in this list, not percentages.</summary>
+    internal static readonly int[] DpiScaleSteps = [100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500];
+
+    // DISPLAYCONFIG_PATH_INFO / MODE_INFO sizes for the raw byte buffers above.
+    internal const int PathInfoSize = 72;
+    internal const int ModeInfoSize = 64;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct DpiScaleGet
+{
+    public int type;          // DEVICE_INFO_GET_DPI_SCALE
+    public uint size;
+    public int adapterIdLow;
+    public int adapterIdHigh;
+    public uint id;
+    public int minScaleRel;
+    public int curScaleRel;
+    public int maxScaleRel;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct DpiScaleSet
+{
+    public int type;          // DEVICE_INFO_SET_DPI_SCALE
+    public uint size;
+    public int adapterIdLow;
+    public int adapterIdHigh;
+    public uint id;
+    public int scaleRel;
 }
 
 /// <summary>

@@ -245,7 +245,7 @@
         <!-- Display mode override -->
         <TextBlock Text="Display Mode Override (optional — only if this game needs a different resolution/refresh rate than its system's default)"
                    Foreground="#88FFFFFF" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0"/>
-        <Grid ColumnDefinitions="*,16,*,16,*">
+        <Grid ColumnDefinitions="*,16,*,16,*,16,*">
           <Border Grid.Column="0" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayWidthOverrideFocused}" Padding="6">
             <StackPanel Spacing="2">
               <TextBlock Text="Width" Foreground="#88FFFFFF" FontSize="11"/>
@@ -262,6 +262,12 @@
             <StackPanel Spacing="2">
               <TextBlock Text="Refresh Hz" Foreground="#88FFFFFF" FontSize="11"/>
               <TextBox Text="{Binding Editor.DisplayModeOverrideRefreshHzText}" IsReadOnly="True"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="6" Classes="cfgField" Classes.fieldFocused="{Binding IsDisplayScaleOverrideFocused}" Padding="6">
+            <StackPanel Spacing="2">
+              <TextBlock Text="Scaling" Foreground="#88FFFFFF" FontSize="11"/>
+              <TextBox Text="{Binding Editor.DisplayModeOverrideScalePercentText}" IsReadOnly="True"/>
             </StackPanel>
           </Border>
         </Grid>

@@ -163,6 +163,7 @@ public sealed partial class GameEditViewModel : ObservableObject
     [ObservableProperty] private int _displayModeOverrideWidth;
     [ObservableProperty] private int _displayModeOverrideHeight;
     [ObservableProperty] private int _displayModeOverrideRefreshHz;
+    [ObservableProperty] private int _displayModeOverrideScalePercent;
 
     /// <summary>DemulShooter's per-title "-target=" argument. Nearly always empty —
     /// only lightgun games behind DemulShooter need it.</summary>
@@ -174,6 +175,9 @@ public sealed partial class GameEditViewModel : ObservableObject
     public string DisplayModeOverrideHeightText    => DisplayModeOverrideHeight    == 0 ? "Not set" : DisplayModeOverrideHeight.ToString();
     public string DisplayModeOverrideRefreshHzText => DisplayModeOverrideRefreshHz == 0 ? "Not set" : DisplayModeOverrideRefreshHz.ToString();
 
+    public string DisplayModeOverrideScalePercentText => DisplayModeOverrideScalePercent == 0 ? "Not set" : $"{DisplayModeOverrideScalePercent}%";
+
+    partial void OnDisplayModeOverrideScalePercentChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideScalePercentText));
     partial void OnDisplayModeOverrideWidthChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideWidthText));
     partial void OnDisplayModeOverrideHeightChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideHeightText));
     partial void OnDisplayModeOverrideRefreshHzChanged(int value) => OnPropertyChanged(nameof(DisplayModeOverrideRefreshHzText));
@@ -300,6 +304,7 @@ public sealed partial class GameEditViewModel : ObservableObject
         DisplayModeOverrideWidth     = game.DisplayModeOverride?.Width     ?? 0;
         DisplayModeOverrideHeight    = game.DisplayModeOverride?.Height    ?? 0;
         DisplayModeOverrideRefreshHz = game.DisplayModeOverride?.RefreshHz ?? 0;
+        DisplayModeOverrideScalePercent = game.DisplayModeOverride?.ScalePercent ?? 0;
         DemulShooterTarget = game.DemulShooterTarget;
         BiosOverridePaths.Clear();
         foreach (var bios in game.BiosOverridePaths) BiosOverridePaths.Add(bios);
@@ -354,13 +359,14 @@ public sealed partial class GameEditViewModel : ObservableObject
                     .ToList(),
             },
             BezelOverridePath = UGL.Core.Utilities.PortablePathHelper.ToPortablePath(BezelOverridePath.Trim()),
-            DisplayModeOverride = (DisplayModeOverrideWidth, DisplayModeOverrideHeight, DisplayModeOverrideRefreshHz) == (0, 0, 0)
+            DisplayModeOverride = (DisplayModeOverrideWidth, DisplayModeOverrideHeight, DisplayModeOverrideRefreshHz, DisplayModeOverrideScalePercent) == (0, 0, 0, 0)
                 ? null
                 : new DisplayMode
                 {
                     Width     = DisplayModeOverrideWidth     == 0 ? null : DisplayModeOverrideWidth,
                     Height    = DisplayModeOverrideHeight    == 0 ? null : DisplayModeOverrideHeight,
                     RefreshHz = DisplayModeOverrideRefreshHz == 0 ? null : DisplayModeOverrideRefreshHz,
+                    ScalePercent = DisplayModeOverrideScalePercent == 0 ? null : DisplayModeOverrideScalePercent,
                 },
             DemulShooterTarget = DemulShooterTarget.Trim(),
             BiosOverridePaths = BiosOverridePaths

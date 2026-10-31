@@ -83,10 +83,10 @@ public sealed partial class GamesConfigViewModel : ObservableObject
                 1 or 3 or 5 => "Left / Right to change",
                 2 => "A to enter, Up/Down to move, A to toggle, B to exit",
                 6 => "A to toggle",
-                13 => "A to enter, Up/Down to move, A to remove, B to exit",
-                15 => "A to enter, Up/Down to move, A to toggle, B to exit",
-                17 or 18 => "Left / Right to change",
-                20 => "A to enter, Up/Down to move, A to remove, B to exit",
+                14 => "A to enter, Up/Down to move, A to remove, B to exit",
+                16 => "A to enter, Up/Down to move, A to toggle, B to exit",
+                18 or 19 => "Left / Right to change",
+                21 => "A to enter, Up/Down to move, A to remove, B to exit",
                 _ => string.Empty,
             };
         }
@@ -97,14 +97,14 @@ public sealed partial class GamesConfigViewModel : ObservableObject
 
     /// <summary>
     /// Field position within the Settings sub-tab — 0=Title, 4=Genre, 7-8=ROM/process-
-    /// name (text, open the virtual keyboard), 21=Save, 22=Cancel. System(1)/
+    /// name (text, open the virtual keyboard), 22=Save, 23=Cancel. System(1)/
     /// Emulator(3) cycle via Left/Right, Players(5) adjusts via Left/Right,
     /// Favorite(6) toggles via Confirm. Category(2) is a multi-select checkbox grid —
     /// Confirm enters a sub-mode (see IsCategoryOptionsFocused below), matching the
     /// same "enter list, Back exits it" convention as Audio's track sub-list.
     /// </summary>
     [ObservableProperty] private int _settingsFocusIndex;
-    private const int SettingsPositionCount = 23;
+    private const int SettingsPositionCount = 24;
 
     /// <summary>
     /// Field position within the Art sub-tab — 0-5 are media path fields (text, open
@@ -138,7 +138,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             Editor.DisabledDeviceTypeOptions[i].IsHighlighted = IsBrowsingDisabledDeviceTypes && i == SelectedDeviceTypeCheckIndex;
     }
 
-    // ── BIOS override sub-mode — entered via Confirm at SettingsFocusIndex==13 ────────
+    // ── BIOS override sub-mode — entered via Confirm at SettingsFocusIndex==14 ────────
     // Nearly always empty; only needed for the rare game that requires a BIOS
     // different from its emulator's own default list (Emulator.BiosPaths). Plain
     // strings, not a wrapper VM — the ListBox's own SelectedIndex binding drives the
@@ -146,7 +146,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     [ObservableProperty] private bool _isBrowsingBiosOverrides;
     [ObservableProperty] private int _selectedBiosOverrideIndex;
 
-    // ── Disabled peripherals sub-mode — entered via Confirm at SettingsFocusIndex==15 ─
+    // ── Disabled peripherals sub-mode — entered via Confirm at SettingsFocusIndex==16 ─
     // Nearly always all unchecked; only needed for the rare game where a lightgun,
     // wheel, etc. would interfere (e.g. disabling both for a fighting game).
     [ObservableProperty] private bool _isBrowsingDisabledDeviceTypes;
@@ -156,7 +156,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     // peripherals above (Game.PlayerDeviceAssignments). Two flat "pending" fields
     // (cycled via Left/Right, same convention as System/Emulator/Players) build up
     // one entry at a time; AddAssignment commits it; the list sub-mode (entered via
-    // Confirm at SettingsFocusIndex==20) removes existing ones. Nearly always empty.
+    // Confirm at SettingsFocusIndex==21) removes existing ones. Nearly always empty.
     [ObservableProperty] private int _pendingAssignmentPlayerIndex = 1;
     [ObservableProperty] private int _pendingAssignmentDeviceIndex;
     [ObservableProperty] private bool _isBrowsingPlayerAssignments;
@@ -199,16 +199,17 @@ public sealed partial class GamesConfigViewModel : ObservableObject
     public bool IsDisplayWidthOverrideFocused     => SettingsFocusIndex == 10;
     public bool IsDisplayHeightOverrideFocused    => SettingsFocusIndex == 11;
     public bool IsDisplayRefreshHzOverrideFocused => SettingsFocusIndex == 12;
-    public bool IsBiosOverrideListFocused => SettingsFocusIndex == 13;
-    public bool IsAddBiosOverrideFocused  => SettingsFocusIndex == 14;
-    public bool IsDisabledDeviceTypesFocused => SettingsFocusIndex == 15;
-    public bool IsDemulShooterTargetFocused => SettingsFocusIndex == 16;
-    public bool IsPendingAssignmentPlayerIndexFocused => SettingsFocusIndex == 17;
-    public bool IsPendingAssignmentDeviceFocused      => SettingsFocusIndex == 18;
-    public bool IsAddAssignmentFocused                => SettingsFocusIndex == 19;
-    public bool IsPlayerDeviceAssignmentsFocused => SettingsFocusIndex == 20;
-    public bool IsSaveFocused           => SettingsFocusIndex == 21;
-    public bool IsCancelFocused         => SettingsFocusIndex == 22;
+    public bool IsDisplayScaleOverrideFocused     => SettingsFocusIndex == 13;
+    public bool IsBiosOverrideListFocused => SettingsFocusIndex == 14;
+    public bool IsAddBiosOverrideFocused  => SettingsFocusIndex == 15;
+    public bool IsDisabledDeviceTypesFocused => SettingsFocusIndex == 16;
+    public bool IsDemulShooterTargetFocused => SettingsFocusIndex == 17;
+    public bool IsPendingAssignmentPlayerIndexFocused => SettingsFocusIndex == 18;
+    public bool IsPendingAssignmentDeviceFocused      => SettingsFocusIndex == 19;
+    public bool IsAddAssignmentFocused                => SettingsFocusIndex == 20;
+    public bool IsPlayerDeviceAssignmentsFocused => SettingsFocusIndex == 21;
+    public bool IsSaveFocused           => SettingsFocusIndex == 22;
+    public bool IsCancelFocused         => SettingsFocusIndex == 23;
 
     partial void OnSettingsFocusIndexChanged(int value)
     {
@@ -226,6 +227,7 @@ public sealed partial class GamesConfigViewModel : ObservableObject
         OnPropertyChanged(nameof(IsDisplayWidthOverrideFocused));
         OnPropertyChanged(nameof(IsDisplayHeightOverrideFocused));
         OnPropertyChanged(nameof(IsDisplayRefreshHzOverrideFocused));
+        OnPropertyChanged(nameof(IsDisplayScaleOverrideFocused));
         OnPropertyChanged(nameof(IsBiosOverrideListFocused));
         OnPropertyChanged(nameof(IsAddBiosOverrideFocused));
         OnPropertyChanged(nameof(IsDisabledDeviceTypesFocused));
@@ -631,8 +633,8 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case 1: CycleSystem(-1); break;
             case 3: CycleEmulator(-1); break;
             case 5: Editor.Players = Math.Max(1, Editor.Players - 1); break;
-            case 17: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
-            case 18: CyclePendingAssignmentDevice(-1); break;
+            case 18: PendingAssignmentPlayerIndex = Math.Max(1, PendingAssignmentPlayerIndex - 1); break;
+            case 19: CyclePendingAssignmentDevice(-1); break;
         }
     }
 
@@ -656,8 +658,8 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case 1: CycleSystem(1); break;
             case 3: CycleEmulator(1); break;
             case 5: Editor.Players = Math.Min(8, Editor.Players + 1); break;
-            case 17: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
-            case 18: CyclePendingAssignmentDevice(1); break;
+            case 18: PendingAssignmentPlayerIndex = Math.Min(8, PendingAssignmentPlayerIndex + 1); break;
+            case 19: CyclePendingAssignmentDevice(1); break;
         }
     }
 
@@ -818,33 +820,34 @@ public sealed partial class GamesConfigViewModel : ObservableObject
             case 10: OpenNumericKeyboard("Display Width Override (0 = use system default)", Editor.DisplayModeOverrideWidth, v => Editor.DisplayModeOverrideWidth = v); break;
             case 11: OpenNumericKeyboard("Display Height Override (0 = use system default)", Editor.DisplayModeOverrideHeight, v => Editor.DisplayModeOverrideHeight = v); break;
             case 12: OpenNumericKeyboard("Display Refresh Hz Override (0 = use system default)", Editor.DisplayModeOverrideRefreshHz, v => Editor.DisplayModeOverrideRefreshHz = v); break;
-            case 13:
+            case 13: OpenNumericKeyboard("Display Scaling % Override (0 = don't change; e.g. 100)", Editor.DisplayModeOverrideScalePercent, v => Editor.DisplayModeOverrideScalePercent = v); break;
+            case 14:
                 if (Editor.BiosOverridePaths.Count > 0)
                 {
                     IsBrowsingBiosOverrides = true;
                     SelectedBiosOverrideIndex = Math.Clamp(SelectedBiosOverrideIndex, 0, Editor.BiosOverridePaths.Count - 1);
                 }
                 break;
-            case 14: await BrowseAddBiosOverrideAsync(); break;
-            case 15:
+            case 15: await BrowseAddBiosOverrideAsync(); break;
+            case 16:
                 if (Editor.DisabledDeviceTypeOptions.Count > 0)
                 {
                     IsBrowsingDisabledDeviceTypes = true;
                     SelectedDeviceTypeCheckIndex = Math.Clamp(SelectedDeviceTypeCheckIndex, 0, Editor.DisabledDeviceTypeOptions.Count - 1);
                 }
                 break;
-            case 16: _virtualKeyboard.Open("DemulShooter Target", Editor.DemulShooterTarget, v => Editor.DemulShooterTarget = v); break;
-            case 19: AddPendingPlayerDeviceAssignment(); break;
-            case 20:
+            case 17: _virtualKeyboard.Open("DemulShooter Target", Editor.DemulShooterTarget, v => Editor.DemulShooterTarget = v); break;
+            case 20: AddPendingPlayerDeviceAssignment(); break;
+            case 21:
                 if (Editor.PlayerDeviceAssignmentEntries.Count > 0)
                 {
                     IsBrowsingPlayerAssignments = true;
                     SelectedPlayerAssignmentIndex = Math.Clamp(SelectedPlayerAssignmentIndex, 0, Editor.PlayerDeviceAssignmentEntries.Count - 1);
                 }
                 break;
-            case 21: await SaveEditorAsync(); break;
-            case 22: CancelEditor(); break;
-            // 1, 3, 5 (System/Emulator/Players), 17, 18 (pending assignment player
+            case 22: await SaveEditorAsync(); break;
+            case 23: CancelEditor(); break;
+            // 1, 3, 5 (System/Emulator/Players), 18, 19 (pending assignment player
             // index/device) are all adjusted via Left/Right, not Confirm.
         }
     }
