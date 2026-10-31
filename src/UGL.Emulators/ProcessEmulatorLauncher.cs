@@ -428,6 +428,28 @@ public sealed class ProcessEmulatorLauncher : IEmulatorLauncher, IDisposable
             };
         }
 
+        // A "shell:AppsFolder\<AUMID>" target (Microsoft Store / UWP app) launched with
+        // UseShellExecute=true makes Windows start the app itself and never hands back a
+        // Process, so Process.Start() returns false and the launch was treated as failed
+        // even though the app opened — skipping the display-mode switch and leaving nothing
+        // for the quit combo to kill. Going through explorer.exe gives a real (short-lived)
+        // wrapper process, same shape as the Steam -applaunch hand-off above; the game
+        // itself is then found via Game.ProcessNameOverride.
+        if (target.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(game.ProcessNameOverride))
+                _logger.LogWarning(
+                    "'{Title}' launches via a shell: target but has no Process Name Override — UGL can't tell when it exits or quit it.",
+                    game.Title);
+
+            return new ProcessStartInfo
+            {
+                FileName        = "explorer.exe",
+                Arguments       = target,
+                UseShellExecute = false,
+            };
+        }
+
         bool isUri = Uri.TryCreate(target, UriKind.Absolute, out var parsed) && !parsed.IsFile;
         var resolvedTarget = isUri ? target : UGL.Core.Utilities.PortablePathHelper.ToAbsolutePath(target);
 
