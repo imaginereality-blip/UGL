@@ -1,4 +1,4 @@
-# UGL release build script.
+# Replay (UGL) release build script.
 #
 # Publishes a self-contained, single-file portable build and packages it into a
 # release ZIP. Run from the repo root (where UGL.sln lives).
@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $publishDir = "publish\UGL"
-$zipName    = "UGL-portable-v$Version.zip"
+$zipName    = "Replay-portable-v$Version.zip"
 $zipPath    = "publish\$zipName"
 
 Write-Host "== Cleaning previous publish output ==" -ForegroundColor Cyan
