@@ -1,4 +1,9 @@
-# UltimateGameLauncher (UGL)
+<p align="center">
+  <img src="src/UGL.App/Assets/Icon/replay.png" alt="Replay icon" width="128">
+</p>
+
+# Replay
+*Ultimate Game Launcher*
 
 A controller-first arcade cabinet game launcher for Windows, built with .NET 9 and Avalonia UI. Designed to run entirely from a portable folder — point it at your ROMs, emulators, and media, and it handles the rest: category/game browsing, RetroArch integration, BIOS management, bezels, background music, and more, all navigable with a controller alone.
 
@@ -32,7 +37,7 @@ dotnet run --project src\UGL.App
 
 ## Folder structure
 
-UGL creates the following folders next to its executable on first run:
+Replay creates the following folders next to its executable on first run:
 
 ```
 config\          Settings, category/game/system/emulator data (JSON)
@@ -52,7 +57,7 @@ retroarch\        Auto-generated RetroArch override configs (not user-edited)
 logs\             Application logs
 ```
 
-Every path UGL stores is relative to its own install folder whenever possible, so the whole thing can be moved to a different drive letter, or a different machine's USB port, without breaking.
+Every path Replay stores is relative to its own install folder whenever possible, so the whole thing can be moved to a different drive letter, or a different machine's USB port, without breaking.
 
 ## Project layout
 

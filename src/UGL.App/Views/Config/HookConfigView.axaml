@@ -9,7 +9,7 @@
 
       <TextBlock Text="Hook Integration" FontSize="18" FontWeight="Bold" Foreground="White"/>
       <TextBlock TextWrapping="Wrap" Foreground="#88FFFFFF" FontSize="13"
-                 Text="Launches MameHooker or Hook of the Reaper alongside the emulator for light gun recoil/rumble and cabinet lighting. UGL only manages starting and stopping the tool — it listens for the emulator's own output signals and resolves its own per-game configuration independently."/>
+                 Text="Launches MameHooker or Hook of the Reaper alongside the emulator for light gun recoil/rumble and cabinet lighting. Replay only manages starting and stopping the tool — it listens for the emulator's own output signals and resolves its own per-game configuration independently."/>
 
       <!-- Enable -->
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsEnabledGloballyFocused}" Padding="8">

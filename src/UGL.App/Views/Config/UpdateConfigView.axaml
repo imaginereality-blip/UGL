@@ -53,7 +53,7 @@
         </Border>
       </StackPanel>
 
-      <TextBlock Text="Installing will close and restart UGL automatically."
+      <TextBlock Text="Installing will close and restart Replay automatically."
                  Foreground="#66FFFFFF" FontSize="12"
                  IsVisible="{Binding IsAwaitingConfirmation}"/>
 

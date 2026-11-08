@@ -30,7 +30,7 @@
             <CheckBox IsChecked="{Binding HidHideEnabled}"
                       Content="Enable HidHide (real per-game peripheral disable)"
                       FontWeight="SemiBold"/>
-            <TextBlock Text="Requires HidHide (github.com/nefarius/HidHide) installed separately. Without this, a game's Disabled Peripherals (Games tab) only silences UGL's own input handling — the emulator itself still sees the device."
+            <TextBlock Text="Requires HidHide (github.com/nefarius/HidHide) installed separately. Without this, a game's Disabled Peripherals (Games tab) only silences Replay's own input handling — the emulator itself still sees the device."
                        Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
           </StackPanel>
         </Border>

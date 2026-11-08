@@ -4,6 +4,7 @@
         xmlns:views="clr-namespace:UGL.App.Views"
         x:Class="UGL.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/Icon/replay.ico"
         Title="{Binding WindowTitle}"
         Width="1920"
         Height="1080"

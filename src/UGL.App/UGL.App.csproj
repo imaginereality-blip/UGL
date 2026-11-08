@@ -18,6 +18,7 @@
     <!-- Required for Avalonia's NativeControlHost-backed controls (VideoView, WebView2)
          to create their native Win32 child window — see app.manifest's own comment. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Icon/replay.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

@@ -30,7 +30,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly FilterOverlayViewModel _filterOverlay;
     private readonly ConfigEditorViewModel _configEditor;
 
-    [ObservableProperty] private string _windowTitle = "UltimateGameLauncher";
+    [ObservableProperty] private string _windowTitle = "Replay — Ultimate Game Launcher";
     [ObservableProperty] private bool _isLoading = true;
 
     // ── Startup video — a one-shot cinematic shown over everything else (including

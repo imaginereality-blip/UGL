@@ -210,7 +210,7 @@
                 <CheckBox IsChecked="{Binding EditEmulatorIsRetroArch}"
                           Content="RetroArch Puppeteer Mode"
                           FontWeight="SemiBold"/>
-                <TextBlock Text="When enabled, UGL drives RetroArch as a headless core engine. Executable Path becomes the .dll core library."
+                <TextBlock Text="When enabled, Replay drives RetroArch as a headless core engine. Executable Path becomes the .dll core library."
                            Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
               </StackPanel>
             </Border>

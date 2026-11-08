@@ -9,7 +9,7 @@
 
       <TextBlock Text="Scraper &amp; Card Art" FontSize="18" FontWeight="Bold" Foreground="White"/>
       <TextBlock TextWrapping="Wrap" Foreground="#88FFFFFF" FontSize="13"
-                 Text="Credentials for game metadata/art sources, used from the Games tab's Scrape action. All three can be configured — pick whichever is preferred as the default. ComfyUI (below) is for generating card art from a workflow you supply; UGL doesn't build or understand the workflow graph itself."/>
+                 Text="Credentials for game metadata/art sources, used from the Games tab's Scrape action. All three can be configured — pick whichever is preferred as the default. ComfyUI (below) is for generating card art from a workflow you supply; Replay doesn't build or understand the workflow graph itself."/>
 
       <!-- Preferred source -->
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsPreferredSourceFocused}" Padding="8">
@@ -38,7 +38,7 @@
 
       <!-- ScreenScraper -->
       <TextBlock Text="ScreenScraper.fr" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,8,0,0"/>
-      <TextBlock Text="Best for retro/arcade art coverage. Dev Id/Password require registering UGL as an application with the ScreenScraper team — not fully self-service."
+      <TextBlock Text="Best for retro/arcade art coverage. Dev Id/Password require registering Replay as an application with the ScreenScraper team — not fully self-service."
                  Foreground="#66FFFFFF" FontSize="11" TextWrapping="Wrap"/>
       <Border Classes="cfgField" Classes.fieldFocused="{Binding IsScreenScraperUsernameFocused}" Padding="8">
         <StackPanel Spacing="4">

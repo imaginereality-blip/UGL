@@ -83,10 +83,10 @@ internal static class AppFolderScaffolder
             "Settings.");
 
         WriteReadmeIfMissing(Path.Combine(root, "media"),
-            "This folder holds all the artwork, video, and audio UGL displays\r\n" +
+            "This folder holds all the artwork, video, and audio Replay displays\r\n" +
             "and plays. You don't usually need to drop files in here directly —\r\n" +
             "when you Browse to an image/video/sound file anywhere in Settings,\r\n" +
-            "UGL copies it into the right spot below automatically, named\r\n" +
+            "Replay copies it into the right spot below automatically, named\r\n" +
             "{systemId}-{gameId}.{ext} (games) or by whatever filename you gave it\r\n" +
             "(categories).\r\n" +
             "\r\n" +
@@ -112,7 +112,7 @@ internal static class AppFolderScaffolder
     }
 
     private const string GettingStartedText =
-        "Welcome to UltimateGameLauncher (UGL)!\r\n" +
+        "Welcome to Replay (Ultimate Game Launcher)!\r\n" +
         "\r\n" +
         "This is a portable app — everything it needs lives in the folders\r\n" +
         "right next to this file. Here's the recommended order to set it up:\r\n" +
@@ -135,7 +135,7 @@ internal static class AppFolderScaffolder
         "\r\n" +
         "5. ADD GAMES\r\n" +
         "   Under Settings -> Games, add each game and Browse to its ROM file\r\n" +
-        "   and cover art — UGL organizes the art into media\\ automatically.\r\n" +
+        "   and cover art — Replay organizes the art into media\\ automatically.\r\n" +
         "\r\n" +
         "6. OPTIONAL EXTRAS\r\n" +
         "   - Category art:      Settings -> Categories\r\n" +

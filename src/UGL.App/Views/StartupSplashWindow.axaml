@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:UGL.App.ViewModels"
         x:Class="UGL.App.Views.StartupSplashWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="UGL"
+        Title="Replay"
         WindowState="FullScreen"
         SystemDecorations="None"
         ShowInTaskbar="False"
